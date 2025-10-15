@@ -287,25 +287,37 @@ async def get_stats():
     """Get dashboard statistics"""
     try:
         # Count total subscribers
-        email_response = email_table.scan(
-            Select='COUNT',
-            FilterExpression='subscribed = :val',
-            ExpressionAttributeValues={':val': True}
-        )
-        subscriber_count = email_response.get('Count', 0)
+        try:
+            email_response = email_table.scan(
+                Select='COUNT',
+                FilterExpression='subscribed = :val',
+                ExpressionAttributeValues={':val': True}
+            )
+            subscriber_count = email_response.get('Count', 0)
+        except Exception as e:
+            print(f"Error counting subscribers: {e}")
+            subscriber_count = 0
 
         # Get last podcast sent
-        podcast_response = podcast_table.scan(
-            FilterExpression='attribute_exists(sent_at)',
-            Limit=1
-        )
-        podcasts = podcast_response.get('Items', [])
-        last_podcast_date = None
-        if podcasts:
-            last_podcast_date = datetime.fromtimestamp(podcasts[0]['sent_at']).isoformat()
+        try:
+            podcast_response = podcast_table.scan(
+                FilterExpression='attribute_exists(sent_at)',
+                Limit=1
+            )
+            podcasts = podcast_response.get('Items', [])
+            last_podcast_date = None
+            if podcasts:
+                last_podcast_date = datetime.fromtimestamp(podcasts[0]['sent_at']).isoformat()
+        except Exception as e:
+            print(f"Error getting last podcast: {e}")
+            last_podcast_date = None
 
         # Count total podcasts
-        total_podcasts = podcast_table.scan(Select='COUNT').get('Count', 0)
+        try:
+            total_podcasts = podcast_table.scan(Select='COUNT').get('Count', 0)
+        except Exception as e:
+            print(f"Error counting podcasts: {e}")
+            total_podcasts = 0
 
         return {
             "total_subscribers": subscriber_count,
@@ -315,7 +327,9 @@ async def get_stats():
 
     except Exception as e:
         print(f"Error fetching stats: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching stats")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error fetching stats: {str(e)}")
 
 @app.get("/api/admin/podcast-history")
 async def get_podcast_history():
@@ -341,7 +355,35 @@ async def get_podcast_history():
 
     except Exception as e:
         print(f"Error fetching history: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching history")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
+
+@app.post("/api/admin/add-test-subscriber")
+async def add_test_subscriber(email: str = Form(...), name: str = Form(None)):
+    """Add a test subscriber for testing emails"""
+    try:
+        email_lower = email.lower()
+        timestamp = int(datetime.utcnow().timestamp())
+
+        item = {
+            'email': email_lower,
+            'signup_timestamp': timestamp,
+            'created_at': datetime.utcnow().isoformat(),
+            'subscribed': True,
+            'last_email_sent': None
+        }
+
+        if name:
+            item['name'] = name
+
+        email_table.put_item(Item=item)
+
+        return {"message": "Test subscriber added", "email": email_lower}
+
+    except Exception as e:
+        print(f"Error adding test subscriber: {e}")
+        raise HTTPException(status_code=500, detail=f"Error adding test subscriber: {str(e)}")
 
 @app.post("/api/admin/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
