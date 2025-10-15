@@ -16,9 +16,41 @@ class PodcastService:
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
 
-        # Voice configuration for natural conversation
-        self.host_voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - warm, curious host
-        self.expert_voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam - knowledgeable expert
+        # Voice presets - different persona combinations
+        self.voice_presets = {
+            'default': {
+                'host_id': "21m00Tcm4TlvDq8ikWAM",  # Rachel - warm, curious
+                'expert_id': "pNInz6obpgDQGcFmaJgB",  # Adam - knowledgeable
+                'host_name': 'Rachel',
+                'expert_name': 'Adam',
+                'description': 'Warm & Professional'
+            },
+            'energetic': {
+                'host_id': "EXAVITQu4vr4xnSDxMaL",  # Bella - enthusiastic, energetic
+                'expert_id': "VR6AewLTigWG4xSOukaG",  # Arnold - deep, authoritative
+                'host_name': 'Bella',
+                'expert_name': 'Arnold',
+                'description': 'Energetic & Authoritative'
+            },
+            'calm': {
+                'host_id': "pNInz6obpgDQGcFmaJgB",  # Adam - calm, clear
+                'expert_id': "ThT5KcBeYPX3keUQqHPh",  # Dorothy - wise, soothing
+                'host_name': 'Adam',
+                'expert_name': 'Dorothy',
+                'description': 'Calm & Wise'
+            },
+            'dynamic': {
+                'host_id': "ErXwobaYiN019PkySvjV",  # Antoni - clear, well-paced
+                'expert_id': "21m00Tcm4TlvDq8ikWAM",  # Rachel - warm, engaging
+                'host_name': 'Antoni',
+                'expert_name': 'Rachel',
+                'description': 'Dynamic & Engaging'
+            }
+        }
+
+        # Default voice configuration
+        self.host_voice_id = self.voice_presets['default']['host_id']
+        self.expert_voice_id = self.voice_presets['default']['expert_id']
 
     def generate_podcast_script_from_text(self, text: str, title: str = "Custom Content") -> str:
         """Generate podcast script from any text using OpenAI with CRAFT prompt framework"""
@@ -292,12 +324,21 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
         return segments
 
-    def generate_audio(self, script: str, podcast_id: str) -> str:
+    def generate_audio(self, script: str, podcast_id: str, voice_preset: str = 'default') -> str:
         """Generate multi-voice audio from script using ElevenLabs and upload to S3"""
         temp_file = f"/tmp/{podcast_id}.mp3"
 
         try:
+            # Get voice preset configuration
+            preset = self.voice_presets.get(voice_preset, self.voice_presets['default'])
+            host_voice_id = preset['host_id']
+            expert_voice_id = preset['expert_id']
+            host_name = preset['host_name']
+            expert_name = preset['expert_name']
+
             print(f"Starting multi-voice audio generation for podcast {podcast_id}...")
+            print(f"Using voice preset: {voice_preset} ({preset['description']})")
+            print(f"Host: {host_name}, Expert: {expert_name}")
             print(f"Script length: {len(script)} characters")
 
             # Parse script into segments by speaker
@@ -315,8 +356,8 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 if not text.strip():
                     continue
 
-                voice_id = self.host_voice_id if speaker == 'host' else self.expert_voice_id
-                speaker_label = "Host (Rachel)" if speaker == 'host' else "Expert (Adam)"
+                voice_id = host_voice_id if speaker == 'host' else expert_voice_id
+                speaker_label = f"Host ({host_name})" if speaker == 'host' else f"Expert ({expert_name})"
                 voice_usage_count[speaker] += 1
 
                 print(f"\nSegment {i+1}/{len(segments)} - {speaker_label}")
@@ -348,8 +389,8 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
             # Summary of voice usage
             print(f"\n=== VOICE USAGE SUMMARY ===")
-            print(f"Host (Rachel) segments: {voice_usage_count['host']}")
-            print(f"Expert (Adam) segments: {voice_usage_count['expert']}")
+            print(f"Host ({host_name}) segments: {voice_usage_count['host']}")
+            print(f"Expert ({expert_name}) segments: {voice_usage_count['expert']}")
             print(f"Total segments: {len(segments)}")
 
             # Write concatenated audio to file
@@ -388,7 +429,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 os.remove(temp_file)
             raise
 
-    def create_podcast(self, paper_data: Dict, use_full_text: bool = False) -> Dict:
+    def create_podcast(self, paper_data: Dict, use_full_text: bool = False, voice_preset: str = 'default') -> Dict:
         """Generate complete podcast from paper"""
         podcast_id = str(uuid.uuid4())
 
@@ -398,7 +439,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
         # Generate audio
         print(f"Generating multi-voice audio...")
-        audio_url = self.generate_audio(script, podcast_id)
+        audio_url = self.generate_audio(script, podcast_id, voice_preset)
 
         return {
             "podcast_id": podcast_id,

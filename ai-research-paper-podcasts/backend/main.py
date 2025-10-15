@@ -80,11 +80,12 @@ async def root():
 async def create_podcast_from_text(
     text: str = Form(...),
     title: str = Form("Custom Content"),
-    email: EmailStr = Form(None)
+    email: EmailStr = Form(None),
+    voice_preset: str = Form('default')
 ):
     """Public endpoint: Generate complete podcast (transcript + audio) from text"""
     try:
-        print(f"Public text-to-podcast request, title: {title}, email: {email}")
+        print(f"Public text-to-podcast request, title: {title}, email: {email}, voice_preset: {voice_preset}")
         print(f"Text length: {len(text)} characters")
 
         if len(text) < 100:
@@ -100,10 +101,10 @@ async def create_podcast_from_text(
         # Generate transcript
         transcript = podcast_service.generate_podcast_script_from_text(text, title)
 
-        # Generate audio
+        # Generate audio with selected voice preset
         podcast_id = str(uuid.uuid4())
         print(f"Converting transcript to audio for podcast {podcast_id}...")
-        audio_url = podcast_service.generate_audio(transcript, podcast_id)
+        audio_url = podcast_service.generate_audio(transcript, podcast_id, voice_preset)
 
         # Store minimal paper data for tracking
         paper_id = f"public-text-{int(datetime.utcnow().timestamp())}"
@@ -313,7 +314,8 @@ async def fetch_paper(request: FetchPaperRequest):
 @app.post("/api/admin/generate-podcast")
 async def generate_podcast(
     paper_id: str = Form(...),
-    use_full_text: bool = Form(False)
+    use_full_text: bool = Form(False),
+    voice_preset: str = Form('default')
 ):
     """Generate complete podcast (transcript + audio) from paper"""
     try:
@@ -329,10 +331,10 @@ async def generate_podcast(
         print(f"Generating transcript for {paper_data['title']}...")
         transcript = podcast_service.generate_podcast_script(paper_data, use_full_text=use_full_text)
 
-        # Step 2: Generate audio from transcript
+        # Step 2: Generate audio from transcript with selected voice preset
         podcast_id = str(uuid.uuid4())
         print(f"Converting transcript to audio for podcast {podcast_id}...")
-        audio_url = podcast_service.generate_audio(transcript, podcast_id)
+        audio_url = podcast_service.generate_audio(transcript, podcast_id, voice_preset)
 
         # Store podcast in DynamoDB
         podcast_item = {
@@ -711,7 +713,8 @@ async def generate_transcript(
 @app.post("/api/admin/convert-to-audio")
 async def convert_to_audio(
     paper_id: str = Form(...),
-    transcript: str = Form(...)
+    transcript: str = Form(...),
+    voice_preset: str = Form('default')
 ):
     """Convert transcript to audio podcast"""
     try:
@@ -723,11 +726,11 @@ async def convert_to_audio(
 
         paper_data = response['Item']
 
-        # Generate audio from transcript
+        # Generate audio from transcript with selected voice preset
         import uuid
         podcast_id = str(uuid.uuid4())
         print(f"Converting transcript to audio for podcast {podcast_id}...")
-        audio_url = podcast_service.generate_audio(transcript, podcast_id)
+        audio_url = podcast_service.generate_audio(transcript, podcast_id, voice_preset)
 
         # Store podcast in DynamoDB
         podcast_item = {

@@ -182,6 +182,7 @@
 
         .podcast-form input[type="text"],
         .podcast-form input[type="email"],
+        .podcast-form select,
         .podcast-form textarea {
             width: 100%;
             padding: 15px;
@@ -192,9 +193,22 @@
             font-family: inherit;
         }
 
+        .podcast-form select {
+            background: white;
+            cursor: pointer;
+        }
+
         .podcast-form textarea {
             min-height: 200px;
             resize: vertical;
+        }
+
+        .voice-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 14px;
         }
 
         .podcast-form button {
@@ -541,6 +555,15 @@
                     id="podcastTitle"
                     placeholder="Podcast Title (optional)"
                 />
+
+                <label class="voice-label">🎙️ Choose Voice Style</label>
+                <select id="voicePreset">
+                    <option value="default">Warm & Professional (Rachel + Adam)</option>
+                    <option value="energetic">Energetic & Authoritative (Bella + Arnold)</option>
+                    <option value="calm">Calm & Wise (Adam + Dorothy)</option>
+                    <option value="dynamic">Dynamic & Engaging (Antoni + Rachel)</option>
+                </select>
+
                 <textarea
                     id="podcastText"
                     placeholder="Paste your text here... (blog post, article, notes, etc. - minimum 100 characters, no maximum!)"
@@ -775,6 +798,7 @@
             const text = document.getElementById('podcastText').value.trim();
             const title = document.getElementById('podcastTitle').value.trim() || 'Custom Content';
             const email = document.getElementById('podcastEmail').value.trim();
+            const voicePreset = document.getElementById('voicePreset').value;
             const generateBtn = document.getElementById('generateBtn');
             const spinnerContainer = document.getElementById('spinnerContainer');
             const podcastResult = document.getElementById('podcastResult');
@@ -801,6 +825,7 @@
                 const formData = new FormData();
                 formData.append('text', text);
                 formData.append('title', title);
+                formData.append('voice_preset', voicePreset);
                 if (email) {
                     formData.append('email', email);
                 }
