@@ -79,6 +79,95 @@ class PaperRequestModel(BaseModel):
 async def root():
     return {"message": "40k ARR SaaS API is running"}
 
+@app.post("/api/create-podcast-from-text")
+async def create_podcast_from_text(
+    text: str = Form(...),
+    title: str = Form("Custom Content"),
+    email: EmailStr = Form(None)
+):
+    """Public endpoint: Generate complete podcast (transcript + audio) from text"""
+    try:
+        print(f"Public text-to-podcast request, title: {title}, email: {email}")
+        print(f"Text length: {len(text)} characters")
+
+        if len(text) < 100:
+            raise HTTPException(status_code=400, detail="Text must be at least 100 characters")
+
+        if len(text) > 20000:
+            raise HTTPException(status_code=400, detail="Text must be less than 20,000 characters")
+
+        # Generate transcript
+        transcript = podcast_service.generate_podcast_script_from_text(text, title)
+
+        # Generate audio
+        podcast_id = str(uuid.uuid4())
+        print(f"Converting transcript to audio for podcast {podcast_id}...")
+        audio_url = podcast_service.generate_audio(transcript, podcast_id)
+
+        # Store minimal paper data for tracking
+        paper_id = f"public-text-{int(datetime.utcnow().timestamp())}"
+        paper_data = {
+            'paper_id': paper_id,
+            'title': title,
+            'authors': ['Public User'],
+            'abstract': text[:500] + "..." if len(text) > 500 else text,
+            'pdf_url': 'N/A',
+            'published': datetime.utcnow().isoformat(),
+            'categories': ['public-text'],
+            'created_at': int(datetime.utcnow().timestamp())
+        }
+        paper_table.put_item(Item=paper_data)
+
+        # Store podcast
+        podcast_item = {
+            'podcast_id': podcast_id,
+            'paper_id': paper_id,
+            'paper_title': title,
+            'paper_authors': 'Public User',
+            'paper_url': 'N/A',
+            'audio_url': audio_url,
+            'transcript': transcript,
+            'created_at': int(datetime.utcnow().timestamp()),
+            'sent_at': None,
+            'recipients_count': 0,
+            'public': True
+        }
+        podcast_table.put_item(Item=podcast_item)
+
+        # If email provided, add to signup list
+        if email:
+            try:
+                email_lower = email.lower()
+                timestamp = int(datetime.utcnow().timestamp())
+                email_table.put_item(
+                    Item={
+                        'email': email_lower,
+                        'signup_timestamp': timestamp,
+                        'created_at': datetime.utcnow().isoformat(),
+                        'subscribed': True,
+                        'last_email_sent': None
+                    },
+                    ConditionExpression='attribute_not_exists(email)'
+                )
+                email_service.send_welcome_email(email_lower, None)
+            except:
+                pass  # Email already exists, ignore
+
+        return {
+            "podcast_id": podcast_id,
+            "audio_url": audio_url,
+            "transcript": transcript,
+            "title": title
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating podcast from text: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error creating podcast: {str(e)}")
+
 @app.get("/api/health")
 async def health():
     return {"status": "healthy"}

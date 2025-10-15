@@ -147,6 +147,140 @@
             display: block;
         }
 
+        /* Text to Podcast Section */
+        .text-to-podcast {
+            padding: 80px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .text-to-podcast-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .text-to-podcast h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: #1a202c;
+        }
+
+        .text-to-podcast .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+
+        .podcast-form {
+            background: #f7fafc;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .podcast-form input[type="text"],
+        .podcast-form input[type="email"],
+        .podcast-form textarea {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+
+        .podcast-form textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .podcast-form button {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .podcast-form button:hover {
+            transform: translateY(-2px);
+        }
+
+        .podcast-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .podcast-result {
+            margin-top: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #667eea;
+            display: none;
+        }
+
+        .podcast-result h3 {
+            color: #1a202c;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .podcast-result audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .podcast-result .download-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .podcast-result .download-btn:hover {
+            opacity: 0.9;
+        }
+
+        .spinner-container {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner-large {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            color: #718096;
+            font-size: 16px;
+        }
+
         /* Features Section */
         .features {
             padding: 80px 20px;
@@ -363,6 +497,7 @@
         <div class="nav-container">
             <a href="/" class="logo">🎙️ AI Research Podcasts</a>
             <div class="nav-links">
+                <a href="#create">Create Podcast</a>
                 <a href="#episodes">Episodes</a>
                 <a href="#features">Features</a>
                 <a href="/admin/">Admin</a>
@@ -391,6 +526,53 @@
                 <button type="submit" id="submitBtn">Subscribe Free</button>
             </form>
             <div class="form-message" id="formMessage"></div>
+        </div>
+    </section>
+
+    <!-- Text to Podcast Section -->
+    <section class="text-to-podcast" id="create">
+        <div class="text-to-podcast-container">
+            <h2>🎙️ Create Your Own Podcast</h2>
+            <p class="subtitle">Paste any text and we'll transform it into a conversational podcast with AI voices. Free to try!</p>
+
+            <div class="podcast-form">
+                <input
+                    type="text"
+                    id="podcastTitle"
+                    placeholder="Podcast Title (optional)"
+                />
+                <textarea
+                    id="podcastText"
+                    placeholder="Paste your text here... (blog post, article, notes, etc. - minimum 100 characters)"
+                    required
+                ></textarea>
+                <input
+                    type="email"
+                    id="podcastEmail"
+                    placeholder="Your email (optional - get notified about daily AI podcasts)"
+                />
+                <button type="button" id="generateBtn" onclick="generatePodcast()">
+                    🎧 Generate Podcast (Free)
+                </button>
+
+                <div class="spinner-container" id="spinnerContainer">
+                    <div class="spinner-large"></div>
+                    <p class="status-text" id="statusText">Creating your podcast... This takes 30-60 seconds.</p>
+                </div>
+
+                <div class="podcast-result" id="podcastResult">
+                    <h3 id="resultTitle">Your Podcast is Ready!</h3>
+                    <audio controls id="audioPlayer">
+                        <source id="audioSource" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div>
+                        <a href="#" id="downloadBtn" class="download-btn" download>
+                            📥 Download MP3
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -587,6 +769,90 @@
 
         // Load episodes on page load
         loadEpisodes();
+
+        // Text to Podcast Generator
+        async function generatePodcast() {
+            const text = document.getElementById('podcastText').value.trim();
+            const title = document.getElementById('podcastTitle').value.trim() || 'Custom Content';
+            const email = document.getElementById('podcastEmail').value.trim();
+            const generateBtn = document.getElementById('generateBtn');
+            const spinnerContainer = document.getElementById('spinnerContainer');
+            const podcastResult = document.getElementById('podcastResult');
+            const statusText = document.getElementById('statusText');
+
+            if (!text) {
+                alert('Please paste some text');
+                return;
+            }
+
+            if (text.length < 100) {
+                alert('Please provide at least 100 characters of text');
+                return;
+            }
+
+            if (text.length > 20000) {
+                alert('Text is too long. Please keep it under 20,000 characters');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating...';
+            spinnerContainer.style.display = 'block';
+            podcastResult.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('title', title);
+                if (email) {
+                    formData.append('email', email);
+                }
+
+                statusText.textContent = 'Creating your podcast... This takes 30-60 seconds.';
+
+                const response = await fetch(`${API_URL}/api/create-podcast-from-text`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to generate podcast');
+                }
+
+                // Show result
+                document.getElementById('resultTitle').textContent = `🎉 "${data.title}" is Ready!`;
+                document.getElementById('audioSource').src = data.audio_url;
+                document.getElementById('audioPlayer').load();
+                document.getElementById('downloadBtn').href = data.audio_url;
+                document.getElementById('downloadBtn').download = `${data.title.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+
+                podcastResult.style.display = 'block';
+                spinnerContainer.style.display = 'none';
+
+                // Clear form
+                document.getElementById('podcastText').value = '';
+                document.getElementById('podcastTitle').value = '';
+
+                // If email provided, show message
+                if (email) {
+                    alert('✅ Podcast created! Check your email for the welcome message.');
+                }
+
+                // Scroll to result
+                podcastResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to generate podcast. Please try again.');
+                spinnerContainer.style.display = 'none';
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎧 Generate Podcast (Free)';
+            }
+        }
     </script>
 </body>
 </html>
