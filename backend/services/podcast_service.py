@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 from openai import OpenAI
 import boto3
 from elevenlabs.client import ElevenLabs
-from pydub import AudioSegment
 from io import BytesIO
 
 class PodcastService:
@@ -308,8 +307,8 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if not segments:
                 raise ValueError("No speech segments found in script")
 
-            # Generate audio for each segment
-            audio_segments = []
+            # Generate audio for each segment and concatenate MP3 bytes directly
+            all_audio_bytes = b''
             voice_usage_count = {'host': 0, 'expert': 0}
 
             for i, (speaker, text) in enumerate(segments):
@@ -333,23 +332,15 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                         output_format="mp3_44100_128"
                     )
 
-                    # Collect audio chunks
-                    audio_bytes = BytesIO()
+                    # Collect audio chunks for this segment
+                    segment_bytes = b''
                     for chunk in audio_generator:
                         if chunk:
-                            audio_bytes.write(chunk)
+                            segment_bytes += chunk
 
-                    # Load as audio segment
-                    audio_bytes.seek(0)
-                    segment_audio = AudioSegment.from_mp3(audio_bytes)
-
-                    # Add slight pause between speakers (300ms)
-                    if audio_segments:
-                        silence = AudioSegment.silent(duration=300)
-                        audio_segments.append(silence)
-
-                    audio_segments.append(segment_audio)
-                    print(f"  ✓ Generated {len(segment_audio)}ms of audio")
+                    # Append to final audio (simple MP3 concatenation)
+                    all_audio_bytes += segment_bytes
+                    print(f"  ✓ Generated {len(segment_bytes)} bytes of audio")
 
                 except Exception as e:
                     print(f"  ✗ Error generating segment {i+1}: {e}")
@@ -359,16 +350,13 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             print(f"\n=== VOICE USAGE SUMMARY ===")
             print(f"Host (Rachel) segments: {voice_usage_count['host']}")
             print(f"Expert (Adam) segments: {voice_usage_count['expert']}")
-            print(f"Total segments: {len(audio_segments) // 2}")  # Divide by 2 because of silence segments
+            print(f"Total segments: {len(segments)}")
 
-            # Concatenate all audio segments
-            print(f"Concatenating {len(audio_segments)} audio segments...")
-            final_audio = sum(audio_segments)
-
-            # Export to file
-            print(f"Exporting to {temp_file}...")
-            final_audio.export(temp_file, format="mp3", bitrate="128k")
-            print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes, duration: {len(final_audio)/1000:.1f}s")
+            # Write concatenated audio to file
+            print(f"Writing final audio to {temp_file}...")
+            with open(temp_file, 'wb') as f:
+                f.write(all_audio_bytes)
+            print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
 
             # Upload to S3
             s3_key = f"podcasts/{podcast_id}.mp3"

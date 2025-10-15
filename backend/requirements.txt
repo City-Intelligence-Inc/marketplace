@@ -12,5 +12,4 @@ python-multipart
 pypdf
 pdfplumber
 httpx
-pydub
 stripe
