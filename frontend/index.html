@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join Our Waitlist</title>
+    <title>AI Research Podcasts - Latest AI Papers as Audio</title>
     <style>
         * {
             margin: 0;
@@ -13,18 +13,21 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            color: #1a202c;
+            line-height: 1.6;
         }
 
+        /* Navigation */
         nav {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px 0;
-            margin-bottom: 20px;
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        nav .nav-container {
+        .nav-container {
             max-width: 1200px;
             margin: 0 auto;
             display: flex;
@@ -33,123 +36,98 @@
             padding: 0 20px;
         }
 
-        nav .logo {
-            color: white;
-            font-size: 20px;
-            font-weight: 600;
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             text-decoration: none;
         }
 
-        nav .nav-links a {
-            color: white;
+        .nav-links a {
+            color: #4a5568;
             text-decoration: none;
             margin-left: 30px;
             font-weight: 500;
-            transition: opacity 0.2s;
+            transition: color 0.2s;
         }
 
-        nav .nav-links a:hover {
-            opacity: 0.8;
+        .nav-links a:hover {
+            color: #667eea;
         }
 
-        .main-content {
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        /* Signup Form */
+        .signup-form {
+            max-width: 500px;
+            margin: 0 auto;
             display: flex;
-            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
             justify-content: center;
-            min-height: calc(100vh - 100px);
         }
 
-        .container {
-            background: white;
-            border-radius: 16px;
-            padding: 48px;
-            max-width: 480px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        h1 {
-            font-size: 32px;
-            color: #1a202c;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .subtitle {
-            color: #718096;
+        .signup-form input {
+            flex: 1;
+            min-width: 250px;
+            padding: 16px 20px;
             font-size: 16px;
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            color: #4a5568;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        input[type="email"] {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
-            border: 2px solid #e2e8f0;
+            border: none;
             border-radius: 8px;
-            transition: all 0.3s ease;
             outline: none;
         }
 
-        input[type="email"]:focus,
-        input[type="text"]:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
+        .signup-form button {
+            padding: 16px 32px;
             font-size: 16px;
             font-weight: 600;
-            color: white;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #667eea;
+            background: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        button:hover {
+        .signup-form button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
+        .signup-form button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        .message {
-            margin-top: 16px;
+        .form-message {
+            margin-top: 15px;
             padding: 12px;
             border-radius: 8px;
             font-size: 14px;
@@ -157,95 +135,342 @@
             display: none;
         }
 
-        .message.success {
-            background-color: #c6f6d5;
-            color: #22543d;
-            border: 1px solid #9ae6b4;
-        }
-
-        .message.error {
-            background-color: #fed7d7;
-            color: #742a2a;
-            border: 1px solid #fc8181;
-        }
-
-        .message.show {
+        .form-message.success {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
             display: block;
+        }
+
+        .form-message.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: white;
+            display: block;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+            background: #f7fafc;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 50px;
+            color: #1a202c;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .feature-card p {
+            color: #718096;
+            line-height: 1.6;
+        }
+
+        /* Episodes Gallery */
+        .episodes {
+            padding: 80px 20px;
+            background: white;
+        }
+
+        .episodes-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .episodes h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 50px;
+            color: #1a202c;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .episode-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .episode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .episode-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .episode-header h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .episode-authors {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .episode-date {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .episode-body {
+            padding: 20px;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .episode-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .no-episodes {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .no-episodes h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .signup-form {
+                flex-direction: column;
+            }
+
+            .signup-form input,
+            .signup-form button {
+                width: 100%;
+            }
+
+            .episodes-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Navigation -->
     <nav>
         <div class="nav-container">
             <a href="/" class="logo">🎙️ AI Research Podcasts</a>
             <div class="nav-links">
-                <a href="/">Home</a>
+                <a href="#episodes">Episodes</a>
+                <a href="#features">Features</a>
                 <a href="/admin/">Admin</a>
             </div>
         </div>
     </nav>
 
-    <div class="main-content">
-        <div class="container">
-            <h1>🎙️ Daily AI Research Podcasts</h1>
-            <p class="subtitle">Get the latest AI papers as 5-10 minute podcasts. Delivered to your inbox daily.</p>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Latest AI Research as Podcasts</h1>
+            <p>Get cutting-edge AI papers transformed into 5-10 minute conversational podcasts. Delivered to your inbox daily.</p>
 
-        <form id="emailForm">
-            <div class="form-group">
-                <label for="name">Name (Optional)</label>
+            <form class="signup-form" id="signupForm">
                 <input
                     type="text"
-                    id="name"
-                    name="name"
-                    placeholder="Your name"
-                    autocomplete="name"
+                    id="nameInput"
+                    placeholder="Your name (optional)"
                 />
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
                 <input
                     type="email"
-                    id="email"
-                    name="email"
-                    placeholder="you@example.com"
+                    id="emailInput"
+                    placeholder="Your email"
                     required
-                    autocomplete="email"
                 />
-            </div>
-
-            <button type="submit" id="submitBtn">Start Receiving Podcasts</button>
-
-            <div id="message" class="message"></div>
-        </form>
+                <button type="submit" id="submitBtn">Subscribe Free</button>
+            </form>
+            <div class="form-message" id="formMessage"></div>
         </div>
-    </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <h2>Why Subscribe?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>Daily Delivery</h3>
+                    <p>Fresh AI research podcasts delivered to your inbox every day. Stay updated effortlessly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⏱️</div>
+                    <h3>Quick & Digestible</h3>
+                    <p>5-10 minute episodes that fit into your busy schedule. Learn during your commute.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎙️</div>
+                    <h3>Natural Conversations</h3>
+                    <p>Host and expert discuss papers in plain language. No jargon, just insights.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Full Transcripts</h3>
+                    <p>Every podcast includes a complete transcript. Read or listen, your choice.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Trending Papers</h3>
+                    <p>Curated from arXiv's most cited and trending AI research papers.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🆓</div>
+                    <h3>100% Free</h3>
+                    <p>No credit card required. Unsubscribe anytime with a single click.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Episodes Gallery -->
+    <section class="episodes" id="episodes">
+        <div class="episodes-container">
+            <h2>Past Episodes</h2>
+            <div id="episodesGrid" class="episodes-grid">
+                <div class="loading">Loading episodes...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 AI Research Podcasts. All rights reserved.</p>
+            <p style="margin-top: 10px; opacity: 0.8;">Powered by OpenAI & ElevenLabs</p>
+        </div>
+    </footer>
 
     <script>
-        // Set your Render backend URL here
         const API_URL = 'https://four0k-arr-saas.onrender.com';
 
-        const form = document.getElementById('emailForm');
-        const nameInput = document.getElementById('name');
-        const emailInput = document.getElementById('email');
+        // Signup form handler
+        const signupForm = document.getElementById('signupForm');
+        const nameInput = document.getElementById('nameInput');
+        const emailInput = document.getElementById('emailInput');
         const submitBtn = document.getElementById('submitBtn');
-        const messageDiv = document.getElementById('message');
+        const formMessage = document.getElementById('formMessage');
 
-        form.addEventListener('submit', async (e) => {
+        signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const email = emailInput.value.trim();
             const name = nameInput.value.trim();
+            if (!email) return;
 
-            if (!email) {
-                showMessage('Please enter a valid email address.', 'error');
-                return;
-            }
-
-            // Disable button and show loading state
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-            hideMessage();
+            submitBtn.textContent = 'Subscribing...';
+            formMessage.className = 'form-message';
 
             try {
                 const payload = { email };
@@ -255,38 +480,113 @@
 
                 const response = await fetch(`${API_URL}/api/signup`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Redirect to thank you page
-                    window.location.href = '/thank-you.html';
+                    formMessage.className = 'form-message success';
+                    formMessage.textContent = '✓ Success! Check your email for confirmation.';
+                    emailInput.value = '';
+                    nameInput.value = '';
+
+                    // Scroll to episodes after signup
+                    setTimeout(() => {
+                        document.getElementById('episodes').scrollIntoView({ behavior: 'smooth' });
+                    }, 1500);
                 } else {
-                    showMessage(data.detail || data.message || 'Something went wrong. Please try again.', 'error');
+                    formMessage.className = 'form-message error';
+                    formMessage.textContent = data.detail || 'Something went wrong. Please try again.';
                 }
             } catch (error) {
-                console.error('Error:', error);
-                showMessage('Network error. Please check your connection and try again.', 'error');
+                formMessage.className = 'form-message error';
+                formMessage.textContent = 'Network error. Please try again.';
             } finally {
-                // Re-enable button
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Start Receiving Podcasts';
+                submitBtn.textContent = 'Subscribe Free';
             }
         });
 
-        function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type} show`;
+        // Load episodes
+        async function loadEpisodes() {
+            const grid = document.getElementById('episodesGrid');
+
+            try {
+                const response = await fetch(`${API_URL}/api/episodes`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to load episodes');
+                }
+
+                const episodes = data.episodes || [];
+
+                if (episodes.length === 0) {
+                    grid.innerHTML = `
+                        <div class="no-episodes">
+                            <h3>No episodes yet</h3>
+                            <p>Be the first to subscribe and get notified when we publish our first episode!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = episodes.map(episode => {
+                    const date = episode.sent_at
+                        ? new Date(episode.sent_at * 1000).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })
+                        : 'Recently published';
+
+                    return `
+                        <div class="episode-card">
+                            <div class="episode-header">
+                                <h3>${escapeHtml(episode.paper_title)}</h3>
+                                <div class="episode-authors">${escapeHtml(episode.paper_authors)}</div>
+                                <div class="episode-date">${date}</div>
+                            </div>
+                            <div class="episode-body">
+                                <audio class="audio-player" controls>
+                                    <source src="${escapeHtml(episode.audio_url)}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <div class="episode-actions">
+                                    <a href="${escapeHtml(episode.audio_url)}" class="btn btn-primary" download>
+                                        Download MP3
+                                    </a>
+                                    <a href="${escapeHtml(episode.paper_url)}" class="btn btn-secondary" target="_blank">
+                                        Read Paper
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading episodes:', error);
+                grid.innerHTML = `
+                    <div class="no-episodes">
+                        <h3>Unable to load episodes</h3>
+                        <p>Please try again later.</p>
+                    </div>
+                `;
+            }
         }
 
-        function hideMessage() {
-            messageDiv.className = 'message';
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
+
+        // Load episodes on page load
+        loadEpisodes();
     </script>
 </body>
 </html>

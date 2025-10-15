@@ -129,6 +129,46 @@ async def unsubscribe(email: EmailStr):
         print(f"Error unsubscribing: {e}")
         raise HTTPException(status_code=500, detail="Error unsubscribing")
 
+@app.get("/api/episodes")
+async def get_episodes():
+    """Get all published podcast episodes for public display"""
+    try:
+        # Scan for all podcasts that have been sent
+        response = podcast_table.scan(
+            FilterExpression='attribute_exists(sent_at)'
+        )
+
+        podcasts = response.get('Items', [])
+
+        # Sort by sent_at descending (most recent first)
+        podcasts.sort(key=lambda x: int(x.get('sent_at') or 0), reverse=True)
+
+        # Format episodes for public display
+        formatted_episodes = []
+        for p in podcasts:
+            try:
+                sent_at = p.get('sent_at')
+                if sent_at and sent_at != 'None':
+                    formatted_episodes.append({
+                        "podcast_id": p['podcast_id'],
+                        "paper_title": p.get('paper_title', 'Unknown'),
+                        "paper_authors": p.get('paper_authors', 'Unknown'),
+                        "paper_url": p.get('paper_url', '#'),
+                        "audio_url": p.get('audio_url', ''),
+                        "sent_at": int(sent_at)
+                    })
+            except Exception as e:
+                print(f"Error formatting episode {p.get('podcast_id')}: {e}")
+                continue
+
+        return {"episodes": formatted_episodes}
+
+    except Exception as e:
+        print(f"Error fetching episodes: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+
 # ===== Admin Endpoints =====
 
 @app.post("/api/admin/fetch-paper")
