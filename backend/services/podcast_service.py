@@ -143,7 +143,13 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         return response.choices[0].message.content
 
     def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
-        """Parse script into (speaker, text) tuples"""
+        """Parse script into (speaker, text) tuples, removing speaker labels"""
+        import re
+
+        # Split by speaker labels using regex
+        # This will catch "Host:" or "Expert:" at the beginning of a line
+        pattern = r'^(Host|Expert):\s*(.*)$'
+
         lines = script.strip().split('\n')
         segments = []
         current_speaker = None
@@ -154,27 +160,37 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if not line:
                 continue
 
-            # Check if line starts with speaker label
-            if line.startswith('Host:'):
+            # Check if line matches speaker pattern
+            match = re.match(pattern, line, re.IGNORECASE)
+
+            if match:
                 # Save previous segment
                 if current_speaker and current_text:
-                    segments.append((current_speaker, ' '.join(current_text)))
-                current_speaker = 'host'
-                current_text = [line[5:].strip()]  # Remove "Host:"
-            elif line.startswith('Expert:'):
-                # Save previous segment
-                if current_speaker and current_text:
-                    segments.append((current_speaker, ' '.join(current_text)))
-                current_speaker = 'expert'
-                current_text = [line[7:].strip()]  # Remove "Expert:"
+                    text = ' '.join(current_text).strip()
+                    if text:  # Only add non-empty segments
+                        segments.append((current_speaker, text))
+
+                # Start new segment
+                speaker_label = match.group(1).lower()
+                text_content = match.group(2).strip()
+
+                current_speaker = 'host' if speaker_label == 'host' else 'expert'
+                current_text = [text_content] if text_content else []
             else:
-                # Continuation of current speaker
+                # Continuation of current speaker's text
                 if current_speaker:
                     current_text.append(line)
 
         # Add final segment
         if current_speaker and current_text:
-            segments.append((current_speaker, ' '.join(current_text)))
+            text = ' '.join(current_text).strip()
+            if text:
+                segments.append((current_speaker, text))
+
+        # Debug logging
+        print(f"\n=== PARSED {len(segments)} SEGMENTS ===")
+        for i, (speaker, text) in enumerate(segments[:5]):  # Show first 5
+            print(f"{i+1}. [{speaker.upper()}]: {text[:80]}...")
 
         return segments
 
@@ -195,14 +211,19 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
             # Generate audio for each segment
             audio_segments = []
+            voice_usage_count = {'host': 0, 'expert': 0}
+
             for i, (speaker, text) in enumerate(segments):
                 if not text.strip():
                     continue
 
                 voice_id = self.host_voice_id if speaker == 'host' else self.expert_voice_id
-                speaker_label = "Host" if speaker == 'host' else "Expert"
+                speaker_label = "Host (Rachel)" if speaker == 'host' else "Expert (Adam)"
+                voice_usage_count[speaker] += 1
 
-                print(f"Generating segment {i+1}/{len(segments)} ({speaker_label}): {text[:50]}...")
+                print(f"\nSegment {i+1}/{len(segments)} - {speaker_label}")
+                print(f"  Voice ID: {voice_id}")
+                print(f"  Text: {text[:80]}...")
 
                 try:
                     # Generate audio for this segment
@@ -234,6 +255,12 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 except Exception as e:
                     print(f"  ✗ Error generating segment {i+1}: {e}")
                     raise
+
+            # Summary of voice usage
+            print(f"\n=== VOICE USAGE SUMMARY ===")
+            print(f"Host (Rachel) segments: {voice_usage_count['host']}")
+            print(f"Expert (Adam) segments: {voice_usage_count['expert']}")
+            print(f"Total segments: {len(audio_segments) // 2}")  # Divide by 2 because of silence segments
 
             # Concatenate all audio segments
             print(f"Concatenating {len(audio_segments)} audio segments...")
