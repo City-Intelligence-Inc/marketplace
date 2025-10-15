@@ -1,9 +1,12 @@
 import os
 import uuid
-from typing import Dict
+import re
+from typing import Dict, List, Tuple
 from openai import OpenAI
 import boto3
 from elevenlabs.client import ElevenLabs
+from pydub import AudioSegment
+from io import BytesIO
 
 class PodcastService:
     """Service for generating podcasts from research papers"""
@@ -14,8 +17,12 @@ class PodcastService:
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
 
+        # Voice configuration for natural conversation
+        self.host_voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - warm, curious host
+        self.expert_voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam - knowledgeable expert
+
     def generate_podcast_script(self, paper_data: Dict, use_full_text: bool = False) -> str:
-        """Generate podcast script from paper using OpenAI"""
+        """Generate podcast script from paper using OpenAI with CRAFT prompt framework"""
 
         # Determine content to use
         if use_full_text and 'full_text' in paper_data:
@@ -27,84 +34,215 @@ class PodcastService:
             length_guidance = "5-7 minute"
             word_count = "700-900 words"
 
-        prompt = f"""You are creating a natural, conversational {length_guidance} podcast script about a research paper.
+        # CRAFT Framework Prompt
+        prompt = f"""# CONTEXT & ROLE
+You are an award-winning podcast producer creating a {length_guidance} conversational podcast episode about cutting-edge AI research. Your specialty is making complex academic papers accessible and engaging for curious listeners who want to stay informed about AI advances but don't have time to read full papers.
 
-Paper Title: {paper_data['title']}
+The podcast features two distinct personalities:
+- HOST (Alex): Curious, asks questions listeners would ask, represents the audience's perspective. Enthusiastic but not afraid to say "wait, explain that again." Conversational and relatable.
+- EXPERT (Dr. Chen): Knowledgeable researcher who explains concepts clearly without condescension. Uses analogies, avoids jargon, shows genuine excitement about breakthroughs. Friendly teacher vibe.
+
+# ACTION & TASK
+Create a complete podcast script for this research paper that transforms dense academic content into an engaging, natural conversation between Alex (Host) and Dr. Chen (Expert).
+
+## Paper Details:
+Title: {paper_data['title']}
 Authors: {', '.join(paper_data['authors'])}
 {content}
 
-Create a podcast script with TWO speakers (Host and Expert) having a natural conversation. Follow this structure:
+## Script Requirements:
+Your script must be {word_count} and follow this three-act structure:
 
-OPENING (10%):
-- Host opens with an intriguing hook that relates to everyday life or current events
-- Make listeners immediately understand why this matters to them
-- Expert briefly validates why this is exciting research
+**ACT 1 - THE HOOK (10% of script, ~70-140 words):**
+- Alex opens with a relatable scenario or current event that connects to the paper
+- Immediately establish why listeners should care (personal impact, societal relevance)
+- Dr. Chen validates the excitement with a compelling "why now" statement
+- Create intrigue without revealing everything upfront
 
-CORE CONTENT (70%):
-- Host asks curious, probing questions that a listener would ask
-- Expert explains concepts clearly without jargon, using analogies when helpful
-- Discuss: What problem does this solve? How does it work? What did they discover?
-- Keep exchanges short and dynamic - avoid long monologues
-- Show enthusiasm and genuine curiosity in the conversation
+**ACT 2 - THE EXPLORATION (70% of script, ~490-980 words):**
+- Alex asks progressively deeper questions that build understanding
+- Dr. Chen explains:
+  * What problem does this research solve?
+  * What's the key innovation or breakthrough?
+  * How does it actually work? (use analogies)
+  * What did they discover/achieve?
+- Keep exchanges dynamic: question → concise answer → follow-up → deeper explanation
+- Include natural reactions: "Wait, that's huge!" / "Okay so let me make sure I understand..."
+- Maximum 2-3 sentences per speaking turn before switching speakers
 
-CLOSING (20%):
-- Discuss real-world applications and future implications
-- Host summarizes key takeaways in simple terms
-- End with a thought-provoking question or future outlook
+**ACT 3 - THE IMPACT (20% of script, ~140-280 words):**
+- Discuss real-world applications and implications
+- Alex asks about timeline/feasibility
+- Dr. Chen provides balanced perspective (exciting but honest about challenges)
+- Alex summarizes key takeaways in plain language
+- End with forward-looking statement or question that leaves listeners thinking
 
-STYLE GUIDELINES:
-- Write like people actually talk: use contractions, natural pauses, "you know", "I mean"
-- Keep sentences short and punchy
-- Show personality: excitement, surprise, thoughtful pauses
-- Avoid academic language - explain as if talking to a smart friend
-- NO markdown formatting (no asterisks, no bold, no italics)
-- Use simple speaker labels: "Host:" and "Expert:"
+# FORMAT & CONSTRAINTS
 
-Target length: {word_count}
+**Critical Formatting Rules:**
+1. Use ONLY these exact labels: "Host:" and "Expert:"
+2. NO stage directions, NO asterisks, NO parentheticals, NO bold/italics
+3. Write EXACTLY how people speak: contractions, filler words, natural pauses
+4. Every speaking turn must be 1-3 sentences maximum (conversational ping-pong)
+5. Never write labels like [Host] or (Host) - always "Host:" at start of line
 
-Example of good style:
-Host: So what got you excited about this paper?
-Expert: Well, you know how we've been talking about AI safety for years? This actually addresses a real gap.
-Host: Okay, break that down for me.
-Expert: Sure. Think of it like..."""
+**Dialogue Style Rules:**
+- Use conversational markers: "you know", "I mean", "right?", "actually", "so"
+- Include thinking sounds when natural: "hmm", "oh!", "wait"
+- Sentence fragments are okay: "Exactly." / "Not quite."
+- Questions should sound spontaneous: "But how does that even work?" not "Can you explain the mechanism?"
+- Avoid formal transitions: Say "So what's wild about this..." not "Another interesting aspect is..."
+
+**Content Rules:**
+- NO jargon without immediate plain-language explanation
+- NO reading of equations or formulas
+- NO listing of author names or institutional affiliations in dialogue
+- Use analogies for complex concepts (compare to everyday things)
+- Show personality: excitement, surprise, "mind blown" moments
+
+# EXAMPLES OF GOOD DIALOGUE
+
+**GOOD - Natural & Engaging:**
+Host: Okay, so AI models forgetting old skills when they learn new ones. That sounds like me trying to learn Spanish while my French gets rusty.
+Expert: Ha! Yeah, that's exactly it. It's called catastrophic forgetting, and it's been a huge problem. But this paper tackles it in a really clever way.
+Host: I'm listening. How?
+Expert: So instead of trying to remember everything, they basically teach the model what's safe to forget and what's critical to keep. Think of it like cleaning out your closet but keeping your favorite jacket.
+
+**BAD - Too formal, too long:**
+Host: Could you explain the concept of catastrophic forgetting and how this research addresses it?
+Expert: Catastrophic forgetting is a phenomenon in machine learning where artificial neural networks tend to forget previously learned information when trained on new tasks. The researchers in this paper have developed a novel approach that utilizes selective memory consolidation to mitigate this issue through a sophisticated weighting mechanism.
+
+**GOOD - Shows personality:**
+Host: Wait wait wait. You're telling me it works with any model?
+Expert: Any model.
+Host: That's huge!
+Expert: Right? That's what got me excited. It's not just some specialized technique. This is plug-and-play.
+
+# TONE & STYLE
+- Enthusiastic but credible
+- Conversational but informative
+- Accessible but respecting listener intelligence
+- Natural humor when appropriate
+- Genuine curiosity and discovery
+
+Now generate the complete {word_count} podcast script following ALL the rules above."""
 
         response = self.openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",  # Using full GPT-4 for better quality
             messages=[
-                {"role": "system", "content": "You are an expert podcast producer who creates natural, engaging conversations about research papers. You write scripts that sound like real people talking, not reading from a textbook."},
+                {
+                    "role": "system",
+                    "content": "You are an expert podcast scriptwriter specializing in making academic research accessible and engaging. You create natural dialogue that sounds like two real people having an enthusiastic conversation, not reading from notes. You follow formatting rules precisely and never include stage directions or labels that should not be spoken aloud."
+                },
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.8,
-            max_tokens=2500
+            temperature=0.85,
+            max_tokens=3000
         )
 
         return response.choices[0].message.content
 
+    def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
+        """Parse script into (speaker, text) tuples"""
+        lines = script.strip().split('\n')
+        segments = []
+        current_speaker = None
+        current_text = []
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Check if line starts with speaker label
+            if line.startswith('Host:'):
+                # Save previous segment
+                if current_speaker and current_text:
+                    segments.append((current_speaker, ' '.join(current_text)))
+                current_speaker = 'host'
+                current_text = [line[5:].strip()]  # Remove "Host:"
+            elif line.startswith('Expert:'):
+                # Save previous segment
+                if current_speaker and current_text:
+                    segments.append((current_speaker, ' '.join(current_text)))
+                current_speaker = 'expert'
+                current_text = [line[7:].strip()]  # Remove "Expert:"
+            else:
+                # Continuation of current speaker
+                if current_speaker:
+                    current_text.append(line)
+
+        # Add final segment
+        if current_speaker and current_text:
+            segments.append((current_speaker, ' '.join(current_text)))
+
+        return segments
+
     def generate_audio(self, script: str, podcast_id: str) -> str:
-        """Generate audio from script using ElevenLabs and upload to S3"""
+        """Generate multi-voice audio from script using ElevenLabs and upload to S3"""
         temp_file = f"/tmp/{podcast_id}.mp3"
 
         try:
-            print(f"Starting audio generation for podcast {podcast_id}...")
+            print(f"Starting multi-voice audio generation for podcast {podcast_id}...")
             print(f"Script length: {len(script)} characters")
 
-            # Use ElevenLabs with turbo model for faster generation
-            print(f"Generating audio with ElevenLabs turbo model...")
-            audio_generator = self.elevenlabs_client.text_to_speech.convert(
-                text=script,
-                voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel's voice ID
-                model_id="eleven_turbo_v2_5",  # Fast turbo model
-                output_format="mp3_44100_128"
-            )
+            # Parse script into segments by speaker
+            segments = self.parse_script_by_speaker(script)
+            print(f"Parsed {len(segments)} speech segments")
 
-            # Write streaming audio chunks to file
-            print(f"Streaming audio to {temp_file}...")
-            with open(temp_file, "wb") as f:
-                for chunk in audio_generator:
-                    if chunk:
-                        f.write(chunk)
+            if not segments:
+                raise ValueError("No speech segments found in script")
 
-            print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
+            # Generate audio for each segment
+            audio_segments = []
+            for i, (speaker, text) in enumerate(segments):
+                if not text.strip():
+                    continue
+
+                voice_id = self.host_voice_id if speaker == 'host' else self.expert_voice_id
+                speaker_label = "Host" if speaker == 'host' else "Expert"
+
+                print(f"Generating segment {i+1}/{len(segments)} ({speaker_label}): {text[:50]}...")
+
+                try:
+                    # Generate audio for this segment
+                    audio_generator = self.elevenlabs_client.text_to_speech.convert(
+                        text=text,
+                        voice_id=voice_id,
+                        model_id="eleven_turbo_v2_5",
+                        output_format="mp3_44100_128"
+                    )
+
+                    # Collect audio chunks
+                    audio_bytes = BytesIO()
+                    for chunk in audio_generator:
+                        if chunk:
+                            audio_bytes.write(chunk)
+
+                    # Load as audio segment
+                    audio_bytes.seek(0)
+                    segment_audio = AudioSegment.from_mp3(audio_bytes)
+
+                    # Add slight pause between speakers (300ms)
+                    if audio_segments:
+                        silence = AudioSegment.silent(duration=300)
+                        audio_segments.append(silence)
+
+                    audio_segments.append(segment_audio)
+                    print(f"  ✓ Generated {len(segment_audio)}ms of audio")
+
+                except Exception as e:
+                    print(f"  ✗ Error generating segment {i+1}: {e}")
+                    raise
+
+            # Concatenate all audio segments
+            print(f"Concatenating {len(audio_segments)} audio segments...")
+            final_audio = sum(audio_segments)
+
+            # Export to file
+            print(f"Exporting to {temp_file}...")
+            final_audio.export(temp_file, format="mp3", bitrate="128k")
+            print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes, duration: {len(final_audio)/1000:.1f}s")
 
             # Upload to S3
             s3_key = f"podcasts/{podcast_id}.mp3"
@@ -145,7 +283,7 @@ Expert: Sure. Think of it like..."""
         script = self.generate_podcast_script(paper_data, use_full_text)
 
         # Generate audio
-        print(f"Generating audio...")
+        print(f"Generating multi-voice audio...")
         audio_url = self.generate_audio(script, podcast_id)
 
         return {
