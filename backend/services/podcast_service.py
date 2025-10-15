@@ -65,26 +65,36 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
         import httpx
 
         # Create client with increased timeout
-        httpx_client = httpx.Client(timeout=300.0)  # 5 minute timeout
+        timeout = httpx.Timeout(300.0, connect=60.0, read=300.0, write=60.0)
+        httpx_client = httpx.Client(timeout=timeout)
         client = ElevenLabs(
             api_key=self.elevenlabs_api_key,
             httpx_client=httpx_client
         )
 
+        temp_file = f"/tmp/{podcast_id}.mp3"
+
         try:
-            # Generate audio - using single voice for now
-            # You can enhance this to use multiple voices for dialogue
+            # Generate audio with streaming to avoid timeout
             print(f"Starting audio generation for podcast {podcast_id}...")
-            audio = client.generate(
+            print(f"Script length: {len(script)} characters")
+
+            # Use text_to_speech.convert with streaming
+            audio_generator = client.text_to_speech.convert(
                 text=script,
-                voice="Rachel",  # Professional female voice
-                model="eleven_monolingual_v1"
+                voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice ID
+                model_id="eleven_monolingual_v1",
+                output_format="mp3_44100_128"
             )
 
-            # Save to temporary file
-            temp_file = f"/tmp/{podcast_id}.mp3"
-            print(f"Saving audio to {temp_file}...")
-            save(audio, temp_file)
+            # Write streaming audio to file
+            print(f"Streaming audio to {temp_file}...")
+            with open(temp_file, "wb") as f:
+                for chunk in audio_generator:
+                    if chunk:
+                        f.write(chunk)
+
+            print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
 
             # Upload to S3
             s3_key = f"podcasts/{podcast_id}.mp3"
@@ -101,12 +111,17 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
             print(f"Audio uploaded successfully: {audio_url}")
 
             # Clean up temp file
-            os.remove(temp_file)
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
 
             return audio_url
 
         except Exception as e:
             print(f"Error in generate_audio: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            # Clean up temp file on error
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
             raise
         finally:
             httpx_client.close()
