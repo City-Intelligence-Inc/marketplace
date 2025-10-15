@@ -400,13 +400,25 @@
 
     <script>
         const API_URL = 'https://four0k-arr-saas.onrender.com';
+        const ADMIN_PASSWORD = 'podcast2025'; // Change this to your desired password
         let currentPaperId = null;
         let currentPodcastId = null;
         let currentTranscript = null;
         let hasFullText = false;
 
-        // Load stats on page load
+        // Check password on page load
         window.addEventListener('load', () => {
+            const savedPassword = sessionStorage.getItem('adminPassword');
+            if (savedPassword !== ADMIN_PASSWORD) {
+                const password = prompt('Enter admin password:');
+                if (password !== ADMIN_PASSWORD) {
+                    alert('Incorrect password');
+                    window.location.href = '/';
+                    return;
+                }
+                sessionStorage.setItem('adminPassword', password);
+            }
+
             loadStats();
             loadHistory();
         });

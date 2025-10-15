@@ -345,8 +345,8 @@ async def get_podcast_history():
 
         podcasts = response.get('Items', [])
 
-        # Sort by sent_at descending
-        podcasts.sort(key=lambda x: x.get('sent_at', 0), reverse=True)
+        # Sort by sent_at descending (handle None values)
+        podcasts.sort(key=lambda x: int(x.get('sent_at') or 0), reverse=True)
 
         # Filter and format podcasts
         formatted_podcasts = []
