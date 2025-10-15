@@ -103,6 +103,36 @@ resource "aws_dynamodb_table" "podcasts" {
   }
 }
 
+# DynamoDB table for storing paper requests
+resource "aws_dynamodb_table" "paper_requests" {
+  name           = var.paper_requests_table_name
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "request_id"
+
+  attribute {
+    name = "request_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_at"
+    type = "N"
+  }
+
+  # GSI for querying by creation date
+  global_secondary_index {
+    name            = "CreatedAtIndex"
+    hash_key        = "created_at"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name        = var.paper_requests_table_name
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
 # S3 bucket for storing podcast audio files
 resource "aws_s3_bucket" "podcasts_audio" {
   bucket = var.s3_bucket_name

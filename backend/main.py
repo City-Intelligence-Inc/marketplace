@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import boto3
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from botocore.exceptions import ClientError
 from typing import List, Optional
@@ -10,8 +10,14 @@ from services.arxiv_service import ArxivService
 from services.podcast_service import PodcastService
 from services.email_service import EmailService
 from services.pdf_service import PDFService
+import stripe
+import uuid
 
 app = FastAPI(title="40k ARR SaaS API")
+
+# Initialize Stripe
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
 # Configure CORS
 allowed_origins = os.getenv('ALLOWED_ORIGINS', '*').split(',')
@@ -33,6 +39,7 @@ dynamodb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'us-ea
 email_table = dynamodb.Table(os.getenv('EMAIL_TABLE_NAME', 'email-signups'))
 paper_table = dynamodb.Table(os.getenv('PAPER_TABLE_NAME', 'paper-links'))
 podcast_table = dynamodb.Table(os.getenv('PODCASTS_TABLE_NAME', 'podcasts'))
+paper_requests_table = dynamodb.Table(os.getenv('PAPER_REQUESTS_TABLE_NAME', 'paper-requests'))
 
 # ===== Models =====
 
@@ -52,6 +59,19 @@ class GeneratePodcastRequest(BaseModel):
 
 class SendPodcastRequest(BaseModel):
     podcast_id: str
+
+class CheckoutRequest(BaseModel):
+    email: EmailStr
+    plan: str  # 'individual_monthly', 'individual_yearly', 'team'
+    is_gift: bool = False
+    gift_recipient_email: EmailStr = None
+    gift_recipient_name: str = None
+
+class PaperRequestModel(BaseModel):
+    email: EmailStr
+    paper_url: str
+    paper_title: str = None
+    reason: str = None
 
 # ===== Public Endpoints =====
 

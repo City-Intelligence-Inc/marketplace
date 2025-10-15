@@ -33,3 +33,9 @@ variable "s3_bucket_name" {
   type        = string
   default     = "40k-arr-saas-podcasts"
 }
+
+variable "paper_requests_table_name" {
+  description = "Name of the DynamoDB table for paper requests"
+  type        = string
+  default     = "paper-requests"
+}

@@ -42,3 +42,13 @@ output "s3_bucket_arn" {
   description = "ARN of the S3 bucket"
   value       = aws_s3_bucket.podcasts_audio.arn
 }
+
+output "paper_requests_table_name" {
+  description = "Name of the paper requests DynamoDB table"
+  value       = aws_dynamodb_table.paper_requests.name
+}
+
+output "paper_requests_table_arn" {
+  description = "ARN of the paper requests DynamoDB table"
+  value       = aws_dynamodb_table.paper_requests.arn
+}
