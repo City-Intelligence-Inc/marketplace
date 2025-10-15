@@ -306,10 +306,14 @@ async def get_stats():
             )
             podcasts = podcast_response.get('Items', [])
             last_podcast_date = None
-            if podcasts:
-                last_podcast_date = datetime.fromtimestamp(podcasts[0]['sent_at']).isoformat()
+            if podcasts and podcasts[0].get('sent_at'):
+                sent_at = podcasts[0]['sent_at']
+                if sent_at is not None and sent_at != 'None':
+                    last_podcast_date = datetime.fromtimestamp(int(sent_at)).isoformat()
         except Exception as e:
             print(f"Error getting last podcast: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             last_podcast_date = None
 
         # Count total podcasts
@@ -344,14 +348,23 @@ async def get_podcast_history():
         # Sort by sent_at descending
         podcasts.sort(key=lambda x: x.get('sent_at', 0), reverse=True)
 
-        return {
-            "podcasts": [{
-                "podcast_id": p['podcast_id'],
-                "paper_title": p['paper_title'],
-                "sent_at": datetime.fromtimestamp(p['sent_at']).isoformat(),
-                "recipients_count": p.get('recipients_count', 0)
-            } for p in podcasts[:20]]  # Return last 20
-        }
+        # Filter and format podcasts
+        formatted_podcasts = []
+        for p in podcasts[:20]:
+            try:
+                sent_at = p.get('sent_at')
+                if sent_at and sent_at != 'None':
+                    formatted_podcasts.append({
+                        "podcast_id": p['podcast_id'],
+                        "paper_title": p.get('paper_title', 'Unknown'),
+                        "sent_at": datetime.fromtimestamp(int(sent_at)).isoformat(),
+                        "recipients_count": p.get('recipients_count', 0)
+                    })
+            except Exception as e:
+                print(f"Error formatting podcast {p.get('podcast_id')}: {e}")
+                continue
+
+        return {"podcasts": formatted_podcasts}
 
     except Exception as e:
         print(f"Error fetching history: {e}")
