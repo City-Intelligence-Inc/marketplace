@@ -439,10 +439,15 @@ async def add_test_subscriber(email: str = Form(...), name: str = Form(None)):
         raise HTTPException(status_code=500, detail=f"Error adding test subscriber: {str(e)}")
 
 @app.post("/api/admin/upload-pdf")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
     """Upload PDF and extract full text with metadata"""
     try:
         print(f"Received file: {file.filename}, content_type: {file.content_type}")
+        print(f"Paper URL: {paper_url}")
+
+        # Validate paper URL
+        if not paper_url or not paper_url.strip():
+            raise HTTPException(status_code=400, detail="Paper URL is required")
 
         # Read PDF bytes
         pdf_bytes = await file.read()
@@ -486,14 +491,14 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Generate paper ID from timestamp
         paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
 
-        # Prepare paper data
+        # Prepare paper data with provided paper URL
         paper_data = {
             'paper_id': paper_id,
             'title': title,
             'authors': authors,
             'abstract': truncated_text[:500] + "..." if len(truncated_text) > 500 else truncated_text,
             'full_text': truncated_text,
-            'pdf_url': None,
+            'pdf_url': paper_url.strip(),  # Use provided URL
             'published': datetime.utcnow().isoformat(),
             'categories': ['uploaded'],
             'created_at': int(datetime.utcnow().timestamp())
@@ -504,6 +509,8 @@ async def upload_pdf(file: UploadFile = File(...)):
 
         return paper_data
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error uploading PDF: {e}")
         import traceback
