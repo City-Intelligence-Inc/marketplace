@@ -305,7 +305,7 @@
                 <div style="margin: 15px 0;">
                     <label style="display: flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="extractFullText" style="margin-right: 10px; width: 20px; height: 20px;">
-                        <span>Extract full PDF text (generates 10-15 min podcast instead of 5-7 min)</span>
+                        <span>Extract full PDF text (generates 7-10 min podcast instead of 5-7 min)</span>
                     </label>
                 </div>
                 <button onclick="fetchPaper()">Fetch Paper</button>
@@ -337,7 +337,7 @@
             <div style="margin: 15px 0;">
                 <label style="display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" id="useFullTextForPodcast" style="margin-right: 10px; width: 20px; height: 20px;">
-                    <span>Use full PDF text (10-15 min podcast instead of 5-7 min from abstract only)</span>
+                    <span>Use full PDF text (7-10 min podcast instead of 5-7 min from abstract only)</span>
                 </label>
             </div>
             <button onclick="generatePodcast()" id="generateBtn" disabled>Generate Podcast</button>
@@ -593,7 +593,7 @@
                     // Enable send button
                     document.getElementById('sendBtn').disabled = false;
 
-                    const length = useFullText ? '10-15 min' : '5-7 min';
+                    const length = useFullText ? '7-10 min' : '5-7 min';
                     showMessage('generateStatus', `Podcast generated successfully! (${length})`, 'success');
                 } else {
                     showMessage('generateStatus', data.detail || 'Error generating podcast', 'error');

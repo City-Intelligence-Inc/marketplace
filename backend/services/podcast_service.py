@@ -20,12 +20,12 @@ class PodcastService:
         # Determine content to use
         if use_full_text and 'full_text' in paper_data:
             content = f"Full Paper Text (excerpt):\n{paper_data['full_text']}"
-            length_guidance = "10-15 minute"
-            word_count = "1500-2000 words"
+            length_guidance = "7-10 minute"
+            word_count = "1000-1400 words"
         else:
             content = f"Abstract: {paper_data['abstract']}"
             length_guidance = "5-7 minute"
-            word_count = "800-1000 words"
+            word_count = "700-900 words"
 
         prompt = f"""You are creating an engaging {length_guidance} podcast script about a research paper.
 
@@ -62,37 +62,54 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
     def generate_audio(self, script: str, podcast_id: str) -> str:
         """Generate audio from script using ElevenLabs and upload to S3"""
         from elevenlabs.client import ElevenLabs
+        import httpx
 
-        client = ElevenLabs(api_key=self.elevenlabs_api_key)
-
-        # Generate audio - using single voice for now
-        # You can enhance this to use multiple voices for dialogue
-        audio = client.generate(
-            text=script,
-            voice="Rachel",  # Professional female voice
-            model="eleven_monolingual_v1"
+        # Create client with increased timeout
+        httpx_client = httpx.Client(timeout=300.0)  # 5 minute timeout
+        client = ElevenLabs(
+            api_key=self.elevenlabs_api_key,
+            httpx_client=httpx_client
         )
 
-        # Save to temporary file
-        temp_file = f"/tmp/{podcast_id}.mp3"
-        save(audio, temp_file)
+        try:
+            # Generate audio - using single voice for now
+            # You can enhance this to use multiple voices for dialogue
+            print(f"Starting audio generation for podcast {podcast_id}...")
+            audio = client.generate(
+                text=script,
+                voice="Rachel",  # Professional female voice
+                model="eleven_monolingual_v1"
+            )
 
-        # Upload to S3
-        s3_key = f"podcasts/{podcast_id}.mp3"
-        self.s3_client.upload_file(
-            temp_file,
-            self.bucket_name,
-            s3_key,
-            ExtraArgs={'ContentType': 'audio/mpeg'}
-        )
+            # Save to temporary file
+            temp_file = f"/tmp/{podcast_id}.mp3"
+            print(f"Saving audio to {temp_file}...")
+            save(audio, temp_file)
 
-        # Generate public URL
-        audio_url = f"https://{self.bucket_name}.s3.amazonaws.com/{s3_key}"
+            # Upload to S3
+            s3_key = f"podcasts/{podcast_id}.mp3"
+            print(f"Uploading to S3: {s3_key}...")
+            self.s3_client.upload_file(
+                temp_file,
+                self.bucket_name,
+                s3_key,
+                ExtraArgs={'ContentType': 'audio/mpeg'}
+            )
 
-        # Clean up temp file
-        os.remove(temp_file)
+            # Generate public URL
+            audio_url = f"https://{self.bucket_name}.s3.amazonaws.com/{s3_key}"
+            print(f"Audio uploaded successfully: {audio_url}")
 
-        return audio_url
+            # Clean up temp file
+            os.remove(temp_file)
+
+            return audio_url
+
+        except Exception as e:
+            print(f"Error in generate_audio: {str(e)}")
+            raise
+        finally:
+            httpx_client.close()
 
     def create_podcast(self, paper_data: Dict, use_full_text: bool = False) -> Dict:
         """Generate complete podcast from paper"""
