@@ -297,6 +297,7 @@
             <div style="margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;">
                 <button onclick="switchTab('arxiv')" id="arxivTab" style="background: none; border: none; border-bottom: 3px solid #667eea; padding: 10px 20px; margin-bottom: -2px; color: #667eea; font-weight: 600;">From arXiv</button>
                 <button onclick="switchTab('upload')" id="uploadTab" style="background: none; border: none; border-bottom: 3px solid transparent; padding: 10px 20px; margin-bottom: -2px; color: #666; font-weight: 600;">Upload PDF</button>
+                <button onclick="switchTab('text')" id="textTab" style="background: none; border: none; border-bottom: 3px solid transparent; padding: 10px 20px; margin-bottom: -2px; color: #666; font-weight: 600;">From Text</button>
             </div>
 
             <!-- arXiv Tab -->
@@ -317,6 +318,14 @@
                 <input type="url" id="paperUrl" placeholder="Paper URL (required - e.g., https://arxiv.org/abs/2401.12345)" required style="margin-bottom: 15px;">
                 <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 15px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; width: 100%;">
                 <button onclick="uploadPDF()">Upload PDF</button>
+            </div>
+
+            <!-- Text Tab -->
+            <div id="textSection" style="display: none;">
+                <p style="color: #666; margin-bottom: 15px;">Paste any text to generate a podcast transcript. Great for blog posts, articles, or custom content!</p>
+                <input type="text" id="textTitle" placeholder="Podcast Title (e.g., 'AI Safety Principles')" style="margin-bottom: 15px;">
+                <textarea id="customText" placeholder="Paste your text here... (minimum 100 characters)" style="width: 100%; min-height: 300px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px; font-family: inherit; margin-bottom: 15px; resize: vertical;"></textarea>
+                <button onclick="generateFromText()">Generate Transcript from Text</button>
             </div>
 
             <div id="fetchSpinner" class="spinner"></div>
@@ -425,20 +434,32 @@
         });
 
         function switchTab(tab) {
+            // Hide all sections
+            document.getElementById('arxivSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('textSection').style.display = 'none';
+
+            // Reset all tabs
+            document.getElementById('arxivTab').style.borderBottomColor = 'transparent';
+            document.getElementById('arxivTab').style.color = '#666';
+            document.getElementById('uploadTab').style.borderBottomColor = 'transparent';
+            document.getElementById('uploadTab').style.color = '#666';
+            document.getElementById('textTab').style.borderBottomColor = 'transparent';
+            document.getElementById('textTab').style.color = '#666';
+
+            // Show selected tab
             if (tab === 'arxiv') {
                 document.getElementById('arxivSection').style.display = 'block';
-                document.getElementById('uploadSection').style.display = 'none';
                 document.getElementById('arxivTab').style.borderBottomColor = '#667eea';
                 document.getElementById('arxivTab').style.color = '#667eea';
-                document.getElementById('uploadTab').style.borderBottomColor = 'transparent';
-                document.getElementById('uploadTab').style.color = '#666';
-            } else {
-                document.getElementById('arxivSection').style.display = 'none';
+            } else if (tab === 'upload') {
                 document.getElementById('uploadSection').style.display = 'block';
-                document.getElementById('arxivTab').style.borderBottomColor = 'transparent';
-                document.getElementById('arxivTab').style.color = '#666';
                 document.getElementById('uploadTab').style.borderBottomColor = '#667eea';
                 document.getElementById('uploadTab').style.color = '#667eea';
+            } else if (tab === 'text') {
+                document.getElementById('textSection').style.display = 'block';
+                document.getElementById('textTab').style.borderBottomColor = '#667eea';
+                document.getElementById('textTab').style.color = '#667eea';
             }
         }
 
@@ -572,6 +593,77 @@
                     showMessage('fetchStatus', 'PDF uploaded and text extracted successfully!', 'success');
                 } else {
                     showMessage('fetchStatus', data.detail || 'Error uploading PDF', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('fetchStatus', 'Network error. Please try again.', 'error');
+            } finally {
+                hideSpinner('fetchSpinner');
+            }
+        }
+
+        async function generateFromText() {
+            const text = document.getElementById('customText').value.trim();
+            const title = document.getElementById('textTitle').value.trim() || 'Custom Content';
+
+            if (!text) {
+                showMessage('fetchStatus', 'Please paste some text', 'error');
+                return;
+            }
+
+            if (text.length < 100) {
+                showMessage('fetchStatus', 'Please provide at least 100 characters of text', 'error');
+                return;
+            }
+
+            showSpinner('fetchSpinner');
+            hideMessage('fetchStatus');
+            document.getElementById('paperPreview').style.display = 'none';
+            document.getElementById('transcriptSection').style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('title', title);
+
+                const response = await fetch(`${API_URL}/api/admin/generate-from-text`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPaperId = data.paper_id;
+                    currentTranscript = data.transcript;
+
+                    // Display "paper" preview
+                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperAuthors').textContent = 'Custom Text';
+                    document.getElementById('paperAbstract').textContent = text.substring(0, 200) + '...';
+                    document.getElementById('paperId').textContent = data.paper_id;
+                    document.getElementById('currentPaperId').textContent = data.paper_id;
+                    document.getElementById('currentPaperId2').textContent = data.paper_id;
+                    document.getElementById('paperPreview').style.display = 'block';
+
+                    // Show transcript immediately
+                    document.getElementById('transcript').textContent = data.transcript;
+                    document.getElementById('transcriptSection').style.display = 'block';
+
+                    // Enable convert button (skip step 2 since we already have transcript)
+                    document.getElementById('convertBtn').disabled = false;
+
+                    // Disable transcript generation button (we already have the transcript)
+                    document.getElementById('generateTranscriptBtn').disabled = true;
+
+                    // Clear form
+                    document.getElementById('customText').value = '';
+                    document.getElementById('textTitle').value = '';
+
+                    const length = text.length > 2000 ? '7-10 min' : '5-7 min';
+                    showMessage('fetchStatus', `Transcript generated from text! (${length})`, 'success');
+                } else {
+                    showMessage('fetchStatus', data.detail || 'Error generating from text', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);

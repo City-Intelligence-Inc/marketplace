@@ -21,6 +21,105 @@ class PodcastService:
         self.host_voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - warm, curious host
         self.expert_voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam - knowledgeable expert
 
+    def generate_podcast_script_from_text(self, text: str, title: str = "Custom Content") -> str:
+        """Generate podcast script from any text using OpenAI with CRAFT prompt framework"""
+
+        # Determine length based on text size
+        text_length = len(text)
+        if text_length > 2000:
+            length_guidance = "7-10 minute"
+            word_count = "1000-1400 words"
+        else:
+            length_guidance = "5-7 minute"
+            word_count = "700-900 words"
+
+        prompt = f"""# CONTEXT & ROLE
+You are an award-winning podcast producer creating a {length_guidance} conversational podcast episode about the following content. Your specialty is making complex topics accessible and engaging for curious listeners.
+
+The podcast features two distinct personalities:
+- HOST (Alex): Curious, asks questions listeners would ask, represents the audience's perspective. Enthusiastic but not afraid to say "wait, explain that again." Conversational and relatable.
+- EXPERT (Dr. Chen): Knowledgeable expert who explains concepts clearly without condescension. Uses analogies, avoids jargon, shows genuine excitement about the topic. Friendly teacher vibe.
+
+# ACTION & TASK
+Create a complete podcast script that transforms this content into an engaging, natural conversation between Alex (Host) and Dr. Chen (Expert).
+
+## Content to Discuss:
+Title: {title}
+Content: {text}
+
+## Script Requirements:
+Your script must be {word_count} and follow this three-act structure:
+
+**ACT 1 - THE HOOK (10% of script, ~70-140 words):**
+- Alex opens with a relatable scenario or current event that connects to the content
+- Immediately establish why listeners should care (personal impact, societal relevance)
+- Dr. Chen validates the excitement with a compelling "why now" statement
+- Create intrigue without revealing everything upfront
+
+**ACT 2 - THE EXPLORATION (70% of script, ~490-980 words):**
+- Alex asks progressively deeper questions that build understanding
+- Dr. Chen explains:
+  * What problem or topic does this address?
+  * What's the key insight or innovation?
+  * How does it actually work? (use analogies)
+  * What are the important takeaways?
+- Keep exchanges dynamic: question → concise answer → follow-up → deeper explanation
+- Include natural reactions: "Wait, that's huge!" / "Okay so let me make sure I understand..."
+- Maximum 2-3 sentences per speaking turn before switching speakers
+
+**ACT 3 - THE IMPACT (20% of script, ~140-280 words):**
+- Discuss real-world applications and implications
+- Alex asks about practical applications
+- Dr. Chen provides balanced perspective (exciting but honest)
+- Alex summarizes key takeaways in plain language
+- End with forward-looking statement or question that leaves listeners thinking
+
+# FORMAT & CONSTRAINTS
+
+**Critical Formatting Rules:**
+1. Use ONLY these exact labels: "Host:" and "Expert:"
+2. NO stage directions, NO asterisks, NO parentheticals, NO bold/italics
+3. Write EXACTLY how people speak: contractions, filler words, natural pauses
+4. Every speaking turn must be 1-3 sentences maximum (conversational ping-pong)
+5. Never write labels like [Host] or (Host) - always "Host:" at start of line
+
+**Dialogue Style Rules:**
+- Use conversational markers: "you know", "I mean", "right?", "actually", "so"
+- Include thinking sounds when natural: "hmm", "oh!", "wait"
+- Sentence fragments are okay: "Exactly." / "Not quite."
+- Questions should sound spontaneous: "But how does that even work?" not "Can you explain the mechanism?"
+- Avoid formal transitions: Say "So what's wild about this..." not "Another interesting aspect is..."
+
+**Content Rules:**
+- NO jargon without immediate plain-language explanation
+- NO reading of technical details or data tables
+- Use analogies for complex concepts (compare to everyday things)
+- Show personality: excitement, surprise, "mind blown" moments
+
+# TONE & STYLE
+- Enthusiastic but credible
+- Conversational but informative
+- Accessible but respecting listener intelligence
+- Natural humor when appropriate
+- Genuine curiosity and discovery
+
+Now generate the complete {word_count} podcast script following ALL the rules above."""
+
+        response = self.openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert podcast scriptwriter specializing in making any topic accessible and engaging. You create natural dialogue that sounds like two real people having an enthusiastic conversation, not reading from notes. You follow formatting rules precisely and never include stage directions or labels that should not be spoken aloud."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.85,
+            max_tokens=3000
+        )
+
+        return response.choices[0].message.content
+
     def generate_podcast_script(self, paper_data: Dict, use_full_text: bool = False) -> str:
         """Generate podcast script from paper using OpenAI with CRAFT prompt framework"""
 

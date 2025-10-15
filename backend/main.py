@@ -656,3 +656,45 @@ async def convert_to_audio(
     except Exception as e:
         print(f"Error converting to audio: {e}")
         raise HTTPException(status_code=500, detail=f"Error converting to audio: {str(e)}")
+
+@app.post("/api/admin/generate-from-text")
+async def generate_from_text(
+    text: str = Form(...),
+    title: str = Form("Custom Content")
+):
+    """Generate podcast transcript from raw text"""
+    try:
+        print(f"Generating transcript from text, title: {title}")
+        print(f"Text length: {len(text)} characters")
+
+        # Generate transcript using the text-to-podcast method
+        transcript = podcast_service.generate_podcast_script_from_text(text, title)
+
+        # Create a temporary paper entry for the text-based content
+        paper_id = f"text-{int(datetime.utcnow().timestamp())}"
+
+        # Store minimal paper data
+        paper_data = {
+            'paper_id': paper_id,
+            'title': title,
+            'authors': ['Custom Text'],
+            'abstract': text[:500] + "..." if len(text) > 500 else text,
+            'pdf_url': 'N/A',
+            'published': datetime.utcnow().isoformat(),
+            'categories': ['custom-text'],
+            'created_at': int(datetime.utcnow().timestamp())
+        }
+
+        paper_table.put_item(Item=paper_data)
+
+        return {
+            "transcript": transcript,
+            "paper_id": paper_id,
+            "title": title
+        }
+
+    except Exception as e:
+        print(f"Error generating transcript from text: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generating transcript from text: {str(e)}")
