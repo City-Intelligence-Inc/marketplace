@@ -233,9 +233,33 @@
 
         <!-- Fetch Paper Card -->
         <div class="card">
-            <h2>1. Fetch Paper from arXiv</h2>
-            <input type="url" id="arxivUrl" placeholder="https://arxiv.org/abs/2401.12345">
-            <button onclick="fetchPaper()">Fetch Paper</button>
+            <h2>1. Add Paper</h2>
+
+            <!-- Tab Navigation -->
+            <div style="margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;">
+                <button onclick="switchTab('arxiv')" id="arxivTab" style="background: none; border: none; border-bottom: 3px solid #667eea; padding: 10px 20px; margin-bottom: -2px; color: #667eea; font-weight: 600;">From arXiv</button>
+                <button onclick="switchTab('upload')" id="uploadTab" style="background: none; border: none; border-bottom: 3px solid transparent; padding: 10px 20px; margin-bottom: -2px; color: #666; font-weight: 600;">Upload PDF</button>
+            </div>
+
+            <!-- arXiv Tab -->
+            <div id="arxivSection">
+                <input type="url" id="arxivUrl" placeholder="https://arxiv.org/abs/2401.12345">
+                <div style="margin: 15px 0;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="extractFullText" style="margin-right: 10px; width: 20px; height: 20px;">
+                        <span>Extract full PDF text (generates 10-15 min podcast instead of 5-7 min)</span>
+                    </label>
+                </div>
+                <button onclick="fetchPaper()">Fetch Paper</button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="uploadSection" style="display: none;">
+                <input type="text" id="uploadTitle" placeholder="Paper Title">
+                <input type="text" id="uploadAuthors" placeholder="Authors (comma-separated)">
+                <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 15px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; width: 100%;">
+                <button onclick="uploadPDF()">Upload PDF</button>
+            </div>
 
             <div id="fetchSpinner" class="spinner"></div>
             <div id="fetchStatus" class="status-message"></div>
@@ -252,7 +276,13 @@
         <div class="card">
             <h2>2. Generate Podcast</h2>
             <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId">-</span></p>
-            <button onclick="generatePodcast()" id="generateBtn" disabled>Generate Podcast (2-3 min)</button>
+            <div style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="useFullTextForPodcast" style="margin-right: 10px; width: 20px; height: 20px;">
+                    <span>Use full PDF text (10-15 min podcast instead of 5-7 min from abstract only)</span>
+                </label>
+            </div>
+            <button onclick="generatePodcast()" id="generateBtn" disabled>Generate Podcast</button>
 
             <div id="generateSpinner" class="spinner"></div>
             <div id="generateStatus" class="status-message"></div>
@@ -304,12 +334,31 @@
         const API_URL = 'https://four0k-arr-saas.onrender.com';
         let currentPaperId = null;
         let currentPodcastId = null;
+        let hasFullText = false;
 
         // Load stats on page load
         window.addEventListener('load', () => {
             loadStats();
             loadHistory();
         });
+
+        function switchTab(tab) {
+            if (tab === 'arxiv') {
+                document.getElementById('arxivSection').style.display = 'block';
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('arxivTab').style.borderBottomColor = '#667eea';
+                document.getElementById('arxivTab').style.color = '#667eea';
+                document.getElementById('uploadTab').style.borderBottomColor = 'transparent';
+                document.getElementById('uploadTab').style.color = '#666';
+            } else {
+                document.getElementById('arxivSection').style.display = 'none';
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('arxivTab').style.borderBottomColor = 'transparent';
+                document.getElementById('arxivTab').style.color = '#666';
+                document.getElementById('uploadTab').style.borderBottomColor = '#667eea';
+                document.getElementById('uploadTab').style.color = '#667eea';
+            }
+        }
 
         async function loadStats() {
             try {
@@ -327,6 +376,8 @@
 
         async function fetchPaper() {
             const url = document.getElementById('arxivUrl').value.trim();
+            const extractFull = document.getElementById('extractFullText').checked;
+
             if (!url) {
                 showMessage('fetchStatus', 'Please enter an arXiv URL', 'error');
                 return;
@@ -337,7 +388,11 @@
             document.getElementById('paperPreview').style.display = 'none';
 
             try {
-                const response = await fetch(`${API_URL}/api/admin/fetch-paper`, {
+                const endpoint = extractFull ?
+                    `${API_URL}/api/admin/extract-pdf-from-arxiv` :
+                    `${API_URL}/api/admin/fetch-paper`;
+
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({arxiv_url: url})
@@ -347,6 +402,7 @@
 
                 if (response.ok) {
                     currentPaperId = data.paper_id;
+                    hasFullText = extractFull || data.full_text !== undefined;
 
                     // Display paper preview
                     document.getElementById('paperTitle').textContent = data.title;
@@ -359,9 +415,77 @@
                     // Enable generate button
                     document.getElementById('generateBtn').disabled = false;
 
-                    showMessage('fetchStatus', 'Paper fetched successfully!', 'success');
+                    // Auto-check the full text option if we extracted it
+                    if (hasFullText) {
+                        document.getElementById('useFullTextForPodcast').checked = true;
+                    }
+
+                    showMessage('fetchStatus',
+                        extractFull ? 'Paper fetched and full PDF text extracted!' : 'Paper fetched successfully!',
+                        'success');
                 } else {
                     showMessage('fetchStatus', data.detail || 'Error fetching paper', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('fetchStatus', 'Network error. Please try again.', 'error');
+            } finally {
+                hideSpinner('fetchSpinner');
+            }
+        }
+
+        async function uploadPDF() {
+            const title = document.getElementById('uploadTitle').value.trim();
+            const authors = document.getElementById('uploadAuthors').value.trim();
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+
+            if (!title || !authors || !file) {
+                showMessage('fetchStatus', 'Please fill in all fields and select a PDF', 'error');
+                return;
+            }
+
+            showSpinner('fetchSpinner');
+            hideMessage('fetchStatus');
+            document.getElementById('paperPreview').style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', title);
+                formData.append('authors', authors);
+
+                const response = await fetch(`${API_URL}/api/admin/upload-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPaperId = data.paper_id;
+                    hasFullText = true;
+
+                    // Display paper preview
+                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperAuthors').textContent = data.authors.join(', ');
+                    document.getElementById('paperAbstract').textContent = data.abstract;
+                    document.getElementById('paperId').textContent = data.paper_id;
+                    document.getElementById('currentPaperId').textContent = data.paper_id;
+                    document.getElementById('paperPreview').style.display = 'block';
+
+                    // Enable generate button and auto-check full text
+                    document.getElementById('generateBtn').disabled = false;
+                    document.getElementById('useFullTextForPodcast').checked = true;
+
+                    // Clear form
+                    document.getElementById('uploadTitle').value = '';
+                    document.getElementById('uploadAuthors').value = '';
+                    fileInput.value = '';
+
+                    showMessage('fetchStatus', 'PDF uploaded and text extracted successfully!', 'success');
+                } else {
+                    showMessage('fetchStatus', data.detail || 'Error uploading PDF', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -374,6 +498,8 @@
         async function generatePodcast() {
             if (!currentPaperId) return;
 
+            const useFullText = document.getElementById('useFullTextForPodcast').checked;
+
             showSpinner('generateSpinner');
             hideMessage('generateStatus');
             document.getElementById('podcastPreview').style.display = 'none';
@@ -381,10 +507,13 @@
             document.getElementById('generateBtn').disabled = true;
 
             try {
-                const response = await fetch(`${API_URL}/api/admin/generate-podcast`, {
+                const formData = new FormData();
+                formData.append('paper_id', currentPaperId);
+                formData.append('use_full_text', useFullText);
+
+                const response = await fetch(`${API_URL}/api/admin/generate-podcast-with-options`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({paper_id: currentPaperId})
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -406,7 +535,8 @@
                     // Enable send button
                     document.getElementById('sendBtn').disabled = false;
 
-                    showMessage('generateStatus', 'Podcast generated successfully!', 'success');
+                    const length = useFullText ? '10-15 min' : '5-7 min';
+                    showMessage('generateStatus', `Podcast generated successfully! (${length})`, 'success');
                 } else {
                     showMessage('generateStatus', data.detail || 'Error generating podcast', 'error');
                     document.getElementById('generateBtn').disabled = false;

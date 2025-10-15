@@ -7,8 +7,10 @@ class EmailService:
 
     def __init__(self):
         self.mailgun_api_key = os.getenv('MAILGUN_API_KEY')
-        self.mailgun_domain = os.getenv('MAILGUN_DOMAIN')
-        self.from_email = os.getenv('FROM_EMAIL', f'podcasts@{self.mailgun_domain}')
+        # Hardcoded Mailgun settings
+        self.mailgun_domain = "ai.complete.city"
+        self.from_email = "arihant@ai.complete.city"
+        self.from_name = "City Secretary"
         self.mailgun_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
 
     def send_welcome_email(self, email: str, name: str = None) -> bool:
@@ -64,7 +66,7 @@ class EmailService:
                 self.mailgun_url,
                 auth=("api", self.mailgun_api_key),
                 data={
-                    "from": f"AI Research Podcasts <{self.from_email}>",
+                    "from": f"{self.from_name} <{self.from_email}>",
                     "to": email,
                     "subject": "Welcome to Daily AI Research Podcasts! 🎙️",
                     "html": html_content
@@ -141,7 +143,7 @@ class EmailService:
                 self.mailgun_url,
                 auth=("api", self.mailgun_api_key),
                 data={
-                    "from": f"AI Research Podcasts <{self.from_email}>",
+                    "from": f"{self.from_name} <{self.from_email}>",
                     "to": email,
                     "subject": f"Today's Podcast: {podcast_data['paper_title'][:50]}...",
                     "html": html_content

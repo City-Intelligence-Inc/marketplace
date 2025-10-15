@@ -14,13 +14,24 @@ class PodcastService:
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
 
-    def generate_podcast_script(self, paper_data: Dict) -> str:
+    def generate_podcast_script(self, paper_data: Dict, use_full_text: bool = False) -> str:
         """Generate podcast script from paper using OpenAI"""
-        prompt = f"""You are creating an engaging 5-7 minute podcast script about a research paper.
+
+        # Determine content to use
+        if use_full_text and 'full_text' in paper_data:
+            content = f"Full Paper Text (excerpt):\n{paper_data['full_text']}"
+            length_guidance = "10-15 minute"
+            word_count = "1500-2000 words"
+        else:
+            content = f"Abstract: {paper_data['abstract']}"
+            length_guidance = "5-7 minute"
+            word_count = "800-1000 words"
+
+        prompt = f"""You are creating an engaging {length_guidance} podcast script about a research paper.
 
 Paper Title: {paper_data['title']}
 Authors: {', '.join(paper_data['authors'])}
-Abstract: {paper_data['abstract']}
+{content}
 
 Create a conversational podcast script with TWO speakers (Host and Expert) that:
 1. Opens with an engaging hook about why this research matters
@@ -34,7 +45,7 @@ Format as:
 Host: [dialogue]
 Expert: [dialogue]
 
-Make it accessible, enthusiastic, and engaging for a technical but non-specialist audience. Keep it around 800-1000 words."""
+Make it accessible, enthusiastic, and engaging for a technical but non-specialist audience. Keep it around {word_count}."""
 
         response = self.openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -83,13 +94,13 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
 
         return audio_url
 
-    def create_podcast(self, paper_data: Dict) -> Dict:
+    def create_podcast(self, paper_data: Dict, use_full_text: bool = False) -> Dict:
         """Generate complete podcast from paper"""
         podcast_id = str(uuid.uuid4())
 
         # Generate script
         print(f"Generating script for {paper_data['title']}...")
-        script = self.generate_podcast_script(paper_data)
+        script = self.generate_podcast_script(paper_data, use_full_text)
 
         # Generate audio
         print(f"Generating audio...")

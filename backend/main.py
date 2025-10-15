@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 import boto3
@@ -9,6 +9,7 @@ from typing import List, Optional
 from services.arxiv_service import ArxivService
 from services.podcast_service import PodcastService
 from services.email_service import EmailService
+from services.pdf_service import PDFService
 
 app = FastAPI(title="40k ARR SaaS API")
 
@@ -341,3 +342,134 @@ async def get_podcast_history():
     except Exception as e:
         print(f"Error fetching history: {e}")
         raise HTTPException(status_code=500, detail="Error fetching history")
+
+@app.post("/api/admin/upload-pdf")
+async def upload_pdf(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    authors: str = Form(...)
+):
+    """Upload PDF and extract full text"""
+    try:
+        # Read PDF bytes
+        pdf_bytes = await file.read()
+
+        # Extract text from PDF
+        pdf_service = PDFService()
+        full_text = pdf_service.extract_text_from_bytes(pdf_bytes)
+
+        # Truncate if needed
+        truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
+
+        # Generate paper ID from title
+        paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
+
+        # Prepare paper data
+        paper_data = {
+            'paper_id': paper_id,
+            'title': title,
+            'authors': [a.strip() for a in authors.split(',')],
+            'abstract': truncated_text[:500] + "..." if len(truncated_text) > 500 else truncated_text,
+            'full_text': truncated_text,
+            'pdf_url': None,
+            'published': datetime.utcnow().isoformat(),
+            'categories': ['uploaded'],
+            'created_at': int(datetime.utcnow().timestamp())
+        }
+
+        # Store in DynamoDB
+        paper_table.put_item(Item=paper_data)
+
+        return paper_data
+
+    except Exception as e:
+        print(f"Error uploading PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error uploading PDF: {str(e)}")
+
+@app.post("/api/admin/extract-pdf-from-arxiv")
+async def extract_pdf_from_arxiv(request: FetchPaperRequest):
+    """Fetch paper from arXiv and extract full PDF text"""
+    try:
+        # Extract paper ID
+        paper_id = arxiv_service.extract_paper_id(request.arxiv_url)
+
+        # Fetch paper metadata from arXiv
+        paper_data = arxiv_service.fetch_paper(paper_id)
+
+        if not paper_data:
+            raise HTTPException(status_code=404, detail="Paper not found")
+
+        # Extract full text from PDF
+        pdf_service = PDFService()
+        full_text = pdf_service.extract_from_arxiv(paper_data['pdf_url'])
+
+        # Truncate if needed
+        truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
+
+        # Add full text to paper data
+        paper_data['full_text'] = truncated_text
+
+        # Store in DynamoDB
+        paper_table.put_item(
+            Item={
+                **paper_data,
+                'created_at': int(datetime.utcnow().timestamp())
+            }
+        )
+
+        return paper_data
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"Error extracting PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Error extracting PDF: {str(e)}")
+
+@app.post("/api/admin/generate-podcast-with-options")
+async def generate_podcast_with_options(
+    paper_id: str = Form(...),
+    use_full_text: bool = Form(False)
+):
+    """Generate podcast with option to use full text"""
+    try:
+        # Fetch paper from DynamoDB
+        response = paper_table.get_item(Key={'paper_id': paper_id})
+
+        if 'Item' not in response:
+            raise HTTPException(status_code=404, detail="Paper not found")
+
+        paper_data = response['Item']
+
+        # Generate podcast with full text option
+        podcast_result = podcast_service.create_podcast(paper_data, use_full_text=use_full_text)
+
+        # Store podcast in DynamoDB
+        podcast_item = {
+            'podcast_id': podcast_result['podcast_id'],
+            'paper_id': paper_id,
+            'paper_title': paper_data['title'],
+            'paper_authors': ', '.join(paper_data['authors']),
+            'paper_url': paper_data.get('pdf_url', 'N/A'),
+            'audio_url': podcast_result['audio_url'],
+            'transcript': podcast_result['script'],
+            'created_at': int(datetime.utcnow().timestamp()),
+            'sent_at': None,
+            'recipients_count': 0,
+            'used_full_text': use_full_text
+        }
+
+        podcast_table.put_item(Item=podcast_item)
+
+        return {
+            "podcast_id": podcast_result['podcast_id'],
+            "audio_url": podcast_result['audio_url'],
+            "transcript": podcast_result['script'],
+            "paper_title": paper_data['title'],
+            "used_full_text": use_full_text
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating podcast: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating podcast: {str(e)}")
