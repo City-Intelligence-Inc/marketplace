@@ -27,34 +27,55 @@ class PodcastService:
             length_guidance = "5-7 minute"
             word_count = "700-900 words"
 
-        prompt = f"""You are creating an engaging {length_guidance} podcast script about a research paper.
+        prompt = f"""You are creating a natural, conversational {length_guidance} podcast script about a research paper.
 
 Paper Title: {paper_data['title']}
 Authors: {', '.join(paper_data['authors'])}
 {content}
 
-Create a conversational podcast script with TWO speakers (Host and Expert) that:
-1. Opens with an engaging hook about why this research matters
-2. Explains the key problem the paper addresses
-3. Describes the main methodology or approach
-4. Highlights the most important findings
-5. Discusses real-world implications
-6. Ends with takeaways for listeners
+Create a podcast script with TWO speakers (Host and Expert) having a natural conversation. Follow this structure:
 
-Format as:
-Host: [dialogue]
-Expert: [dialogue]
+OPENING (10%):
+- Host opens with an intriguing hook that relates to everyday life or current events
+- Make listeners immediately understand why this matters to them
+- Expert briefly validates why this is exciting research
 
-Make it accessible, enthusiastic, and engaging for a technical but non-specialist audience. Keep it around {word_count}."""
+CORE CONTENT (70%):
+- Host asks curious, probing questions that a listener would ask
+- Expert explains concepts clearly without jargon, using analogies when helpful
+- Discuss: What problem does this solve? How does it work? What did they discover?
+- Keep exchanges short and dynamic - avoid long monologues
+- Show enthusiasm and genuine curiosity in the conversation
+
+CLOSING (20%):
+- Discuss real-world applications and future implications
+- Host summarizes key takeaways in simple terms
+- End with a thought-provoking question or future outlook
+
+STYLE GUIDELINES:
+- Write like people actually talk: use contractions, natural pauses, "you know", "I mean"
+- Keep sentences short and punchy
+- Show personality: excitement, surprise, thoughtful pauses
+- Avoid academic language - explain as if talking to a smart friend
+- NO markdown formatting (no asterisks, no bold, no italics)
+- Use simple speaker labels: "Host:" and "Expert:"
+
+Target length: {word_count}
+
+Example of good style:
+Host: So what got you excited about this paper?
+Expert: Well, you know how we've been talking about AI safety for years? This actually addresses a real gap.
+Host: Okay, break that down for me.
+Expert: Sure. Think of it like..."""
 
         response = self.openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an expert science communicator who creates engaging podcast scripts."},
+                {"role": "system", "content": "You are an expert podcast producer who creates natural, engaging conversations about research papers. You write scripts that sound like real people talking, not reading from a textbook."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
-            max_tokens=2000
+            temperature=0.8,
+            max_tokens=2500
         )
 
         return response.choices[0].message.content
