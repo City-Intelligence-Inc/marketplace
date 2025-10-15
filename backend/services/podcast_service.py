@@ -3,12 +3,14 @@ import uuid
 from typing import Dict
 from openai import OpenAI
 import boto3
+from elevenlabs.client import ElevenLabs
 
 class PodcastService:
     """Service for generating podcasts from research papers"""
 
     def __init__(self):
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        self.elevenlabs_client = ElevenLabs(api_key=os.getenv('ELEVENLABS_API_KEY'))
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
 
@@ -58,27 +60,28 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
         return response.choices[0].message.content
 
     def generate_audio(self, script: str, podcast_id: str) -> str:
-        """Generate audio from script using OpenAI TTS and upload to S3"""
-        from pathlib import Path
-
+        """Generate audio from script using ElevenLabs and upload to S3"""
         temp_file = f"/tmp/{podcast_id}.mp3"
 
         try:
             print(f"Starting audio generation for podcast {podcast_id}...")
             print(f"Script length: {len(script)} characters")
 
-            # Use OpenAI TTS - faster and more reliable than ElevenLabs
-            print(f"Generating audio with OpenAI TTS...")
-            response = self.openai_client.audio.speech.create(
-                model="tts-1",  # Use tts-1 for faster generation, or tts-1-hd for higher quality
-                voice="nova",  # Available voices: alloy, echo, fable, onyx, nova, shimmer
-                input=script,
-                response_format="mp3"
+            # Use ElevenLabs with turbo model for faster generation
+            print(f"Generating audio with ElevenLabs turbo model...")
+            audio_generator = self.elevenlabs_client.text_to_speech.convert(
+                text=script,
+                voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel's voice ID
+                model_id="eleven_turbo_v2_5",  # Fast turbo model
+                output_format="mp3_44100_128"
             )
 
-            # Stream to file
-            print(f"Writing audio to {temp_file}...")
-            response.stream_to_file(temp_file)
+            # Write streaming audio chunks to file
+            print(f"Streaming audio to {temp_file}...")
+            with open(temp_file, "wb") as f:
+                for chunk in audio_generator:
+                    if chunk:
+                        f.write(chunk)
 
             print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
 
@@ -105,6 +108,8 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
         except Exception as e:
             print(f"Error in generate_audio: {str(e)}")
             print(f"Error type: {type(e).__name__}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             # Clean up temp file on error
             if os.path.exists(temp_file):
                 os.remove(temp_file)
