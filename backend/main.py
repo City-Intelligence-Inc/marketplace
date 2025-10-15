@@ -344,17 +344,19 @@ async def get_podcast_history():
         raise HTTPException(status_code=500, detail="Error fetching history")
 
 @app.post("/api/admin/upload-pdf")
-async def upload_pdf(
-    file: UploadFile = File(...)
-):
+async def upload_pdf(file: UploadFile = File(...)):
     """Upload PDF and extract full text with metadata"""
     try:
+        print(f"Received file: {file.filename}, content_type: {file.content_type}")
+
         # Read PDF bytes
         pdf_bytes = await file.read()
+        print(f"PDF size: {len(pdf_bytes)} bytes")
 
         # Extract text from PDF
         pdf_service = PDFService()
         full_text = pdf_service.extract_text_from_bytes(pdf_bytes)
+        print(f"Extracted text length: {len(full_text)} characters")
 
         # Truncate if needed
         truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
@@ -370,6 +372,8 @@ async def upload_pdf(
                 title = line[:200]  # Limit title length
                 break
 
+        print(f"Extracted title: {title}")
+
         # Try to find authors (look for common patterns)
         authors = ["Unknown"]
         for i, line in enumerate(lines):
@@ -381,6 +385,8 @@ async def upload_pdf(
                     if author_line and len(author_line) < 200:
                         authors = [a.strip() for a in author_line.split(',')]
                 break
+
+        print(f"Extracted authors: {authors}")
 
         # Generate paper ID from timestamp
         paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
@@ -405,6 +411,8 @@ async def upload_pdf(
 
     except Exception as e:
         print(f"Error uploading PDF: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error uploading PDF: {str(e)}")
 
 @app.post("/api/admin/extract-pdf-from-arxiv")
