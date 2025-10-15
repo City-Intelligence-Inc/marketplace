@@ -15,10 +15,48 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
+        }
+
+        nav {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 0;
+            margin-bottom: 20px;
+        }
+
+        nav .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        nav .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        nav .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 30px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        nav .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            min-height: calc(100vh - 100px);
         }
 
         .container {
@@ -137,9 +175,20 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎙️ Daily AI Research Podcasts</h1>
-        <p class="subtitle">Get the latest AI papers as 5-10 minute podcasts. Delivered to your inbox daily.</p>
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">🎙️ AI Research Podcasts</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/admin/">Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>🎙️ Daily AI Research Podcasts</h1>
+            <p class="subtitle">Get the latest AI papers as 5-10 minute podcasts. Delivered to your inbox daily.</p>
 
         <form id="emailForm">
             <div class="form-group">
@@ -169,6 +218,7 @@
 
             <div id="message" class="message"></div>
         </form>
+        </div>
     </div>
 
     <script>
