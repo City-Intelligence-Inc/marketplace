@@ -77,9 +77,25 @@ class EmailService:
             print(f"Error sending welcome email: {e}")
             return False
 
+    def clean_transcript(self, text: str) -> str:
+        """Remove markdown formatting from transcript"""
+        import re
+        # Remove bold markers (**text** or __text__)
+        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+        text = re.sub(r'__(.+?)__', r'\1', text)
+        # Remove italic markers (*text* or _text_)
+        text = re.sub(r'\*(.+?)\*', r'\1', text)
+        text = re.sub(r'_(.+?)_', r'\1', text)
+        # Remove headers (# text)
+        text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
+        return text
+
     def send_podcast_email(self, email: str, podcast_data: Dict, name: str = None) -> bool:
         """Send podcast email to subscriber"""
         recipient_name = name if name else "there"
+
+        # Clean transcript of markdown formatting
+        clean_transcript = self.clean_transcript(podcast_data['transcript'])
 
         html_content = f"""
         <!DOCTYPE html>
@@ -123,7 +139,7 @@ class EmailService:
 
                     <div class="transcript">
                         <h3>📝 Transcript</h3>
-                        <p style="white-space: pre-wrap;">{podcast_data['transcript']}</p>
+                        <p style="white-space: pre-wrap;">{clean_transcript}</p>
                     </div>
 
                     <p style="text-align: center; margin-top: 30px;">
