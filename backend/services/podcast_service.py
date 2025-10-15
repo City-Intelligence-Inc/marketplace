@@ -2,7 +2,6 @@ import os
 import uuid
 from typing import Dict
 from openai import OpenAI
-from elevenlabs import client as elevenlabs_client, save
 import boto3
 
 class PodcastService:
@@ -10,7 +9,6 @@ class PodcastService:
 
     def __init__(self):
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        self.elevenlabs_api_key = os.getenv('ELEVENLABS_API_KEY')
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
 
@@ -60,39 +58,27 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
         return response.choices[0].message.content
 
     def generate_audio(self, script: str, podcast_id: str) -> str:
-        """Generate audio from script using ElevenLabs and upload to S3"""
-        from elevenlabs.client import ElevenLabs
-        import httpx
-
-        # Create client with increased timeout
-        timeout = httpx.Timeout(300.0, connect=60.0, read=300.0, write=60.0)
-        httpx_client = httpx.Client(timeout=timeout)
-        client = ElevenLabs(
-            api_key=self.elevenlabs_api_key,
-            httpx_client=httpx_client
-        )
+        """Generate audio from script using OpenAI TTS and upload to S3"""
+        from pathlib import Path
 
         temp_file = f"/tmp/{podcast_id}.mp3"
 
         try:
-            # Generate audio with streaming to avoid timeout
             print(f"Starting audio generation for podcast {podcast_id}...")
             print(f"Script length: {len(script)} characters")
 
-            # Use text_to_speech.convert with streaming
-            audio_generator = client.text_to_speech.convert(
-                text=script,
-                voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice ID
-                model_id="eleven_monolingual_v1",
-                output_format="mp3_44100_128"
+            # Use OpenAI TTS - faster and more reliable than ElevenLabs
+            print(f"Generating audio with OpenAI TTS...")
+            response = self.openai_client.audio.speech.create(
+                model="tts-1",  # Use tts-1 for faster generation, or tts-1-hd for higher quality
+                voice="nova",  # Available voices: alloy, echo, fable, onyx, nova, shimmer
+                input=script,
+                response_format="mp3"
             )
 
-            # Write streaming audio to file
-            print(f"Streaming audio to {temp_file}...")
-            with open(temp_file, "wb") as f:
-                for chunk in audio_generator:
-                    if chunk:
-                        f.write(chunk)
+            # Stream to file
+            print(f"Writing audio to {temp_file}...")
+            response.stream_to_file(temp_file)
 
             print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
 
@@ -123,8 +109,6 @@ Make it accessible, enthusiastic, and engaging for a technical but non-specialis
             if os.path.exists(temp_file):
                 os.remove(temp_file)
             raise
-        finally:
-            httpx_client.close()
 
     def create_podcast(self, paper_data: Dict, use_full_text: bool = False) -> Dict:
         """Generate complete podcast from paper"""
