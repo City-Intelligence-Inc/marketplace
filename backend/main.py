@@ -425,12 +425,12 @@ async def extract_pdf_from_arxiv(request: FetchPaperRequest):
         print(f"Error extracting PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Error extracting PDF: {str(e)}")
 
-@app.post("/api/admin/generate-podcast-with-options")
-async def generate_podcast_with_options(
+@app.post("/api/admin/generate-transcript")
+async def generate_transcript(
     paper_id: str = Form(...),
     use_full_text: bool = Form(False)
 ):
-    """Generate podcast with option to use full text"""
+    """Generate just the transcript/script without audio"""
     try:
         # Fetch paper from DynamoDB
         response = paper_table.get_item(Key={'paper_id': paper_id})
@@ -440,36 +440,68 @@ async def generate_podcast_with_options(
 
         paper_data = response['Item']
 
-        # Generate podcast with full text option
-        podcast_result = podcast_service.create_podcast(paper_data, use_full_text=use_full_text)
-
-        # Store podcast in DynamoDB
-        podcast_item = {
-            'podcast_id': podcast_result['podcast_id'],
-            'paper_id': paper_id,
-            'paper_title': paper_data['title'],
-            'paper_authors': ', '.join(paper_data['authors']),
-            'paper_url': paper_data.get('pdf_url', 'N/A'),
-            'audio_url': podcast_result['audio_url'],
-            'transcript': podcast_result['script'],
-            'created_at': int(datetime.utcnow().timestamp()),
-            'sent_at': None,
-            'recipients_count': 0,
-            'used_full_text': use_full_text
-        }
-
-        podcast_table.put_item(Item=podcast_item)
+        # Generate only the script
+        print(f"Generating transcript for {paper_data['title']}...")
+        transcript = podcast_service.generate_podcast_script(paper_data, use_full_text=use_full_text)
 
         return {
-            "podcast_id": podcast_result['podcast_id'],
-            "audio_url": podcast_result['audio_url'],
-            "transcript": podcast_result['script'],
-            "paper_title": paper_data['title'],
-            "used_full_text": use_full_text
+            "transcript": transcript,
+            "paper_id": paper_id,
+            "paper_title": paper_data['title']
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error generating podcast: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating podcast: {str(e)}")
+        print(f"Error generating transcript: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating transcript: {str(e)}")
+
+@app.post("/api/admin/convert-to-audio")
+async def convert_to_audio(
+    paper_id: str = Form(...),
+    transcript: str = Form(...)
+):
+    """Convert transcript to audio podcast"""
+    try:
+        # Fetch paper from DynamoDB
+        response = paper_table.get_item(Key={'paper_id': paper_id})
+
+        if 'Item' not in response:
+            raise HTTPException(status_code=404, detail="Paper not found")
+
+        paper_data = response['Item']
+
+        # Generate audio from transcript
+        import uuid
+        podcast_id = str(uuid.uuid4())
+        print(f"Converting transcript to audio for podcast {podcast_id}...")
+        audio_url = podcast_service.generate_audio(transcript, podcast_id)
+
+        # Store podcast in DynamoDB
+        podcast_item = {
+            'podcast_id': podcast_id,
+            'paper_id': paper_id,
+            'paper_title': paper_data['title'],
+            'paper_authors': ', '.join(paper_data['authors']),
+            'paper_url': paper_data.get('pdf_url', 'N/A'),
+            'audio_url': audio_url,
+            'transcript': transcript,
+            'created_at': int(datetime.utcnow().timestamp()),
+            'sent_at': None,
+            'recipients_count': 0
+        }
+
+        podcast_table.put_item(Item=podcast_item)
+
+        return {
+            "podcast_id": podcast_id,
+            "audio_url": audio_url,
+            "transcript": transcript,
+            "paper_title": paper_data['title']
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error converting to audio: {e}")
+        raise HTTPException(status_code=500, detail=f"Error converting to audio: {str(e)}")

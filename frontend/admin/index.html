@@ -330,20 +330,36 @@
             </div>
         </div>
 
-        <!-- Generate Podcast Card -->
+        <!-- Generate Transcript Card -->
         <div class="card">
-            <h2>2. Generate Podcast</h2>
+            <h2>2. Generate Transcript</h2>
             <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId">-</span></p>
             <div style="margin: 15px 0;">
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="useFullTextForPodcast" style="margin-right: 10px; width: 20px; height: 20px;">
-                    <span>Use full PDF text (7-10 min podcast instead of 5-7 min from abstract only)</span>
+                    <input type="checkbox" id="useFullTextForTranscript" style="margin-right: 10px; width: 20px; height: 20px;">
+                    <span>Use full PDF text (7-10 min script instead of 5-7 min from abstract only)</span>
                 </label>
             </div>
-            <button onclick="generatePodcast()" id="generateBtn" disabled>Generate Podcast</button>
+            <button onclick="generateTranscript()" id="generateTranscriptBtn" disabled>Generate Transcript</button>
 
-            <div id="generateSpinner" class="spinner"></div>
-            <div id="generateStatus" class="status-message"></div>
+            <div id="transcriptSpinner" class="spinner"></div>
+            <div id="transcriptStatus" class="status-message"></div>
+
+            <div id="transcriptSection" style="display: none;">
+                <h3 style="margin-top: 20px;">📝 Generated Transcript:</h3>
+                <div id="transcript" class="transcript" style="display: block;"></div>
+                <button onclick="editTranscript()" style="margin-top: 10px; background: #ed8936;">Edit Transcript</button>
+            </div>
+        </div>
+
+        <!-- Convert to Audio Card -->
+        <div class="card">
+            <h2>3. Convert to Audio</h2>
+            <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId2">-</span></p>
+            <button onclick="convertToAudio()" id="convertBtn" disabled>Convert Transcript to Podcast</button>
+
+            <div id="convertSpinner" class="spinner"></div>
+            <div id="convertStatus" class="status-message"></div>
 
             <div id="podcastPreview" class="audio-player">
                 <h3>🎧 Podcast Generated!</h3>
@@ -352,16 +368,11 @@
                 </audio>
                 <p>Podcast ID: <span id="podcastId"></span></p>
             </div>
-
-            <div id="transcriptSection">
-                <h3 style="margin-top: 20px;">Transcript:</h3>
-                <div id="transcript" class="transcript"></div>
-            </div>
         </div>
 
         <!-- Send Email Card -->
         <div class="card">
-            <h2>3. Send to Subscribers</h2>
+            <h2>4. Send to Subscribers</h2>
             <p style="color: #666; margin-bottom: 15px;">Current Podcast: <span id="currentPodcastId">-</span></p>
             <button onclick="sendPodcast()" id="sendBtn" class="button-secondary" disabled>Send to All Subscribers</button>
 
@@ -392,6 +403,7 @@
         const API_URL = 'https://four0k-arr-saas.onrender.com';
         let currentPaperId = null;
         let currentPodcastId = null;
+        let currentTranscript = null;
         let hasFullText = false;
 
         // Load stats on page load
@@ -470,12 +482,13 @@
                     document.getElementById('currentPaperId').textContent = data.paper_id;
                     document.getElementById('paperPreview').style.display = 'block';
 
-                    // Enable generate button
-                    document.getElementById('generateBtn').disabled = false;
+                    // Enable transcript generation button
+                    document.getElementById('generateTranscriptBtn').disabled = false;
+                    document.getElementById('currentPaperId2').textContent = data.paper_id;
 
                     // Auto-check the full text option if we extracted it
                     if (hasFullText) {
-                        document.getElementById('useFullTextForPodcast').checked = true;
+                        document.getElementById('useFullTextForTranscript').checked = true;
                     }
 
                     showMessage('fetchStatus',
@@ -532,9 +545,10 @@
                     document.getElementById('currentPaperId').textContent = data.paper_id;
                     document.getElementById('paperPreview').style.display = 'block';
 
-                    // Enable generate button and auto-check full text
-                    document.getElementById('generateBtn').disabled = false;
-                    document.getElementById('useFullTextForPodcast').checked = true;
+                    // Enable transcript generation button and auto-check full text
+                    document.getElementById('generateTranscriptBtn').disabled = false;
+                    document.getElementById('currentPaperId2').textContent = data.paper_id;
+                    document.getElementById('useFullTextForTranscript').checked = true;
 
                     // Clear form
                     document.getElementById('uploadTitle').value = '';
@@ -553,23 +567,107 @@
             }
         }
 
-        async function generatePodcast() {
+        async function generateTranscript() {
             if (!currentPaperId) return;
 
-            const useFullText = document.getElementById('useFullTextForPodcast').checked;
+            const useFullText = document.getElementById('useFullTextForTranscript').checked;
 
-            showSpinner('generateSpinner');
-            hideMessage('generateStatus');
-            document.getElementById('podcastPreview').style.display = 'none';
-            document.getElementById('transcript').style.display = 'none';
-            document.getElementById('generateBtn').disabled = true;
+            showSpinner('transcriptSpinner');
+            hideMessage('transcriptStatus');
+            document.getElementById('transcriptSection').style.display = 'none';
+            document.getElementById('generateTranscriptBtn').disabled = true;
 
             try {
                 const formData = new FormData();
                 formData.append('paper_id', currentPaperId);
                 formData.append('use_full_text', useFullText);
 
-                const response = await fetch(`${API_URL}/api/admin/generate-podcast-with-options`, {
+                const response = await fetch(`${API_URL}/api/admin/generate-transcript`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentTranscript = data.transcript;
+
+                    // Show transcript
+                    document.getElementById('transcript').textContent = data.transcript;
+                    document.getElementById('transcriptSection').style.display = 'block';
+
+                    // Enable convert button
+                    document.getElementById('convertBtn').disabled = false;
+
+                    const length = useFullText ? '7-10 min' : '5-7 min';
+                    showMessage('transcriptStatus', `Transcript generated successfully! (${length})`, 'success');
+                } else {
+                    showMessage('transcriptStatus', data.detail || 'Error generating transcript', 'error');
+                    document.getElementById('generateTranscriptBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('transcriptStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('generateTranscriptBtn').disabled = false;
+            } finally {
+                hideSpinner('transcriptSpinner');
+            }
+        }
+
+        function editTranscript() {
+            const transcriptDiv = document.getElementById('transcript');
+            const currentText = transcriptDiv.textContent;
+
+            // Convert to editable textarea
+            const textarea = document.createElement('textarea');
+            textarea.style.width = '100%';
+            textarea.style.minHeight = '400px';
+            textarea.style.padding = '15px';
+            textarea.style.fontSize = '14px';
+            textarea.style.fontFamily = 'monospace';
+            textarea.style.border = '2px solid #667eea';
+            textarea.style.borderRadius = '5px';
+            textarea.value = currentText;
+
+            transcriptDiv.parentNode.replaceChild(textarea, transcriptDiv);
+
+            // Update button
+            const editBtn = event.target;
+            editBtn.textContent = 'Save Transcript';
+            editBtn.style.background = '#48bb78';
+            editBtn.onclick = function() {
+                const newDiv = document.createElement('div');
+                newDiv.id = 'transcript';
+                newDiv.className = 'transcript';
+                newDiv.style.display = 'block';
+                newDiv.textContent = textarea.value;
+
+                currentTranscript = textarea.value;
+
+                textarea.parentNode.replaceChild(newDiv, textarea);
+
+                editBtn.textContent = 'Edit Transcript';
+                editBtn.style.background = '#ed8936';
+                editBtn.onclick = editTranscript;
+
+                showMessage('transcriptStatus', 'Transcript updated!', 'success');
+            };
+        }
+
+        async function convertToAudio() {
+            if (!currentPaperId || !currentTranscript) return;
+
+            showSpinner('convertSpinner');
+            hideMessage('convertStatus');
+            document.getElementById('podcastPreview').style.display = 'none';
+            document.getElementById('convertBtn').disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('paper_id', currentPaperId);
+                formData.append('transcript', currentTranscript);
+
+                const response = await fetch(`${API_URL}/api/admin/convert-to-audio`, {
                     method: 'POST',
                     body: formData
                 });
@@ -586,25 +684,20 @@
                     document.getElementById('currentPodcastId').textContent = data.podcast_id;
                     document.getElementById('podcastPreview').style.display = 'block';
 
-                    // Show transcript
-                    document.getElementById('transcript').textContent = data.transcript;
-                    document.getElementById('transcript').style.display = 'block';
-
                     // Enable send button
                     document.getElementById('sendBtn').disabled = false;
 
-                    const length = useFullText ? '7-10 min' : '5-7 min';
-                    showMessage('generateStatus', `Podcast generated successfully! (${length})`, 'success');
+                    showMessage('convertStatus', 'Podcast audio generated successfully!', 'success');
                 } else {
-                    showMessage('generateStatus', data.detail || 'Error generating podcast', 'error');
-                    document.getElementById('generateBtn').disabled = false;
+                    showMessage('convertStatus', data.detail || 'Error converting to audio', 'error');
+                    document.getElementById('convertBtn').disabled = false;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('generateStatus', 'Network error. Please try again.', 'error');
-                document.getElementById('generateBtn').disabled = false;
+                showMessage('convertStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('convertBtn').disabled = false;
             } finally {
-                hideSpinner('generateSpinner');
+                hideSpinner('convertSpinner');
             }
         }
 
