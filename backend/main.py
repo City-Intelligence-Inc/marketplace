@@ -54,9 +54,6 @@ class SignupResponse(BaseModel):
 class FetchPaperRequest(BaseModel):
     arxiv_url: str
 
-class GeneratePodcastRequest(BaseModel):
-    paper_id: str
-
 class SendPodcastRequest(BaseModel):
     podcast_id: str
 
@@ -307,29 +304,38 @@ async def fetch_paper(request: FetchPaperRequest):
         raise HTTPException(status_code=500, detail="Error fetching paper")
 
 @app.post("/api/admin/generate-podcast")
-async def generate_podcast(request: GeneratePodcastRequest):
-    """Generate podcast from paper"""
+async def generate_podcast(
+    paper_id: str = Form(...),
+    use_full_text: bool = Form(False)
+):
+    """Generate complete podcast (transcript + audio) from paper"""
     try:
         # Fetch paper from DynamoDB
-        response = paper_table.get_item(Key={'paper_id': request.paper_id})
+        response = paper_table.get_item(Key={'paper_id': paper_id})
 
         if 'Item' not in response:
             raise HTTPException(status_code=404, detail="Paper not found")
 
         paper_data = response['Item']
 
-        # Generate podcast
-        podcast_result = podcast_service.create_podcast(paper_data)
+        # Step 1: Generate transcript
+        print(f"Generating transcript for {paper_data['title']}...")
+        transcript = podcast_service.generate_podcast_script(paper_data, use_full_text=use_full_text)
+
+        # Step 2: Generate audio from transcript
+        podcast_id = str(uuid.uuid4())
+        print(f"Converting transcript to audio for podcast {podcast_id}...")
+        audio_url = podcast_service.generate_audio(transcript, podcast_id)
 
         # Store podcast in DynamoDB
         podcast_item = {
-            'podcast_id': podcast_result['podcast_id'],
-            'paper_id': request.paper_id,
+            'podcast_id': podcast_id,
+            'paper_id': paper_id,
             'paper_title': paper_data['title'],
             'paper_authors': ', '.join(paper_data['authors']),
-            'paper_url': paper_data['pdf_url'],
-            'audio_url': podcast_result['audio_url'],
-            'transcript': podcast_result['script'],
+            'paper_url': paper_data.get('pdf_url', 'N/A'),
+            'audio_url': audio_url,
+            'transcript': transcript,
             'created_at': int(datetime.utcnow().timestamp()),
             'sent_at': None,
             'recipients_count': 0
@@ -338,9 +344,9 @@ async def generate_podcast(request: GeneratePodcastRequest):
         podcast_table.put_item(Item=podcast_item)
 
         return {
-            "podcast_id": podcast_result['podcast_id'],
-            "audio_url": podcast_result['audio_url'],
-            "transcript": podcast_result['script'],
+            "podcast_id": podcast_id,
+            "audio_url": audio_url,
+            "transcript": transcript,
             "paper_title": paper_data['title']
         }
 
@@ -348,6 +354,8 @@ async def generate_podcast(request: GeneratePodcastRequest):
         raise
     except Exception as e:
         print(f"Error generating podcast: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating podcast: {str(e)}")
 
 @app.get("/api/admin/preview-podcast/{podcast_id}")
