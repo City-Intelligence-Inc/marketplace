@@ -138,8 +138,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Join Our Waitlist</h1>
-        <p class="subtitle">Be the first to know when we launch. Get early access and exclusive updates.</p>
+        <h1>🎙️ Daily AI Research Podcasts</h1>
+        <p class="subtitle">Get the latest AI papers as 5-10 minute podcasts. Delivered to your inbox daily.</p>
 
         <form id="emailForm">
             <div class="form-group">
@@ -165,7 +165,7 @@
                 />
             </div>
 
-            <button type="submit" id="submitBtn">Join the Waitlist</button>
+            <button type="submit" id="submitBtn">Start Receiving Podcasts</button>
 
             <div id="message" class="message"></div>
         </form>
@@ -214,9 +214,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage('Success! You\'re on the waitlist.', 'success');
-                    emailInput.value = '';
-                    nameInput.value = '';
+                    // Redirect to thank you page
+                    window.location.href = '/thank-you.html';
                 } else {
                     showMessage(data.detail || data.message || 'Something went wrong. Please try again.', 'error');
                 }
@@ -226,7 +225,7 @@
             } finally {
                 // Re-enable button
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Join the Waitlist';
+                submitBtn.textContent = 'Start Receiving Podcasts';
             }
         });
 

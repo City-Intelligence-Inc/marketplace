@@ -72,3 +72,87 @@ resource "aws_dynamodb_table" "email_signups" {
     ManagedBy   = "Terraform"
   }
 }
+
+# DynamoDB table for storing podcasts
+resource "aws_dynamodb_table" "podcasts" {
+  name           = var.podcasts_table_name
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "podcast_id"
+
+  attribute {
+    name = "podcast_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_at"
+    type = "N"
+  }
+
+  # GSI for querying by creation date
+  global_secondary_index {
+    name            = "CreatedAtIndex"
+    hash_key        = "created_at"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name        = var.podcasts_table_name
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+# S3 bucket for storing podcast audio files
+resource "aws_s3_bucket" "podcasts_audio" {
+  bucket = var.s3_bucket_name
+
+  tags = {
+    Name        = "Podcast Audio Storage"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+}
+
+# S3 bucket public access settings
+resource "aws_s3_bucket_public_access_block" "podcasts_audio" {
+  bucket = aws_s3_bucket.podcasts_audio.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# S3 bucket policy for public read access
+resource "aws_s3_bucket_policy" "podcasts_audio" {
+  bucket = aws_s3_bucket.podcasts_audio.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.podcasts_audio.arn}/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.podcasts_audio]
+}
+
+# S3 bucket CORS configuration
+resource "aws_s3_bucket_cors_configuration" "podcasts_audio" {
+  bucket = aws_s3_bucket.podcasts_audio.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD"]
+    allowed_origins = ["*"]
+    expose_headers  = []
+    max_age_seconds = 3000
+  }
+}

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AI Research Podcasts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-secondary {
+            background: #48bb78;
+        }
+
+        .button-danger {
+            background: #f56565;
+        }
+
+        .paper-preview {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .paper-preview h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .paper-preview p {
+            color: #4a5568;
+            margin: 5px 0;
+        }
+
+        .audio-player {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .transcript {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status-message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Admin Dashboard</h1>
+            <p>Manage your AI Research Podcasts</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Subscribers</h3>
+                <div class="value" id="totalSubscribers">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Podcasts</h3>
+                <div class="value" id="totalPodcasts">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Last Sent</h3>
+                <div class="value" style="font-size: 18px;" id="lastSent">-</div>
+            </div>
+        </div>
+
+        <!-- Fetch Paper Card -->
+        <div class="card">
+            <h2>1. Fetch Paper from arXiv</h2>
+            <input type="url" id="arxivUrl" placeholder="https://arxiv.org/abs/2401.12345">
+            <button onclick="fetchPaper()">Fetch Paper</button>
+
+            <div id="fetchSpinner" class="spinner"></div>
+            <div id="fetchStatus" class="status-message"></div>
+
+            <div id="paperPreview" class="paper-preview">
+                <h3 id="paperTitle"></h3>
+                <p><strong>Authors:</strong> <span id="paperAuthors"></span></p>
+                <p><strong>Abstract:</strong> <span id="paperAbstract"></span></p>
+                <p><strong>Paper ID:</strong> <span id="paperId"></span></p>
+            </div>
+        </div>
+
+        <!-- Generate Podcast Card -->
+        <div class="card">
+            <h2>2. Generate Podcast</h2>
+            <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId">-</span></p>
+            <button onclick="generatePodcast()" id="generateBtn" disabled>Generate Podcast (2-3 min)</button>
+
+            <div id="generateSpinner" class="spinner"></div>
+            <div id="generateStatus" class="status-message"></div>
+
+            <div id="podcastPreview" class="audio-player">
+                <h3>🎧 Podcast Generated!</h3>
+                <audio controls id="audioPlayer" style="width: 100%; max-width: 600px; margin: 15px 0;">
+                    <source id="audioSource" type="audio/mpeg">
+                </audio>
+                <p>Podcast ID: <span id="podcastId"></span></p>
+            </div>
+
+            <div id="transcriptSection">
+                <h3 style="margin-top: 20px;">Transcript:</h3>
+                <div id="transcript" class="transcript"></div>
+            </div>
+        </div>
+
+        <!-- Send Email Card -->
+        <div class="card">
+            <h2>3. Send to Subscribers</h2>
+            <p style="color: #666; margin-bottom: 15px;">Current Podcast: <span id="currentPodcastId">-</span></p>
+            <button onclick="sendPodcast()" id="sendBtn" class="button-secondary" disabled>Send to All Subscribers</button>
+
+            <div id="sendSpinner" class="spinner"></div>
+            <div id="sendStatus" class="status-message"></div>
+        </div>
+
+        <!-- History Card -->
+        <div class="card">
+            <h2>Podcast History</h2>
+            <button onclick="loadHistory()" style="margin-bottom: 20px;">Refresh History</button>
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Date Sent</th>
+                        <th>Paper Title</th>
+                        <th>Recipients</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr><td colspan="3" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://four0k-arr-saas.onrender.com';
+        let currentPaperId = null;
+        let currentPodcastId = null;
+
+        // Load stats on page load
+        window.addEventListener('load', () => {
+            loadStats();
+            loadHistory();
+        });
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/stats`);
+                const data = await response.json();
+
+                document.getElementById('totalSubscribers').textContent = data.total_subscribers;
+                document.getElementById('totalPodcasts').textContent = data.total_podcasts;
+                document.getElementById('lastSent').textContent = data.last_podcast_date ?
+                    new Date(data.last_podcast_date).toLocaleDateString() : 'Never';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function fetchPaper() {
+            const url = document.getElementById('arxivUrl').value.trim();
+            if (!url) {
+                showMessage('fetchStatus', 'Please enter an arXiv URL', 'error');
+                return;
+            }
+
+            showSpinner('fetchSpinner');
+            hideMessage('fetchStatus');
+            document.getElementById('paperPreview').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/fetch-paper`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({arxiv_url: url})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPaperId = data.paper_id;
+
+                    // Display paper preview
+                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperAuthors').textContent = data.authors.join(', ');
+                    document.getElementById('paperAbstract').textContent = data.abstract;
+                    document.getElementById('paperId').textContent = data.paper_id;
+                    document.getElementById('currentPaperId').textContent = data.paper_id;
+                    document.getElementById('paperPreview').style.display = 'block';
+
+                    // Enable generate button
+                    document.getElementById('generateBtn').disabled = false;
+
+                    showMessage('fetchStatus', 'Paper fetched successfully!', 'success');
+                } else {
+                    showMessage('fetchStatus', data.detail || 'Error fetching paper', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('fetchStatus', 'Network error. Please try again.', 'error');
+            } finally {
+                hideSpinner('fetchSpinner');
+            }
+        }
+
+        async function generatePodcast() {
+            if (!currentPaperId) return;
+
+            showSpinner('generateSpinner');
+            hideMessage('generateStatus');
+            document.getElementById('podcastPreview').style.display = 'none';
+            document.getElementById('transcript').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/generate-podcast`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({paper_id: currentPaperId})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentPodcastId = data.podcast_id;
+
+                    // Setup audio player
+                    document.getElementById('audioSource').src = data.audio_url;
+                    document.getElementById('audioPlayer').load();
+                    document.getElementById('podcastId').textContent = data.podcast_id;
+                    document.getElementById('currentPodcastId').textContent = data.podcast_id;
+                    document.getElementById('podcastPreview').style.display = 'block';
+
+                    // Show transcript
+                    document.getElementById('transcript').textContent = data.transcript;
+                    document.getElementById('transcript').style.display = 'block';
+
+                    // Enable send button
+                    document.getElementById('sendBtn').disabled = false;
+
+                    showMessage('generateStatus', 'Podcast generated successfully!', 'success');
+                } else {
+                    showMessage('generateStatus', data.detail || 'Error generating podcast', 'error');
+                    document.getElementById('generateBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('generateStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('generateBtn').disabled = false;
+            } finally {
+                hideSpinner('generateSpinner');
+            }
+        }
+
+        async function sendPodcast() {
+            if (!currentPodcastId) return;
+
+            if (!confirm('Are you sure you want to send this podcast to all subscribers?')) {
+                return;
+            }
+
+            showSpinner('sendSpinner');
+            hideMessage('sendStatus');
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/send-podcast`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({podcast_id: currentPodcastId})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('sendStatus',
+                        `Podcast sent! ${data.sent} sent, ${data.failed} failed (${data.total_subscribers} total)`,
+                        'success');
+                    loadStats();
+                    loadHistory();
+                } else {
+                    showMessage('sendStatus', data.detail || 'Error sending podcast', 'error');
+                    document.getElementById('sendBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('sendStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('sendBtn').disabled = false;
+            } finally {
+                hideSpinner('sendSpinner');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/podcast-history`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('historyBody');
+                tbody.innerHTML = '';
+
+                if (data.podcasts && data.podcasts.length > 0) {
+                    data.podcasts.forEach(p => {
+                        const row = tbody.insertRow();
+                        row.insertCell(0).textContent = new Date(p.sent_at).toLocaleString();
+                        row.insertCell(1).textContent = p.paper_title;
+                        row.insertCell(2).textContent = p.recipients_count;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No podcasts sent yet</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        function showSpinner(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideSpinner(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showMessage(id, message, type) {
+            const el = document.getElementById(id);
+            el.textContent = message;
+            el.className = `status-message ${type}`;
+            el.style.display = 'block';
+        }
+
+        function hideMessage(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+    </script>
+</body>
+</html>
