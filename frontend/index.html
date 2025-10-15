@@ -543,7 +543,7 @@
                 />
                 <textarea
                     id="podcastText"
-                    placeholder="Paste your text here... (blog post, article, notes, etc. - minimum 100 characters)"
+                    placeholder="Paste your text here... (blog post, article, notes, etc. - minimum 100 characters, no maximum!)"
                     required
                 ></textarea>
                 <input
@@ -790,10 +790,6 @@
                 return;
             }
 
-            if (text.length > 20000) {
-                alert('Text is too long. Please keep it under 20,000 characters');
-                return;
-            }
 
             // Show loading state
             generateBtn.disabled = true;

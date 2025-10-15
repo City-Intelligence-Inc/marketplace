@@ -93,9 +93,6 @@ async def create_podcast_from_text(
         if len(text) < 100:
             raise HTTPException(status_code=400, detail="Text must be at least 100 characters")
 
-        if len(text) > 20000:
-            raise HTTPException(status_code=400, detail="Text must be less than 20,000 characters")
-
         # Generate transcript
         transcript = podcast_service.generate_podcast_script_from_text(text, title)
 
