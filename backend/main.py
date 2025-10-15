@@ -90,6 +90,13 @@ async def create_podcast_from_text(
         if len(text) < 100:
             raise HTTPException(status_code=400, detail="Text must be at least 100 characters")
 
+        # Truncate text if too long to avoid OpenAI rate limits
+        # GPT-4o has ~30k TPM limit, so limit input to ~20k characters (~5k tokens)
+        max_chars = 20000
+        if len(text) > max_chars:
+            print(f"Truncating text from {len(text)} to {max_chars} characters")
+            text = text[:max_chars] + "\n\n[Content truncated for length...]"
+
         # Generate transcript
         transcript = podcast_service.generate_podcast_script_from_text(text, title)
 
