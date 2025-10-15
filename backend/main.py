@@ -345,11 +345,9 @@ async def get_podcast_history():
 
 @app.post("/api/admin/upload-pdf")
 async def upload_pdf(
-    file: UploadFile = File(...),
-    title: str = Form(...),
-    authors: str = Form(...)
+    file: UploadFile = File(...)
 ):
-    """Upload PDF and extract full text"""
+    """Upload PDF and extract full text with metadata"""
     try:
         # Read PDF bytes
         pdf_bytes = await file.read()
@@ -361,14 +359,37 @@ async def upload_pdf(
         # Truncate if needed
         truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
 
-        # Generate paper ID from title
+        # Try to extract title and authors from first few lines of text
+        lines = full_text.split('\n')[:20]  # First 20 lines
+
+        # Simple heuristics to extract title (usually first non-empty line)
+        title = "Uploaded Paper"
+        for line in lines:
+            line = line.strip()
+            if len(line) > 10 and not line.isupper():  # Skip all-caps headers
+                title = line[:200]  # Limit title length
+                break
+
+        # Try to find authors (look for common patterns)
+        authors = ["Unknown"]
+        for i, line in enumerate(lines):
+            line_lower = line.lower()
+            if any(keyword in line_lower for keyword in ['author', 'by']):
+                # Next line might be authors
+                if i + 1 < len(lines):
+                    author_line = lines[i + 1].strip()
+                    if author_line and len(author_line) < 200:
+                        authors = [a.strip() for a in author_line.split(',')]
+                break
+
+        # Generate paper ID from timestamp
         paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
 
         # Prepare paper data
         paper_data = {
             'paper_id': paper_id,
             'title': title,
-            'authors': [a.strip() for a in authors.split(',')],
+            'authors': authors,
             'abstract': truncated_text[:500] + "..." if len(truncated_text) > 500 else truncated_text,
             'full_text': truncated_text,
             'pdf_url': None,

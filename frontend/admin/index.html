@@ -313,8 +313,7 @@
 
             <!-- Upload Tab -->
             <div id="uploadSection" style="display: none;">
-                <input type="text" id="uploadTitle" placeholder="Paper Title">
-                <input type="text" id="uploadAuthors" placeholder="Authors (comma-separated)">
+                <p style="color: #666; margin-bottom: 15px;">Upload a PDF and we'll automatically extract the text for your podcast.</p>
                 <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 15px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; width: 100%;">
                 <button onclick="uploadPDF()">Upload PDF</button>
             </div>
@@ -506,13 +505,11 @@
         }
 
         async function uploadPDF() {
-            const title = document.getElementById('uploadTitle').value.trim();
-            const authors = document.getElementById('uploadAuthors').value.trim();
             const fileInput = document.getElementById('pdfFile');
             const file = fileInput.files[0];
 
-            if (!title || !authors || !file) {
-                showMessage('fetchStatus', 'Please fill in all fields and select a PDF', 'error');
+            if (!file) {
+                showMessage('fetchStatus', 'Please select a PDF file', 'error');
                 return;
             }
 
@@ -523,8 +520,6 @@
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                formData.append('title', title);
-                formData.append('authors', authors);
 
                 const response = await fetch(`${API_URL}/api/admin/upload-pdf`, {
                     method: 'POST',
@@ -551,8 +546,6 @@
                     document.getElementById('useFullTextForTranscript').checked = true;
 
                     // Clear form
-                    document.getElementById('uploadTitle').value = '';
-                    document.getElementById('uploadAuthors').value = '';
                     fileInput.value = '';
 
                     showMessage('fetchStatus', 'PDF uploaded and text extracted successfully!', 'success');
