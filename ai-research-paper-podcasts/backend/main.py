@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, EmailStr
 import boto3
 from datetime import datetime, timedelta
@@ -12,12 +14,22 @@ from services.email_service import EmailService
 from services.pdf_service import PDFService
 import stripe
 import uuid
+from pathlib import Path
 
 app = FastAPI(title="40k ARR SaaS API")
+
+# Get the directory containing the frontend files
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 # Initialize Stripe
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+
+# Stripe Price IDs
+INDIVIDUAL_MONTHLY_PRICE_ID = os.getenv('INDIVIDUAL_MONTHLY_PRICE_ID', 'price_1SIbzVRhG8asVSl57FKrrQ1Q')
+INDIVIDUAL_YEARLY_PRICE_ID = os.getenv('INDIVIDUAL_YEARLY_PRICE_ID', 'price_1SIc0VRhG8asVSl5q67CtVLa')
+TEAM_YEARLY_PRICE_ID = os.getenv('TEAM_YEARLY_PRICE_ID', 'price_1SIc1ORhG8asVSl5e6nyAmH3')
 
 # Configure CORS
 allowed_origins = os.getenv('ALLOWED_ORIGINS', '*').split(',')
@@ -279,6 +291,272 @@ async def get_episodes():
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+
+# ===== Stripe Endpoints =====
+
+@app.post("/api/create-checkout")
+async def create_checkout(request: CheckoutRequest):
+    """Create a Stripe Checkout session for subscription"""
+    try:
+        # Map plan names to Price IDs
+        price_id_map = {
+            'individual_monthly': INDIVIDUAL_MONTHLY_PRICE_ID,
+            'individual_yearly': INDIVIDUAL_YEARLY_PRICE_ID,
+            'team': TEAM_YEARLY_PRICE_ID
+        }
+
+        price_id = price_id_map.get(request.plan)
+        if not price_id:
+            raise HTTPException(status_code=400, detail="Invalid plan selected")
+
+        # Determine success and cancel URLs
+        success_url = os.getenv('SUCCESS_URL', 'https://your-domain.com/thank-you.html') + '?session_id={CHECKOUT_SESSION_ID}'
+        cancel_url = os.getenv('CANCEL_URL', 'https://your-domain.com/pricing.html')
+
+        # Create checkout session params
+        checkout_params = {
+            'payment_method_types': ['card'],
+            'line_items': [{
+                'price': price_id,
+                'quantity': 1 if request.plan != 'team' else 5,  # Team plan includes 5 seats
+            }],
+            'mode': 'subscription',
+            'success_url': success_url,
+            'cancel_url': cancel_url,
+            'customer_email': request.email,
+            'metadata': {
+                'plan': request.plan,
+                'email': request.email
+            },
+            'subscription_data': {
+                'metadata': {
+                    'plan': request.plan,
+                    'email': request.email
+                }
+            }
+        }
+
+        # Handle gift subscriptions
+        if request.is_gift and request.gift_recipient_email:
+            checkout_params['metadata']['is_gift'] = 'true'
+            checkout_params['metadata']['gift_recipient_email'] = request.gift_recipient_email
+            checkout_params['metadata']['gift_recipient_name'] = request.gift_recipient_name or ''
+            checkout_params['subscription_data']['metadata']['is_gift'] = 'true'
+            checkout_params['subscription_data']['metadata']['gift_recipient_email'] = request.gift_recipient_email
+
+        # Create the checkout session
+        session = stripe.checkout.Session.create(**checkout_params)
+
+        return {
+            'checkout_url': session.url,
+            'session_id': session.id
+        }
+
+    except stripe.error.StripeError as e:
+        print(f"Stripe error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"Error creating checkout: {e}")
+        raise HTTPException(status_code=500, detail="Error creating checkout session")
+
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events"""
+    try:
+        payload = await request.body()
+        sig_header = request.headers.get('stripe-signature')
+
+        # Verify webhook signature
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, STRIPE_WEBHOOK_SECRET
+            )
+        except stripe.error.SignatureVerificationError as e:
+            print(f"Webhook signature verification failed: {e}")
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
+        # Handle different event types
+        event_type = event['type']
+        data = event['data']['object']
+
+        print(f"Received Stripe webhook: {event_type}")
+
+        if event_type == 'checkout.session.completed':
+            # Payment successful - activate subscription
+            customer_email = data.get('customer_email')
+            subscription_id = data.get('subscription')
+            customer_id = data.get('customer')
+            metadata = data.get('metadata', {})
+
+            plan = metadata.get('plan', 'individual_monthly')
+            is_gift = metadata.get('is_gift') == 'true'
+
+            # Determine the actual subscriber email
+            if is_gift:
+                subscriber_email = metadata.get('gift_recipient_email', customer_email)
+            else:
+                subscriber_email = customer_email
+
+            if subscriber_email:
+                subscriber_email = subscriber_email.lower()
+                timestamp = int(datetime.utcnow().timestamp())
+
+                # Update or create subscriber record
+                try:
+                    email_table.update_item(
+                        Key={'email': subscriber_email},
+                        UpdateExpression='SET subscription_tier = :tier, stripe_customer_id = :customer_id, stripe_subscription_id = :sub_id, subscription_status = :status, subscription_start_date = :start_date, subscribed = :subscribed',
+                        ExpressionAttributeValues={
+                            ':tier': plan,
+                            ':customer_id': customer_id,
+                            ':sub_id': subscription_id,
+                            ':status': 'active',
+                            ':start_date': timestamp,
+                            ':subscribed': True
+                        }
+                    )
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'ResourceNotFoundException':
+                        # Email doesn't exist, create new entry
+                        email_table.put_item(
+                            Item={
+                                'email': subscriber_email,
+                                'signup_timestamp': timestamp,
+                                'created_at': datetime.utcnow().isoformat(),
+                                'subscribed': True,
+                                'subscription_tier': plan,
+                                'stripe_customer_id': customer_id,
+                                'stripe_subscription_id': subscription_id,
+                                'subscription_status': 'active',
+                                'subscription_start_date': timestamp
+                            }
+                        )
+
+                print(f"Activated subscription for {subscriber_email}: {plan}")
+
+                # Send welcome email for paid tier
+                if is_gift:
+                    # TODO: Send gift welcome email
+                    pass
+                else:
+                    email_service.send_welcome_email(subscriber_email, None)
+
+        elif event_type == 'customer.subscription.updated':
+            # Subscription updated (e.g., plan change)
+            subscription_id = data.get('id')
+            status = data.get('status')
+            customer_id = data.get('customer')
+
+            # Find customer by subscription ID and update
+            response = email_table.scan(
+                FilterExpression='stripe_subscription_id = :sub_id',
+                ExpressionAttributeValues={':sub_id': subscription_id}
+            )
+
+            for item in response.get('Items', []):
+                email_table.update_item(
+                    Key={'email': item['email']},
+                    UpdateExpression='SET subscription_status = :status',
+                    ExpressionAttributeValues={':status': status}
+                )
+                print(f"Updated subscription status for {item['email']}: {status}")
+
+        elif event_type == 'customer.subscription.deleted':
+            # Subscription canceled or expired
+            subscription_id = data.get('id')
+
+            # Find customer by subscription ID and mark as inactive
+            response = email_table.scan(
+                FilterExpression='stripe_subscription_id = :sub_id',
+                ExpressionAttributeValues={':sub_id': subscription_id}
+            )
+
+            for item in response.get('Items', []):
+                email_table.update_item(
+                    Key={'email': item['email']},
+                    UpdateExpression='SET subscription_status = :status, subscription_tier = :tier',
+                    ExpressionAttributeValues={
+                        ':status': 'canceled',
+                        ':tier': 'free'
+                    }
+                )
+                print(f"Canceled subscription for {item['email']}")
+
+        return {"status": "success"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error processing webhook: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Error processing webhook")
+
+@app.post("/api/customer-portal")
+async def customer_portal(email: EmailStr):
+    """Generate a Stripe Customer Portal link for managing subscription"""
+    try:
+        email_lower = email.lower()
+
+        # Get customer ID from DynamoDB
+        response = email_table.get_item(Key={'email': email_lower})
+
+        if 'Item' not in response:
+            raise HTTPException(status_code=404, detail="Customer not found")
+
+        customer_data = response['Item']
+        stripe_customer_id = customer_data.get('stripe_customer_id')
+
+        if not stripe_customer_id:
+            raise HTTPException(status_code=400, detail="No active subscription found")
+
+        # Create portal session
+        return_url = os.getenv('PORTAL_RETURN_URL', 'https://your-domain.com/dashboard.html')
+
+        portal_session = stripe.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=return_url,
+        )
+
+        return {
+            'portal_url': portal_session.url
+        }
+
+    except stripe.error.StripeError as e:
+        print(f"Stripe error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating portal session: {e}")
+        raise HTTPException(status_code=500, detail="Error creating portal session")
+
+@app.get("/api/subscription-status")
+async def get_subscription_status(email: EmailStr):
+    """Get subscription status for a user"""
+    try:
+        email_lower = email.lower()
+        response = email_table.get_item(Key={'email': email_lower})
+
+        if 'Item' not in response:
+            return {
+                'tier': 'free',
+                'status': 'none',
+                'has_subscription': False
+            }
+
+        customer_data = response['Item']
+
+        return {
+            'tier': customer_data.get('subscription_tier', 'free'),
+            'status': customer_data.get('subscription_status', 'none'),
+            'has_subscription': customer_data.get('stripe_subscription_id') is not None,
+            'subscription_start_date': customer_data.get('subscription_start_date')
+        }
+
+    except Exception as e:
+        print(f"Error fetching subscription status: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching subscription status")
 
 # ===== Admin Endpoints =====
 
@@ -802,3 +1080,30 @@ async def generate_from_text(
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating transcript from text: {str(e)}")
+
+# ===== Static HTML Pages =====
+
+@app.get("/pricing.html")
+async def get_pricing():
+    """Serve the pricing page"""
+    pricing_file = FRONTEND_DIR / "pricing.html"
+    if pricing_file.exists():
+        return FileResponse(pricing_file)
+    raise HTTPException(status_code=404, detail="Pricing page not found")
+
+@app.get("/thank-you.html")
+async def get_thank_you():
+    """Serve the thank you page"""
+    thank_you_file = FRONTEND_DIR / "thank-you.html"
+    if thank_you_file.exists():
+        return FileResponse(thank_you_file)
+    raise HTTPException(status_code=404, detail="Thank you page not found")
+
+@app.get("/dashboard.html")
+async def get_dashboard():
+    """Serve the dashboard page (placeholder for now)"""
+    dashboard_file = FRONTEND_DIR / "dashboard.html"
+    if dashboard_file.exists():
+        return FileResponse(dashboard_file)
+    # For now, redirect to index if dashboard doesn't exist
+    return FileResponse(FRONTEND_DIR / "index.html")
