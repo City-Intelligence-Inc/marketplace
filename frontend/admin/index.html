@@ -430,9 +430,14 @@
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
                         Host Voice:
                     </label>
-                    <select id="hostVoice" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
-                        <option value="rachel">Rachel - Warm, curious, engaging</option>
-                    </select>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="hostVoice" style="flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                            <option value="rachel">Rachel - Warm, curious, engaging</option>
+                        </select>
+                        <button onclick="previewVoice('host')" style="padding: 12px 20px; font-size: 16px; background: #48bb78; white-space: nowrap;">
+                            ▶️ Preview
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Expert Voice -->
@@ -440,9 +445,14 @@
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
                         Expert Voice:
                     </label>
-                    <select id="expertVoice" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
-                        <option value="adam">Adam - Knowledgeable, calm, clear</option>
-                    </select>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="expertVoice" style="flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                            <option value="adam">Adam - Knowledgeable, calm, clear</option>
+                        </select>
+                        <button onclick="previewVoice('expert')" style="padding: 12px 20px; font-size: 16px; background: #48bb78; white-space: nowrap;">
+                            ▶️ Preview
+                        </button>
+                    </div>
                 </div>
 
                 <p style="color: #666; font-size: 13px; margin-top: 10px; font-style: italic;">
@@ -1442,6 +1452,48 @@
                 document.getElementById('sendEmailBtn').disabled = false;
             } finally {
                 hideSpinner('emailSpinner');
+            }
+        }
+
+        // Voice Preview Function
+        let currentPreviewAudio = null;
+
+        async function previewVoice(role) {
+            const voiceSelect = role === 'host' ?
+                document.getElementById('hostVoice') :
+                document.getElementById('expertVoice');
+
+            const voiceKey = voiceSelect.value;
+
+            try {
+                // Stop any currently playing preview
+                if (currentPreviewAudio) {
+                    currentPreviewAudio.pause();
+                    currentPreviewAudio = null;
+                }
+
+                // Fetch and play preview
+                const response = await fetch(`${API_URL}/api/admin/voice-preview/${voiceKey}?role=${role}`);
+
+                if (!response.ok) {
+                    alert('Error loading voice preview. Please try again.');
+                    return;
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                currentPreviewAudio = new Audio(audioUrl);
+                currentPreviewAudio.play();
+
+                // Clean up after playing
+                currentPreviewAudio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    currentPreviewAudio = null;
+                };
+            } catch (error) {
+                console.error('Error previewing voice:', error);
+                alert('Error playing voice preview. Please try again.');
             }
         }
     </script>

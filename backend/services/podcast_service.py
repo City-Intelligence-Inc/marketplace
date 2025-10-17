@@ -254,6 +254,48 @@ class PodcastService:
             })
         return personas
 
+    def generate_voice_preview(self, voice_key: str, role: str = 'host') -> bytes:
+        """Generate a short preview audio for a voice"""
+        voice_data = self.all_voices.get(voice_key, self.all_voices['rachel'])
+        voice_id = voice_data['id']
+        voice_name = voice_data['name']
+
+        # Different sample text for host vs expert
+        if role == 'host':
+            sample_text = "Hey! So I'm really excited to dive into this topic. It's one of those things that sounds super complex at first, but once you get it... it's actually pretty cool!"
+        else:
+            sample_text = "Great question! So here's the thing - the way this works is actually pretty fascinating. Let me break it down in a way that makes sense."
+
+        print(f"Generating preview for {voice_name} ({role})...")
+
+        try:
+            # Generate preview audio with conversational settings
+            audio_generator = self.elevenlabs_client.text_to_speech.convert(
+                text=sample_text,
+                voice_id=voice_id,
+                model_id="eleven_turbo_v2_5",
+                output_format="mp3_44100_128",
+                voice_settings={
+                    "stability": 0.35,  # Very expressive and natural
+                    "similarity_boost": 0.85,  # Closer to real human voice
+                    "style": 0.65,  # Higher style for more personality
+                    "use_speaker_boost": True
+                }
+            )
+
+            # Collect audio bytes
+            audio_bytes = b''
+            for chunk in audio_generator:
+                if chunk:
+                    audio_bytes += chunk
+
+            print(f"✓ Preview generated: {len(audio_bytes)} bytes")
+            return audio_bytes
+
+        except Exception as e:
+            print(f"Error generating voice preview: {e}")
+            raise
+
     def generate_podcast_script_from_text(self, text: str, title: str = "Custom Content") -> str:
         """Generate podcast script from any text using OpenAI with CRAFT prompt framework"""
 
@@ -443,37 +485,69 @@ Your script must be {word_count} and follow this three-act structure:
 4. Every speaking turn must be 1-3 sentences maximum (conversational ping-pong)
 5. Never write labels like [Host] or (Host) - always "Host:" at start of line
 
-**Dialogue Style Rules:**
-- Use conversational markers: "you know", "I mean", "right?", "actually", "so"
-- Include thinking sounds when natural: "hmm", "oh!", "wait"
-- Sentence fragments are okay: "Exactly." / "Not quite."
-- Questions should sound spontaneous: "But how does that even work?" not "Can you explain the mechanism?"
-- Avoid formal transitions: Say "So what's wild about this..." not "Another interesting aspect is..."
+**CRITICAL: Make It Sound Like REAL PEOPLE Talking**
 
-**Content Rules:**
-- NO jargon without immediate plain-language explanation
-- NO reading of equations or formulas
-- NO listing of author names or institutional affiliations in dialogue
-- Use analogies for complex concepts (compare to everyday things)
-- Show personality: excitement, surprise, "mind blown" moments
+This is NOT a formal interview. This is two friends having an excited conversation at a coffee shop. Write EXACTLY how people actually speak:
 
-# EXAMPLES OF GOOD DIALOGUE
+**Natural Speech Patterns (USE THESE HEAVILY):**
+- Filler words: "um", "uh", "like", "you know", "I mean", "so", "well", "actually"
+- Reactions: "Oh!", "Wait", "Whoa", "Hmm", "Interesting", "No way!", "Really?"
+- Incomplete thoughts: "So it's like... wait, how do I explain this..."
+- Self-corrections: "It's kind of... well, no, it's more like..."
+- Thinking out loud: "Let me think... okay so..."
+- Casual agreements: "Yeah", "Totally", "Exactly", "Right", "For sure", "Absolutely"
 
-**GOOD - Natural & Engaging:**
-Host: Okay, so AI models forgetting old skills when they learn new ones. That sounds like me trying to learn Spanish while my French gets rusty.
-Expert: Ha! Yeah, that's exactly it. It's called catastrophic forgetting, and it's been a huge problem. But this paper tackles it in a really clever way.
-Host: I'm listening. How?
-Expert: So instead of trying to remember everything, they basically teach the model what's safe to forget and what's critical to keep. Think of it like cleaning out your closet but keeping your favorite jacket.
+**Conversation Flow:**
+- Short bursts, not speeches (1-2 sentences MAX per turn)
+- Natural interruptions and build on each other's ideas
+- Questions should be casual: "Wait, so how does that work?" not "Could you explain the mechanism?"
+- Avoid ANY formal transitions - just flow naturally
+- Show they're listening: "Mhm", "Okay", "I see", "Got it"
 
-**BAD - Too formal, too long:**
-Host: Could you explain the concept of catastrophic forgetting and how this research addresses it?
-Expert: Catastrophic forgetting is a phenomenon in machine learning where artificial neural networks tend to forget previously learned information when trained on new tasks. The researchers in this paper have developed a novel approach that utilizes selective memory consolidation to mitigate this issue through a sophisticated weighting mechanism.
+**Personality & Energy:**
+- Get excited! Use exclamation points naturally
+- Laugh when appropriate: "Ha!", "That's wild!"
+- Express confusion honestly: "Wait, I'm lost", "Hold on, back up"
+- Show surprise: "No way!", "Seriously?", "That's insane!"
 
-**GOOD - Shows personality:**
-Host: Wait wait wait. You're telling me it works with any model?
+**What to AVOID:**
+- NO perfect sentences every time
+- NO formal language ("Furthermore", "Additionally", "In conclusion")
+- NO reading lists or data
+- NO jargon bombs without explanation
+- NO paragraph-long explanations
+
+# EXAMPLES OF REAL CONVERSATIONAL DIALOGUE
+
+**PERFECT - Natural, Energetic, Real:**
+Host: Okay, so like, AI models forgetting old stuff when they learn new things? That's literally me trying to learn Spanish while my French just... disappears.
+Expert: Ha! Yeah, exactly! It's called catastrophic forgetting, and it's been driving people crazy.
+Host: Okay, so what's the trick here?
+Expert: Alright, so instead of trying to remember everything, which is impossible, right? They basically teach the model what's safe to forget and what you gotta keep.
+Host: Oh, like... cleaning out your closet but keeping your favorite jacket?
+Expert: Yes! Perfect analogy!
+
+**BETTER - More Natural Reactions:**
+Host: Wait, hold on. You're saying it works with ANY model?
 Expert: Any model.
-Host: That's huge!
-Expert: Right? That's what got me excited. It's not just some specialized technique. This is plug-and-play.
+Host: Whoa. That's huge!
+Expert: Right? Like, this isn't some specialized thing. It's plug-and-play.
+Host: No way. So I could just... drop it in?
+Expert: Pretty much, yeah.
+
+**EVEN BETTER - Real Conversation Flow:**
+Host: Okay, I gotta ask though... does it actually work?
+Expert: So, um, they tested it on like five different models, and—
+Host: —And it crushed it?
+Expert: It crushed it! Every single one.
+Host: That's insane!
+Expert: I know! And the crazy part is, it's not even that complicated.
+Host: Wait, really?
+Expert: Well, I mean, the math is gnarly, but the concept? Super simple.
+
+**BAD - Too Formal, Robotic:**
+Host: Could you explain the concept of catastrophic forgetting and how this research addresses it?
+Expert: Catastrophic forgetting is a phenomenon in machine learning where artificial neural networks tend to forget previously learned information when trained on new tasks.
 
 # TONE & STYLE
 - Enthusiastic but credible
@@ -622,9 +696,9 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                         model_id="eleven_turbo_v2_5",
                         output_format="mp3_44100_128",
                         voice_settings={
-                            "stability": 0.45,  # Lower = more expressive, natural variation
-                            "similarity_boost": 0.75,  # Higher = more natural sounding
-                            "style": 0.5,  # Moderate style exaggeration
+                            "stability": 0.35,  # Much lower = very expressive and natural
+                            "similarity_boost": 0.85,  # Higher = closer to real human voice
+                            "style": 0.65,  # Higher style for more personality
                             "use_speaker_boost": True  # Enhanced clarity
                         }
                     )

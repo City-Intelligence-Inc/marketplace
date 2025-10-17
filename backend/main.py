@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, EmailStr
 import boto3
 from datetime import datetime, timedelta
@@ -1149,6 +1149,19 @@ async def get_personas():
     except Exception as e:
         print(f"Error fetching personas: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching personas: {str(e)}")
+
+@app.get("/api/admin/voice-preview/{voice_key}")
+async def get_voice_preview(voice_key: str, role: str = 'host'):
+    """Generate and return a short audio preview for a voice"""
+    try:
+        print(f"Generating voice preview for {voice_key} as {role}")
+        audio_bytes = podcast_service.generate_voice_preview(voice_key, role)
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+    except Exception as e:
+        print(f"Error generating voice preview: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generating voice preview: {str(e)}")
 
 @app.get("/api/admin/users")
 async def get_all_users():
