@@ -960,7 +960,11 @@ async def extract_pdf_from_arxiv(request: FetchPaperRequest):
 @app.post("/api/admin/generate-transcript")
 async def generate_transcript(
     paper_id: str = Form(...),
-    use_full_text: bool = Form(False)
+    use_full_text: bool = Form(False),
+    technical_level: str = Form('undergrad'),
+    custom_topics: str = Form(None),
+    host_persona: str = Form('curious_journalist'),
+    expert_persona: str = Form('academic_expert')
 ):
     """Generate just the transcript/script without audio"""
     try:
@@ -972,9 +976,21 @@ async def generate_transcript(
 
         paper_data = response['Item']
 
-        # Generate only the script
+        # Generate only the script with all parameters
         print(f"Generating transcript for {paper_data['title']}...")
-        transcript = podcast_service.generate_podcast_script(paper_data, use_full_text=use_full_text)
+        print(f"Technical level: {technical_level}")
+        print(f"Host persona: {host_persona}, Expert persona: {expert_persona}")
+        if custom_topics:
+            print(f"Custom topics: {custom_topics[:100]}...")
+
+        transcript = podcast_service.generate_podcast_script(
+            paper_data,
+            use_full_text=use_full_text,
+            technical_level=technical_level,
+            custom_topics=custom_topics,
+            host_persona=host_persona,
+            expert_persona=expert_persona
+        )
 
         return {
             "transcript": transcript,
@@ -992,9 +1008,11 @@ async def generate_transcript(
 async def convert_to_audio(
     paper_id: str = Form(...),
     transcript: str = Form(...),
-    voice_preset: str = Form('default')
+    voice_preset: str = Form('default'),
+    host_voice_key: str = Form(None),
+    expert_voice_key: str = Form(None)
 ):
-    """Convert transcript to audio podcast"""
+    """Convert transcript to audio podcast with custom voice selection"""
     try:
         # Fetch paper from DynamoDB
         response = paper_table.get_item(Key={'paper_id': paper_id})
@@ -1004,11 +1022,22 @@ async def convert_to_audio(
 
         paper_data = response['Item']
 
-        # Generate audio from transcript with selected voice preset
+        # Generate audio from transcript with selected voices
         import uuid
         podcast_id = str(uuid.uuid4())
         print(f"Converting transcript to audio for podcast {podcast_id}...")
-        audio_url = podcast_service.generate_audio(transcript, podcast_id, voice_preset)
+        if host_voice_key and expert_voice_key:
+            print(f"Using custom voices: Host={host_voice_key}, Expert={expert_voice_key}")
+        else:
+            print(f"Using voice preset: {voice_preset}")
+
+        audio_url = podcast_service.generate_audio(
+            transcript,
+            podcast_id,
+            voice_preset=voice_preset,
+            host_voice_key=host_voice_key,
+            expert_voice_key=expert_voice_key
+        )
 
         # Store podcast in DynamoDB
         podcast_item = {
@@ -1080,6 +1109,121 @@ async def generate_from_text(
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating transcript from text: {str(e)}")
+
+@app.get("/api/admin/voices")
+async def get_available_voices():
+    """Get list of available voice presets"""
+    try:
+        voices = podcast_service.get_available_voices()
+        return {"voices": voices}
+    except Exception as e:
+        print(f"Error fetching voices: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
+
+@app.get("/api/admin/individual-voices")
+async def get_individual_voices():
+    """Get list of all individual voices for custom selection"""
+    try:
+        voices = podcast_service.get_all_individual_voices()
+        return {"voices": voices}
+    except Exception as e:
+        print(f"Error fetching individual voices: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching individual voices: {str(e)}")
+
+@app.get("/api/admin/technical-levels")
+async def get_technical_levels():
+    """Get list of technical difficulty levels"""
+    try:
+        levels = podcast_service.get_technical_levels()
+        return {"levels": levels}
+    except Exception as e:
+        print(f"Error fetching technical levels: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching technical levels: {str(e)}")
+
+@app.get("/api/admin/personas")
+async def get_personas():
+    """Get list of available podcast personas"""
+    try:
+        personas = podcast_service.get_personas()
+        return {"personas": personas}
+    except Exception as e:
+        print(f"Error fetching personas: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching personas: {str(e)}")
+
+@app.get("/api/admin/users")
+async def get_all_users():
+    """Get all users from DynamoDB"""
+    try:
+        # Scan all users from email table
+        response = email_table.scan()
+        users = response.get('Items', [])
+
+        # Handle pagination if there are many users
+        while 'LastEvaluatedKey' in response:
+            response = email_table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            users.extend(response.get('Items', []))
+
+        # Sort by signup timestamp (most recent first)
+        users.sort(key=lambda x: x.get('signup_timestamp', 0), reverse=True)
+
+        return {
+            "users": users,
+            "total": len(users)
+        }
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
+
+class ManualEmailRequest(BaseModel):
+    subject: str
+    message: str
+    recipients: List[EmailStr]  # List of email addresses
+    from_name: str = "AI Research Podcasts"
+
+@app.post("/api/admin/send-manual-email")
+async def send_manual_email(request: ManualEmailRequest):
+    """Send a manual email to selected users"""
+    try:
+        if not request.recipients:
+            raise HTTPException(status_code=400, detail="No recipients provided")
+
+        sent_count = 0
+        failed_count = 0
+        failed_emails = []
+
+        for recipient_email in request.recipients:
+            try:
+                # Send email using email service
+                email_service.send_custom_email(
+                    to_email=recipient_email.lower(),
+                    subject=request.subject,
+                    message=request.message,
+                    from_name=request.from_name
+                )
+                sent_count += 1
+                print(f"✓ Sent email to {recipient_email}")
+            except Exception as e:
+                failed_count += 1
+                failed_emails.append(recipient_email)
+                print(f"✗ Failed to send to {recipient_email}: {e}")
+
+        return {
+            "message": "Email sending completed",
+            "sent": sent_count,
+            "failed": failed_count,
+            "failed_emails": failed_emails,
+            "total_recipients": len(request.recipients)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error sending manual emails: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error sending manual emails: {str(e)}")
 
 # ===== Static HTML Pages =====
 

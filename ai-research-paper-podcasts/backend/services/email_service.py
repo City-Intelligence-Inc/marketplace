@@ -185,3 +185,54 @@ class EmailService:
                 failed += 1
 
         return {"sent": sent, "failed": failed}
+
+    def send_custom_email(self, to_email: str, subject: str, message: str, from_name: str = None) -> bool:
+        """Send a custom email to a user"""
+        sender_name = from_name if from_name else self.from_name
+
+        # Convert plain text message to HTML with basic formatting
+        html_message = message.replace('\n', '<br>')
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                .content {{ background: #f9f9f9; padding: 30px; }}
+                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>{subject}</h1>
+                </div>
+                <div class="content">
+                    {html_message}
+                </div>
+                <div class="footer">
+                    <p>Don't want these emails? <a href="{{{{unsubscribe_url}}}}">Unsubscribe</a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        try:
+            response = requests.post(
+                self.mailgun_url,
+                auth=("api", self.mailgun_api_key),
+                data={
+                    "from": f"{sender_name} <{self.from_email}>",
+                    "to": to_email,
+                    "subject": subject,
+                    "html": html_content
+                }
+            )
+            return response.status_code == 200
+        except Exception as e:
+            print(f"Error sending custom email to {to_email}: {e}")
+            return False

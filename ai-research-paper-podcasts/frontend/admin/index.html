@@ -343,6 +343,61 @@
         <div class="card">
             <h2>2. Generate Transcript</h2>
             <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId">-</span></p>
+
+            <!-- Persona Selection -->
+            <div style="margin-bottom: 20px; padding: 20px; background: #f7fafc; border-radius: 10px; border: 2px solid #e2e8f0;">
+                <h3 style="margin-bottom: 15px; color: #333;">🎭 Podcast Personas</h3>
+
+                <!-- Host Persona -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Host Persona:
+                    </label>
+                    <select id="hostPersona" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                        <option value="curious_journalist">Curious Tech Journalist</option>
+                    </select>
+                    <p style="color: #666; font-size: 13px; margin-top: 5px;" id="hostPersonaDesc">Loading...</p>
+                </div>
+
+                <!-- Expert Persona -->
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Expert Persona:
+                    </label>
+                    <select id="expertPersona" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                        <option value="academic_expert">Academic Researcher</option>
+                    </select>
+                    <p style="color: #666; font-size: 13px; margin-top: 5px;" id="expertPersonaDesc">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Technical Level Selection -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                    🎓 Technical Level:
+                </label>
+                <select id="technicalLevel" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px; margin-bottom: 10px;">
+                    <option value="baby">👶 Explain to a Child (5 year old)</option>
+                    <option value="highschool">🎒 High School Level</option>
+                    <option value="undergrad" selected>🎓 Undergraduate Level</option>
+                    <option value="graduate">👨‍🎓 Graduate/Professional</option>
+                    <option value="expert">🔬 Expert Researcher</option>
+                    <option value="nobel">🏆 Nobel Laureate Level</option>
+                </select>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;" id="technicalLevelDescription">Balanced technical accuracy with accessibility - good for most audiences</p>
+            </div>
+
+            <!-- Custom Topics -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">
+                    💡 Custom Topics to Cover (Optional):
+                </label>
+                <textarea id="customTopics" placeholder="Enter specific areas you want the podcast to cover, e.g.:&#10;- Real-world applications in healthcare&#10;- Comparison with previous methods&#10;- Limitations and future work&#10;- Ethical implications&#10;&#10;Leave blank for automatic topic selection based on the paper." style="width: 100%; min-height: 120px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                <p style="color: #666; font-size: 13px; margin-top: 5px; font-style: italic;">
+                    💡 Tip: The AI will naturally weave these topics into the conversation while maintaining podcast quality
+                </p>
+            </div>
+
             <div style="margin: 15px 0;">
                 <label style="display: flex; align-items: center; cursor: pointer;">
                     <input type="checkbox" id="useFullTextForTranscript" style="margin-right: 10px; width: 20px; height: 20px;">
@@ -365,6 +420,36 @@
         <div class="card">
             <h2>3. Convert to Audio</h2>
             <p style="color: #666; margin-bottom: 15px;">Paper ID: <span id="currentPaperId2">-</span></p>
+
+            <!-- Custom Voice Selection -->
+            <div style="margin-bottom: 20px; padding: 20px; background: #f7fafc; border-radius: 10px; border: 2px solid #e2e8f0;">
+                <h3 style="margin-bottom: 15px; color: #333;">🎤 Custom Voice Selection</h3>
+
+                <!-- Host Voice -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Host Voice:
+                    </label>
+                    <select id="hostVoice" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                        <option value="rachel">Rachel - Warm, curious, engaging</option>
+                    </select>
+                </div>
+
+                <!-- Expert Voice -->
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                        Expert Voice:
+                    </label>
+                    <select id="expertVoice" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px;">
+                        <option value="adam">Adam - Knowledgeable, calm, clear</option>
+                    </select>
+                </div>
+
+                <p style="color: #666; font-size: 13px; margin-top: 10px; font-style: italic;">
+                    💡 Tip: Try different combinations! Popular choices: Rachel (host) + Adam (expert), Bella (host) + Arnold (expert)
+                </p>
+            </div>
+
             <button onclick="convertToAudio()" id="convertBtn" disabled>Convert Transcript to Podcast</button>
 
             <div id="convertSpinner" class="spinner"></div>
@@ -406,6 +491,77 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- User Management Card -->
+        <div class="card">
+            <h2>👥 User Management</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <p style="color: #666;">Total Users: <strong id="totalUsers">-</strong></p>
+                <button onclick="loadUsers()" style="background: #48bb78;">Refresh Users</button>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="userSearch" placeholder="Search by email or name..." onkeyup="filterUsers()" style="margin-bottom: 0;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="selectAllUsers" onclick="toggleSelectAll()" style="margin-right: 10px; width: 20px; height: 20px;">
+                    <span><strong>Select All</strong></span>
+                </label>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px;">
+                <table id="usersTable" style="margin-bottom: 0;">
+                    <thead style="position: sticky; top: 0; background: white;">
+                        <tr>
+                            <th style="width: 40px;">Select</th>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Signup Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <tr><td colspan="5" style="text-align: center;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 5px;">
+                <p style="margin-bottom: 10px;"><strong>Selected:</strong> <span id="selectedCount">0</span> users</p>
+                <button onclick="showEmailComposer()" id="composeEmailBtn" style="background: #ed8936;" disabled>✉️ Compose Email to Selected Users</button>
+            </div>
+        </div>
+
+        <!-- Manual Email Card -->
+        <div class="card" id="emailComposerCard" style="display: none;">
+            <h2>✉️ Compose Email</h2>
+            <p style="color: #666; margin-bottom: 20px;">Sending to <strong id="recipientCount">0</strong> selected users</p>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">From Name:</label>
+                <input type="text" id="emailFromName" placeholder="AI Research Podcasts" value="AI Research Podcasts">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Subject:</label>
+                <input type="text" id="emailSubject" placeholder="Important Update about Your AI Research Podcasts">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">Message:</label>
+                <textarea id="emailMessage" placeholder="Write your message here... (line breaks will be preserved)" style="width: 100%; min-height: 200px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="sendManualEmail()" id="sendEmailBtn" style="background: #48bb78;">Send Email</button>
+                <button onclick="hideEmailComposer()" style="background: #718096;">Cancel</button>
+            </div>
+
+            <div id="emailSpinner" class="spinner"></div>
+            <div id="emailStatus" class="status-message"></div>
+        </div>
     </div>
 
     <script>
@@ -431,6 +587,10 @@
 
             loadStats();
             loadHistory();
+            loadIndividualVoices();
+            loadPersonas();
+            loadUsers();
+            setupTechnicalLevelListener();
         });
 
         function switchTab(tab) {
@@ -474,6 +634,164 @@
                     new Date(data.last_podcast_date).toLocaleDateString() : 'Never';
             } catch (error) {
                 console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadIndividualVoices() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/individual-voices`);
+                const data = await response.json();
+
+                const hostSelect = document.getElementById('hostVoice');
+                const expertSelect = document.getElementById('expertVoice');
+
+                // Clear existing options
+                hostSelect.innerHTML = '';
+                expertSelect.innerHTML = '';
+
+                // Populate both dropdowns with all available voices
+                data.voices.forEach(voice => {
+                    // Host dropdown
+                    const hostOption = document.createElement('option');
+                    hostOption.value = voice.key;
+                    hostOption.textContent = `${voice.name} - ${voice.description}`;
+                    hostSelect.appendChild(hostOption);
+
+                    // Expert dropdown
+                    const expertOption = document.createElement('option');
+                    expertOption.value = voice.key;
+                    expertOption.textContent = `${voice.name} - ${voice.description}`;
+                    expertSelect.appendChild(expertOption);
+                });
+
+                // Set default selections (Rachel for host, Adam for expert)
+                hostSelect.value = 'rachel';
+                expertSelect.value = 'adam';
+            } catch (error) {
+                console.error('Error loading individual voices:', error);
+            }
+        }
+
+        function setupTechnicalLevelListener() {
+            const levelSelect = document.getElementById('technicalLevel');
+            const descriptions = {
+                'baby': 'Maximum simplification with everyday analogies - perfect for absolute beginners',
+                'highschool': 'Basic concepts without heavy jargon - accessible to most people',
+                'undergrad': 'Assumes basic domain knowledge - balanced accessibility and accuracy',
+                'graduate': 'Technical but conversational - for professionals in the field',
+                'expert': 'Deep technical discussion - assumes expert-level knowledge',
+                'nobel': 'Maximum technical sophistication - world-leading expert level'
+            };
+
+            levelSelect.addEventListener('change', () => {
+                const level = levelSelect.value;
+                document.getElementById('technicalLevelDescription').textContent =
+                    descriptions[level] || 'Select a technical level';
+            });
+        }
+
+        let allPersonas = [];
+
+        async function loadPersonas() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/personas`);
+                const data = await response.json();
+
+                allPersonas = data.personas || [];
+
+                const hostSelect = document.getElementById('hostPersona');
+                const expertSelect = document.getElementById('expertPersona');
+
+                // Clear existing options
+                hostSelect.innerHTML = '';
+                expertSelect.innerHTML = '';
+
+                // Separate hosts and experts
+                const hosts = allPersonas.filter(p => p.role === 'Host');
+                const experts = allPersonas.filter(p => p.role === 'Expert');
+
+                // Populate host dropdown
+                hosts.forEach(persona => {
+                    const option = document.createElement('option');
+                    option.value = persona.key;
+                    option.textContent = persona.name;
+                    option.dataset.personality = persona.personality;
+                    option.dataset.voices = JSON.stringify(persona.voice_suggestions);
+                    hostSelect.appendChild(option);
+                });
+
+                // Populate expert dropdown
+                experts.forEach(persona => {
+                    const option = document.createElement('option');
+                    option.value = persona.key;
+                    option.textContent = persona.name;
+                    option.dataset.personality = persona.personality;
+                    option.dataset.voices = JSON.stringify(persona.voice_suggestions);
+                    expertSelect.appendChild(option);
+                });
+
+                // Set defaults
+                hostSelect.value = 'curious_journalist';
+                expertSelect.value = 'academic_expert';
+
+                // Update descriptions
+                updatePersonaDescriptions();
+
+                // Add event listeners
+                hostSelect.addEventListener('change', updatePersonaDescriptions);
+                expertSelect.addEventListener('change', updatePersonaDescriptions);
+            } catch (error) {
+                console.error('Error loading personas:', error);
+            }
+        }
+
+        function updatePersonaDescriptions() {
+            const hostSelect = document.getElementById('hostPersona');
+            const expertSelect = document.getElementById('expertPersona');
+
+            const hostOption = hostSelect.options[hostSelect.selectedIndex];
+            const expertOption = expertSelect.options[expertSelect.selectedIndex];
+
+            if (hostOption) {
+                const personality = hostOption.dataset.personality || '';
+                const voices = JSON.parse(hostOption.dataset.voices || '[]');
+                document.getElementById('hostPersonaDesc').textContent =
+                    `${personality} | Suggested voices: ${voices.join(', ')}`;
+            }
+
+            if (expertOption) {
+                const personality = expertOption.dataset.personality || '';
+                const voices = JSON.parse(expertOption.dataset.voices || '[]');
+                document.getElementById('expertPersonaDesc').textContent =
+                    `${personality} | Suggested voices: ${voices.join(', ')}`;
+            }
+
+            // Update voice recommendations in step 3
+            updateVoiceRecommendations();
+        }
+
+        function updateVoiceRecommendations() {
+            const hostSelect = document.getElementById('hostPersona');
+            const expertSelect = document.getElementById('expertPersona');
+
+            const hostOption = hostSelect.options[hostSelect.selectedIndex];
+            const expertOption = expertSelect.options[expertSelect.selectedIndex];
+
+            if (hostOption && expertOption) {
+                const hostVoices = JSON.parse(hostOption.dataset.voices || '[]');
+                const expertVoices = JSON.parse(expertOption.dataset.voices || '[]');
+
+                // Set recommended voices if available
+                const hostVoiceSelect = document.getElementById('hostVoice');
+                const expertVoiceSelect = document.getElementById('expertVoice');
+
+                if (hostVoices.length > 0 && hostVoiceSelect) {
+                    hostVoiceSelect.value = hostVoices[0];
+                }
+
+                if (expertVoices.length > 0 && expertVoiceSelect) {
+                    expertVoiceSelect.value = expertVoices[0];
+                }
             }
         }
 
@@ -677,6 +995,10 @@
             if (!currentPaperId) return;
 
             const useFullText = document.getElementById('useFullTextForTranscript').checked;
+            const technicalLevel = document.getElementById('technicalLevel').value;
+            const customTopics = document.getElementById('customTopics').value.trim();
+            const hostPersona = document.getElementById('hostPersona').value;
+            const expertPersona = document.getElementById('expertPersona').value;
 
             showSpinner('transcriptSpinner');
             hideMessage('transcriptStatus');
@@ -687,6 +1009,12 @@
                 const formData = new FormData();
                 formData.append('paper_id', currentPaperId);
                 formData.append('use_full_text', useFullText);
+                formData.append('technical_level', technicalLevel);
+                formData.append('host_persona', hostPersona);
+                formData.append('expert_persona', expertPersona);
+                if (customTopics) {
+                    formData.append('custom_topics', customTopics);
+                }
 
                 const response = await fetch(`${API_URL}/api/admin/generate-transcript`, {
                     method: 'POST',
@@ -706,7 +1034,15 @@
                     document.getElementById('convertBtn').disabled = false;
 
                     const length = useFullText ? '7-10 min' : '5-7 min';
-                    showMessage('transcriptStatus', `Transcript generated successfully! (${length})`, 'success');
+                    const levelText = document.getElementById('technicalLevel').options[document.getElementById('technicalLevel').selectedIndex].text;
+                    const hostName = document.getElementById('hostPersona').options[document.getElementById('hostPersona').selectedIndex].text;
+                    const expertName = document.getElementById('expertPersona').options[document.getElementById('expertPersona').selectedIndex].text;
+
+                    let successMsg = `Transcript generated! (${length}, ${levelText})`;
+                    if (customTopics) {
+                        successMsg += ` with custom topics`;
+                    }
+                    showMessage('transcriptStatus', successMsg, 'success');
                 } else {
                     showMessage('transcriptStatus', data.detail || 'Error generating transcript', 'error');
                     document.getElementById('generateTranscriptBtn').disabled = false;
@@ -769,9 +1105,14 @@
             document.getElementById('convertBtn').disabled = true;
 
             try {
+                const hostVoice = document.getElementById('hostVoice').value;
+                const expertVoice = document.getElementById('expertVoice').value;
+
                 const formData = new FormData();
                 formData.append('paper_id', currentPaperId);
                 formData.append('transcript', currentTranscript);
+                formData.append('host_voice_key', hostVoice);
+                formData.append('expert_voice_key', expertVoice);
 
                 const response = await fetch(`${API_URL}/api/admin/convert-to-audio`, {
                     method: 'POST',
@@ -793,7 +1134,9 @@
                     // Enable send button
                     document.getElementById('sendBtn').disabled = false;
 
-                    showMessage('convertStatus', 'Podcast audio generated successfully!', 'success');
+                    const hostName = document.getElementById('hostVoice').options[document.getElementById('hostVoice').selectedIndex].text.split(' - ')[0];
+                    const expertName = document.getElementById('expertVoice').options[document.getElementById('expertVoice').selectedIndex].text.split(' - ')[0];
+                    showMessage('convertStatus', `Podcast audio generated successfully! Host: ${hostName}, Expert: ${expertName}`, 'success');
                 } else {
                     showMessage('convertStatus', data.detail || 'Error converting to audio', 'error');
                     document.getElementById('convertBtn').disabled = false;
@@ -886,6 +1229,220 @@
 
         function hideMessage(id) {
             document.getElementById(id).style.display = 'none';
+        }
+
+        // User Management Functions
+        let allUsers = [];
+        let selectedUsers = new Set();
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/users`);
+                const data = await response.json();
+
+                allUsers = data.users || [];
+                document.getElementById('totalUsers').textContent = data.total || 0;
+
+                renderUsers(allUsers);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersBody').innerHTML =
+                    '<tr><td colspan="5" style="text-align: center; color: #e53e3e;">Error loading users</td></tr>';
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersBody');
+            tbody.innerHTML = '';
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No users found</td></tr>';
+                return;
+            }
+
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                const email = user.email || 'N/A';
+                const name = user.name || '-';
+                const signupDate = user.signup_timestamp ?
+                    new Date(user.signup_timestamp * 1000).toLocaleDateString() : 'Unknown';
+                const status = user.subscribed !== false ? 'Active' : 'Unsubscribed';
+
+                // Checkbox cell
+                const checkboxCell = row.insertCell(0);
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'user-checkbox';
+                checkbox.dataset.email = email;
+                checkbox.checked = selectedUsers.has(email);
+                checkbox.onchange = () => updateSelectedUsers();
+                checkboxCell.appendChild(checkbox);
+
+                // Email cell
+                row.insertCell(1).textContent = email;
+
+                // Name cell
+                row.insertCell(2).textContent = name;
+
+                // Signup date cell
+                row.insertCell(3).textContent = signupDate;
+
+                // Status cell
+                const statusCell = row.insertCell(4);
+                statusCell.textContent = status;
+                statusCell.style.color = status === 'Active' ? '#48bb78' : '#f56565';
+                statusCell.style.fontWeight = '600';
+            });
+
+            updateSelectedCount();
+        }
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(user => {
+                const email = (user.email || '').toLowerCase();
+                const name = (user.name || '').toLowerCase();
+                return email.includes(searchTerm) || name.includes(searchTerm);
+            });
+            renderUsers(filtered);
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllUsers');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                const email = checkbox.dataset.email;
+                if (selectAllCheckbox.checked) {
+                    selectedUsers.add(email);
+                } else {
+                    selectedUsers.delete(email);
+                }
+            });
+
+            updateSelectedCount();
+        }
+
+        function updateSelectedUsers() {
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            selectedUsers.clear();
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedUsers.add(checkbox.dataset.email);
+                }
+            });
+
+            // Update select all checkbox state
+            const selectAllCheckbox = document.getElementById('selectAllUsers');
+            const visibleCheckboxes = Array.from(checkboxes);
+            const allChecked = visibleCheckboxes.length > 0 &&
+                visibleCheckboxes.every(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedUsers.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('composeEmailBtn').disabled = count === 0;
+        }
+
+        function showEmailComposer() {
+            if (selectedUsers.size === 0) {
+                alert('Please select at least one user');
+                return;
+            }
+
+            document.getElementById('recipientCount').textContent = selectedUsers.size;
+            document.getElementById('emailComposerCard').style.display = 'block';
+
+            // Scroll to email composer
+            document.getElementById('emailComposerCard').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        function hideEmailComposer() {
+            document.getElementById('emailComposerCard').style.display = 'none';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailMessage').value = '';
+            hideMessage('emailStatus');
+        }
+
+        async function sendManualEmail() {
+            const fromName = document.getElementById('emailFromName').value.trim();
+            const subject = document.getElementById('emailSubject').value.trim();
+            const message = document.getElementById('emailMessage').value.trim();
+
+            if (!subject) {
+                showMessage('emailStatus', 'Please enter a subject', 'error');
+                return;
+            }
+
+            if (!message) {
+                showMessage('emailStatus', 'Please enter a message', 'error');
+                return;
+            }
+
+            if (selectedUsers.size === 0) {
+                showMessage('emailStatus', 'No users selected', 'error');
+                return;
+            }
+
+            const confirmed = confirm(
+                `Are you sure you want to send this email to ${selectedUsers.size} users?\n\n` +
+                `Subject: ${subject}\n\n` +
+                `This action cannot be undone.`
+            );
+
+            if (!confirmed) return;
+
+            showSpinner('emailSpinner');
+            hideMessage('emailStatus');
+            document.getElementById('sendEmailBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/send-manual-email`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        subject: subject,
+                        message: message,
+                        recipients: Array.from(selectedUsers),
+                        from_name: fromName || 'AI Research Podcasts'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('emailStatus',
+                        `Email sent successfully! ${data.sent} sent, ${data.failed} failed`,
+                        'success');
+
+                    // Clear form and selections after successful send
+                    setTimeout(() => {
+                        hideEmailComposer();
+                        selectedUsers.clear();
+                        document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+                        document.getElementById('selectAllUsers').checked = false;
+                        updateSelectedCount();
+                    }, 3000);
+                } else {
+                    showMessage('emailStatus', data.detail || 'Error sending email', 'error');
+                    document.getElementById('sendEmailBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('emailStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('sendEmailBtn').disabled = false;
+            } finally {
+                hideSpinner('emailSpinner');
+            }
         }
     </script>
 </body>
