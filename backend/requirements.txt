@@ -13,4 +13,3 @@ pypdf
 pdfplumber
 httpx
 stripe
-pydub
