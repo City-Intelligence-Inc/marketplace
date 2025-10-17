@@ -86,7 +86,7 @@ class PaperRequestModel(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "40k ARR SaaS API is running"}
+    return {"message": "40k ARR SaaS API is running", "version": "2.0-personas"}
 
 @app.post("/api/create-podcast-from-text")
 async def create_podcast_from_text(
