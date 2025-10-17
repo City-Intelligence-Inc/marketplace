@@ -6,6 +6,8 @@ from openai import OpenAI
 import boto3
 from elevenlabs.client import ElevenLabs
 from io import BytesIO
+from pydub import AudioSegment
+from pydub.effects import normalize
 
 class PodcastService:
     """Service for generating podcasts from research papers"""
@@ -593,9 +595,10 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if not segments:
                 raise ValueError("No speech segments found in script")
 
-            # Generate audio for each segment and concatenate MP3 bytes directly
-            all_audio_bytes = b''
+            # Generate audio for each segment with volume normalization
+            audio_segments = []
             voice_usage_count = {'host': 0, 'expert': 0}
+            target_dBFS = -20.0  # Target volume level in dBFS
 
             for i, (speaker, text) in enumerate(segments):
                 if not text.strip():
@@ -632,9 +635,15 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                         if chunk:
                             segment_bytes += chunk
 
-                    # Append to final audio (simple MP3 concatenation)
-                    all_audio_bytes += segment_bytes
-                    print(f"  ✓ Generated {len(segment_bytes)} bytes of audio")
+                    # Convert to AudioSegment and normalize volume
+                    audio_segment = AudioSegment.from_mp3(BytesIO(segment_bytes))
+
+                    # Normalize to target dBFS
+                    change_in_dBFS = target_dBFS - audio_segment.dBFS
+                    normalized_segment = audio_segment.apply_gain(change_in_dBFS)
+
+                    audio_segments.append(normalized_segment)
+                    print(f"  ✓ Generated {len(segment_bytes)} bytes | Volume: {audio_segment.dBFS:.1f} dBFS → {normalized_segment.dBFS:.1f} dBFS")
 
                 except Exception as e:
                     print(f"  ✗ Error generating segment {i+1}: {e}")
@@ -646,10 +655,15 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             print(f"Expert ({expert_name}) segments: {voice_usage_count['expert']}")
             print(f"Total segments: {len(segments)}")
 
-            # Write concatenated audio to file
-            print(f"Writing final audio to {temp_file}...")
-            with open(temp_file, 'wb') as f:
-                f.write(all_audio_bytes)
+            # Concatenate all normalized audio segments
+            print(f"\n=== CONCATENATING {len(audio_segments)} NORMALIZED SEGMENTS ===")
+            final_audio = audio_segments[0]
+            for segment in audio_segments[1:]:
+                final_audio += segment
+
+            # Export to MP3
+            print(f"Exporting final audio to {temp_file}...")
+            final_audio.export(temp_file, format="mp3", bitrate="128k")
             print(f"Audio file created, size: {os.path.getsize(temp_file)} bytes")
 
             # Upload to S3
