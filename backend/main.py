@@ -1193,7 +1193,7 @@ class ManualEmailRequest(BaseModel):
     subject: str
     message: str
     recipients: List[EmailStr]  # List of email addresses
-    from_name: str = "AI Research Podcasts"
+    from_name: str = "City Secretary"
 
 @app.post("/api/admin/send-manual-email")
 async def send_manual_email(request: ManualEmailRequest):

@@ -1,12 +1,12 @@
-# AI Research Paper Podcast Generator - Setup Guide
+# City Secretary - Setup Guide
 
 ## Overview
-Automated system for converting arXiv research papers into podcasts and sending them to subscribers via email.
+Automated system for converting research papers and news into podcasts and sending them to subscribers via email.
 
 ## Infrastructure (AWS - Already Deployed ✅)
 - **DynamoDB Tables:**
   - `email-signups` - Subscriber management
-  - `paper-links` - arXiv paper metadata
+  - `paper-links` - Research paper metadata
   - `podcasts` - Generated podcast records
 - **S3 Bucket:** Audio file storage
 
@@ -57,8 +57,8 @@ S3_BUCKET_NAME=your-bucket-name
 1. **Visit Admin Dashboard:** `/admin/index.html`
 
 2. **Fetch Paper:**
-   - Find interesting paper on arXiv
-   - Paste URL (e.g., https://arxiv.org/abs/2401.12345)
+   - Find interesting research paper
+   - Paste URL (e.g., research paper link)
    - Click "Fetch Paper"
    - Review title, authors, abstract
 
@@ -151,7 +151,7 @@ S3_BUCKET_NAME=your-bucket-name
 
 ### Test Admin Dashboard
 1. Visit `/admin/index.html`
-2. Paste arXiv URL: https://arxiv.org/abs/2301.07041
+2. Paste research paper URL
 3. Generate podcast
 4. Send to yourself first (test email)
 

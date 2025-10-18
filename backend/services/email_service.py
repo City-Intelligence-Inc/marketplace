@@ -33,19 +33,19 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>🎙️ Welcome to Daily AI Research Podcasts!</h1>
+                    <h1>🎙️ Welcome to City Secretary!</h1>
                 </div>
                 <div class="content">
                     <p>Hi {recipient_name},</p>
 
-                    <p>Thanks for signing up! You're now part of our community receiving the latest AI research as engaging podcasts.</p>
+                    <p>Thanks for signing up! You're now part of our community receiving the latest research and news as engaging podcasts.</p>
 
                     <h3>What to expect:</h3>
                     <ul>
                         <li>📅 Daily podcast delivered to your inbox</li>
                         <li>⏱️ 5-10 minute audio summaries</li>
                         <li>📄 Full transcripts included</li>
-                        <li>🔬 Trending papers from arXiv</li>
+                        <li>🔬 Trending research papers and news</li>
                         <li>🚫 Unsubscribe anytime</li>
                     </ul>
 
@@ -68,7 +68,7 @@ class EmailService:
                 data={
                     "from": f"{self.from_name} <{self.from_email}>",
                     "to": email,
-                    "subject": "Welcome to Daily AI Research Podcasts! 🎙️",
+                    "subject": "Welcome to City Secretary! 🎙️",
                     "html": html_content
                 }
             )
@@ -116,7 +116,7 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>📄 Today's AI Research Podcast</h1>
+                    <h1>📄 Today's Research Podcast</h1>
                 </div>
                 <div class="content">
                     <p>Hi {recipient_name},</p>

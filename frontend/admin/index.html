@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - AI Research Podcasts</title>
+    <title>Admin Dashboard - City Secretary</title>
     <style>
         * {
             margin: 0;
@@ -260,7 +260,7 @@
 <body>
     <nav>
         <div class="nav-container">
-            <a href="/" class="logo">🎙️ AI Research Podcasts</a>
+            <a href="/" class="logo">🎙️ City Secretary</a>
             <div class="nav-links">
                 <a href="/">Home</a>
                 <a href="/admin/">Admin</a>
@@ -271,7 +271,7 @@
     <div class="container">
         <div class="header">
             <h1>🎙️ Admin Dashboard</h1>
-            <p>Manage your AI Research Podcasts</p>
+            <p>Manage your research podcasts</p>
         </div>
 
         <!-- Stats Cards -->
@@ -303,7 +303,7 @@
 
             <!-- arXiv Tab -->
             <div id="arxivSection">
-                <input type="url" id="arxivUrl" placeholder="https://arxiv.org/abs/2401.12345">
+                <input type="url" id="arxivUrl" placeholder="https://arxiv.org/abs/2401.12345 or any research paper URL">
                 <div style="margin: 15px 0;">
                     <label style="display: flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="extractFullText" style="margin-right: 10px; width: 20px; height: 20px;">
@@ -316,7 +316,7 @@
             <!-- Upload Tab -->
             <div id="uploadSection" style="display: none;">
                 <p style="color: #666; margin-bottom: 15px;">Upload a PDF and we'll automatically extract the text for your podcast.</p>
-                <input type="url" id="paperUrl" placeholder="Paper URL (required - e.g., https://arxiv.org/abs/2401.12345)" required style="margin-bottom: 15px;">
+                <input type="url" id="paperUrl" placeholder="Paper URL (required - e.g., research paper link)" required style="margin-bottom: 15px;">
                 <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 15px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 5px; width: 100%;">
                 <button onclick="uploadPDF()">Upload PDF</button>
             </div>
@@ -324,7 +324,7 @@
             <!-- Text Tab -->
             <div id="textSection" style="display: none;">
                 <p style="color: #666; margin-bottom: 15px;">Paste any text to generate a podcast transcript. Great for blog posts, articles, or custom content!</p>
-                <input type="text" id="textTitle" placeholder="Podcast Title (e.g., 'AI Safety Principles')" style="margin-bottom: 15px;">
+                <input type="text" id="textTitle" placeholder="Podcast Title (e.g., 'Climate Change Research Update')" style="margin-bottom: 15px;">
                 <textarea id="customText" placeholder="Paste your text here... (minimum 100 characters)" style="width: 100%; min-height: 300px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px; font-family: inherit; margin-bottom: 15px; resize: vertical;"></textarea>
                 <button onclick="generateFromText()">Generate Transcript from Text</button>
             </div>
@@ -580,12 +580,12 @@
 
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 600;">From Name:</label>
-                <input type="text" id="emailFromName" placeholder="AI Research Podcasts" value="AI Research Podcasts">
+                <input type="text" id="emailFromName" placeholder="City Secretary" value="City Secretary">
             </div>
 
             <div style="margin-bottom: 15px;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 600;">Subject:</label>
-                <input type="text" id="emailSubject" placeholder="Important Update about Your AI Research Podcasts">
+                <input type="text" id="emailSubject" placeholder="Important Update from City Secretary">
             </div>
 
             <div style="margin-bottom: 15px;">
@@ -1469,7 +1469,7 @@
                         subject: subject,
                         message: message,
                         recipients: Array.from(selectedUsers),
-                        from_name: fromName || 'AI Research Podcasts'
+                        from_name: fromName || 'City Secretary'
                     })
                 });
 

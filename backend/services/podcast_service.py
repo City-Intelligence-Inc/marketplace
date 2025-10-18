@@ -430,7 +430,7 @@ IMPORTANT: Weave these topics naturally into the conversation. Don't make it fee
 
         # CRAFT Framework Prompt
         prompt = f"""# CONTEXT & ROLE
-You are an award-winning podcast producer creating a {length_guidance} conversational podcast episode about cutting-edge AI research for {audience_description}.
+You are an award-winning podcast producer creating a {length_guidance} conversational podcast episode about cutting-edge research for {audience_description}.
 
 The podcast features two distinct personalities:
 - HOST: {host_config['name']} - {host_config['personality']}

@@ -1,10 +1,10 @@
-# AI Research Paper Podcast Generator
+# City Secretary
 
-Automated service that converts arXiv research papers into engaging podcasts and delivers them to subscribers via email.
+Keep up with latest research through engaging podcast summaries. Automated service that converts research papers and news into conversational podcasts delivered to subscribers via email.
 
 ## What It Does
 
-- Fetches research papers from arXiv
+- Fetches research papers from various sources
 - Generates conversational podcast scripts using OpenAI
 - Converts scripts to natural-sounding audio with ElevenLabs voices
 - Emails podcasts to subscribers with embedded audio player
