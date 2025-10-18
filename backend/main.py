@@ -1238,6 +1238,176 @@ async def send_manual_email(request: ManualEmailRequest):
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error sending manual emails: {str(e)}")
 
+class BulkImportRequest(BaseModel):
+    emails: List[EmailStr]  # List of emails from CSV
+
+@app.post("/api/admin/bulk-import-users")
+async def bulk_import_users(request: BulkImportRequest):
+    """Bulk import users from CSV"""
+    try:
+        if not request.emails:
+            raise HTTPException(status_code=400, detail="No emails provided")
+
+        timestamp = int(datetime.utcnow().timestamp())
+        added_count = 0
+        skipped_count = 0
+        failed_count = 0
+        added_emails = []
+        skipped_emails = []
+        failed_emails = []
+
+        for email in request.emails:
+            try:
+                email_lower = email.lower().strip()
+
+                # Try to add to DynamoDB
+                item = {
+                    'email': email_lower,
+                    'signup_timestamp': timestamp,
+                    'created_at': datetime.utcnow().isoformat(),
+                    'subscribed': True,
+                    'last_email_sent': None,
+                    'source': 'bulk_import'
+                }
+
+                try:
+                    email_table.put_item(
+                        Item=item,
+                        ConditionExpression='attribute_not_exists(email)'
+                    )
+                    added_count += 1
+                    added_emails.append(email_lower)
+                    print(f"✓ Added {email_lower}")
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                        # Email already exists
+                        skipped_count += 1
+                        skipped_emails.append(email_lower)
+                        print(f"⊘ Skipped {email_lower} (already exists)")
+                    else:
+                        raise
+            except Exception as e:
+                failed_count += 1
+                failed_emails.append(email_lower if 'email_lower' in locals() else str(email))
+                print(f"✗ Failed to add {email}: {e}")
+
+        return {
+            "message": "Bulk import completed",
+            "added": added_count,
+            "skipped": skipped_count,
+            "failed": failed_count,
+            "added_emails": added_emails,
+            "skipped_emails": skipped_emails,
+            "failed_emails": failed_emails,
+            "total": len(request.emails)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error bulk importing users: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error bulk importing users: {str(e)}")
+
+class QuickAddUserRequest(BaseModel):
+    email: EmailStr
+    name: str = None
+
+@app.post("/api/admin/quick-add-user")
+async def quick_add_user(request: QuickAddUserRequest):
+    """Quickly add a single user from admin panel"""
+    try:
+        email = request.email.lower().strip()
+        timestamp = int(datetime.utcnow().timestamp())
+
+        item = {
+            'email': email,
+            'signup_timestamp': timestamp,
+            'created_at': datetime.utcnow().isoformat(),
+            'subscribed': True,
+            'last_email_sent': None,
+            'source': 'admin_add'
+        }
+
+        if request.name:
+            item['name'] = request.name.strip()
+
+        try:
+            email_table.put_item(
+                Item=item,
+                ConditionExpression='attribute_not_exists(email)'
+            )
+
+            # Send welcome email
+            email_service.send_welcome_email(email, request.name)
+
+            return {
+                "message": "User added successfully",
+                "email": email,
+                "name": request.name
+            }
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                raise HTTPException(status_code=409, detail="Email already exists")
+            else:
+                raise
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error adding user: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error adding user: {str(e)}")
+
+class SendPodcastToUsersRequest(BaseModel):
+    podcast_id: str
+    recipient_emails: List[EmailStr]
+
+@app.post("/api/admin/send-podcast-to-users")
+async def send_podcast_to_users(request: SendPodcastToUsersRequest):
+    """Send podcast to specific users"""
+    try:
+        # Fetch podcast
+        podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
+
+        if 'Item' not in podcast_response:
+            raise HTTPException(status_code=404, detail="Podcast not found")
+
+        podcast_data = podcast_response['Item']
+
+        # Get user data for selected emails
+        subscribers = []
+        for email in request.recipient_emails:
+            try:
+                user_response = email_table.get_item(Key={'email': email.lower()})
+                if 'Item' in user_response:
+                    subscribers.append(user_response['Item'])
+            except Exception as e:
+                print(f"Warning: Could not fetch user {email}: {e}")
+
+        if not subscribers:
+            return {"message": "No valid subscribers found", "sent": 0, "failed": 0}
+
+        # Send emails
+        result = email_service.send_bulk_podcast_emails(subscribers, podcast_data)
+
+        return {
+            "message": "Podcast sent to selected users",
+            "sent": result['sent'],
+            "failed": result['failed'],
+            "total_subscribers": len(subscribers)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error sending podcast to users: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error sending podcast to users: {str(e)}")
+
 # ===== Static HTML Pages =====
 
 @app.get("/pricing.html")

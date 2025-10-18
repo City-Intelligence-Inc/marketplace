@@ -221,6 +221,7 @@
             border-radius: 5px;
             margin: 15px 0;
             display: none;
+            white-space: pre-wrap;
         }
 
         .status-message.success {
@@ -478,7 +479,12 @@
         <div class="card">
             <h2>4. Send to Subscribers</h2>
             <p style="color: #666; margin-bottom: 15px;">Current Podcast: <span id="currentPodcastId">-</span></p>
-            <button onclick="sendPodcast()" id="sendBtn" class="button-secondary" disabled>Send to All Subscribers</button>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button onclick="sendTestEmail()" id="sendTestBtn" style="background: #ed8936;" disabled>Send Test Email (to yourself)</button>
+                <button onclick="sendToSelectedUsers()" id="sendToSelectedBtn" style="background: #48bb78;" disabled>Send to Selected Users</button>
+                <button onclick="sendPodcast()" id="sendBtn" class="button-secondary" disabled>Send to ALL Subscribers</button>
+            </div>
 
             <div id="sendSpinner" class="spinner"></div>
             <div id="sendStatus" class="status-message"></div>
@@ -508,6 +514,29 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <p style="color: #666;">Total Users: <strong id="totalUsers">-</strong></p>
                 <button onclick="loadUsers()" style="background: #48bb78;">Refresh Users</button>
+            </div>
+
+            <!-- Quick Add User Section -->
+            <div style="margin-bottom: 25px; padding: 20px; background: #f0fff4; border: 2px solid #48bb78; border-radius: 10px;">
+                <h3 style="margin-bottom: 15px; color: #2f855a;">➕ Quick Add User</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;">
+                    <input type="email" id="quickAddEmail" placeholder="Email address" style="margin-bottom: 0;">
+                    <input type="text" id="quickAddName" placeholder="Name (optional)" style="margin-bottom: 0;">
+                    <button onclick="quickAddUser()" id="quickAddBtn" style="background: #48bb78; white-space: nowrap;">Add User</button>
+                </div>
+                <div id="quickAddStatus" class="status-message" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Bulk Import Section -->
+            <div style="margin-bottom: 25px; padding: 20px; background: #fef5e7; border: 2px solid #f39c12; border-radius: 10px;">
+                <h3 style="margin-bottom: 15px; color: #d68910;">📂 Bulk Import from CSV</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Upload a CSV file with email addresses (one per line, or comma-separated)</p>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="csvFileInput" accept=".csv,.txt" style="flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 5px; background: white;">
+                    <button onclick="bulkImportCSV()" id="bulkImportBtn" style="background: #f39c12; white-space: nowrap;">Import CSV</button>
+                </div>
+                <div id="bulkImportStatus" class="status-message" style="margin-top: 10px;"></div>
+                <div id="bulkImportSpinner" class="spinner"></div>
             </div>
 
             <div style="margin-bottom: 15px;">
@@ -1141,8 +1170,14 @@
                     document.getElementById('currentPodcastId').textContent = data.podcast_id;
                     document.getElementById('podcastPreview').style.display = 'block';
 
-                    // Enable send button
+                    // Enable send buttons
                     document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('sendTestBtn').disabled = false;
+
+                    // Enable send to selected if users are selected
+                    if (selectedUsers.size > 0) {
+                        document.getElementById('sendToSelectedBtn').disabled = false;
+                    }
 
                     const hostName = document.getElementById('hostVoice').options[document.getElementById('hostVoice').selectedIndex].text.split(' - ')[0];
                     const expertName = document.getElementById('expertVoice').options[document.getElementById('expertVoice').selectedIndex].text.split(' - ')[0];
@@ -1232,7 +1267,12 @@
 
         function showMessage(id, message, type) {
             const el = document.getElementById(id);
-            el.textContent = message;
+            // Support HTML in messages
+            if (message.includes('<br>')) {
+                el.innerHTML = message;
+            } else {
+                el.textContent = message;
+            }
             el.className = `status-message ${type}`;
             el.style.display = 'block';
         }
@@ -1358,6 +1398,12 @@
             const count = selectedUsers.size;
             document.getElementById('selectedCount').textContent = count;
             document.getElementById('composeEmailBtn').disabled = count === 0;
+
+            // Enable/disable "Send to Selected Users" button based on selection AND podcast availability
+            const sendToSelectedBtn = document.getElementById('sendToSelectedBtn');
+            if (sendToSelectedBtn) {
+                sendToSelectedBtn.disabled = count === 0 || !currentPodcastId;
+            }
         }
 
         function showEmailComposer() {
@@ -1452,6 +1498,250 @@
                 document.getElementById('sendEmailBtn').disabled = false;
             } finally {
                 hideSpinner('emailSpinner');
+            }
+        }
+
+        // Quick Add User Function
+        async function quickAddUser() {
+            const email = document.getElementById('quickAddEmail').value.trim();
+            const name = document.getElementById('quickAddName').value.trim();
+
+            if (!email) {
+                showMessage('quickAddStatus', 'Please enter an email address', 'error');
+                return;
+            }
+
+            // Basic email validation
+            if (!email.includes('@')) {
+                showMessage('quickAddStatus', 'Please enter a valid email address', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('quickAddBtn');
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            hideMessage('quickAddStatus');
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/quick-add-user`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, name: name || null})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('quickAddStatus', `✓ User added: ${email}`, 'success');
+                    document.getElementById('quickAddEmail').value = '';
+                    document.getElementById('quickAddName').value = '';
+
+                    // Refresh users list
+                    setTimeout(() => {
+                        loadUsers();
+                        loadStats();
+                    }, 1000);
+                } else {
+                    if (response.status === 409) {
+                        showMessage('quickAddStatus', 'Email already exists', 'error');
+                    } else {
+                        showMessage('quickAddStatus', data.detail || 'Error adding user', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('quickAddStatus', 'Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add User';
+            }
+        }
+
+        // Bulk Import CSV Function
+        async function bulkImportCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showMessage('bulkImportStatus', 'Please select a CSV file', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('bulkImportBtn');
+            btn.disabled = true;
+            btn.textContent = 'Importing...';
+            hideMessage('bulkImportStatus');
+            showSpinner('bulkImportSpinner');
+
+            try {
+                // Read file as text
+                const text = await file.text();
+
+                // Parse emails from CSV (handle both newlines and commas)
+                const lines = text.split(/[\n\r]+/);
+                const emails = [];
+
+                for (const line of lines) {
+                    // Split by comma and trim
+                    const parts = line.split(',').map(p => p.trim());
+
+                    for (const part of parts) {
+                        // Basic email validation
+                        if (part && part.includes('@') && part.includes('.')) {
+                            // Clean up email (remove quotes, whitespace, etc.)
+                            const cleanEmail = part.replace(/["'\s]/g, '');
+                            if (cleanEmail && !emails.includes(cleanEmail)) {
+                                emails.push(cleanEmail);
+                            }
+                        }
+                    }
+                }
+
+                if (emails.length === 0) {
+                    showMessage('bulkImportStatus', 'No valid emails found in file', 'error');
+                    hideSpinner('bulkImportSpinner');
+                    btn.disabled = false;
+                    btn.textContent = 'Import CSV';
+                    return;
+                }
+
+                // Confirm import
+                const confirmed = confirm(
+                    `Found ${emails.length} email(s) in file.\n\n` +
+                    `First 5: ${emails.slice(0, 5).join(', ')}\n\n` +
+                    `Continue with import?`
+                );
+
+                if (!confirmed) {
+                    hideSpinner('bulkImportSpinner');
+                    btn.disabled = false;
+                    btn.textContent = 'Import CSV';
+                    return;
+                }
+
+                // Send to backend
+                const response = await fetch(`${API_URL}/api/admin/bulk-import-users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({emails})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let message = `✓ Import complete!\n\n`;
+                    message += `Added: ${data.added}\n`;
+                    message += `Skipped (already exist): ${data.skipped}\n`;
+                    message += `Failed: ${data.failed}\n`;
+                    message += `Total processed: ${data.total}`;
+
+                    showMessage('bulkImportStatus', message.replace(/\n/g, '<br>'), 'success');
+
+                    // Clear file input
+                    fileInput.value = '';
+
+                    // Refresh users list
+                    setTimeout(() => {
+                        loadUsers();
+                        loadStats();
+                    }, 1500);
+                } else {
+                    showMessage('bulkImportStatus', data.detail || 'Error importing users', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('bulkImportStatus', 'Error processing file. Please try again.', 'error');
+            } finally {
+                hideSpinner('bulkImportSpinner');
+                btn.disabled = false;
+                btn.textContent = 'Import CSV';
+            }
+        }
+
+        // Send Test Email Function
+        async function sendTestEmail() {
+            if (!currentPodcastId) return;
+
+            const testEmail = prompt('Enter your email address for the test:');
+            if (!testEmail || !testEmail.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            if (!confirm(`Send test podcast email to ${testEmail}?`)) {
+                return;
+            }
+
+            showSpinner('sendSpinner');
+            hideMessage('sendStatus');
+            document.getElementById('sendTestBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/send-podcast-to-users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        podcast_id: currentPodcastId,
+                        recipient_emails: [testEmail]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('sendStatus',
+                        `✓ Test email sent to ${testEmail}! Check your inbox.`,
+                        'success');
+                } else {
+                    showMessage('sendStatus', data.detail || 'Error sending test email', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('sendStatus', 'Network error. Please try again.', 'error');
+            } finally {
+                hideSpinner('sendSpinner');
+                document.getElementById('sendTestBtn').disabled = false;
+            }
+        }
+
+        // Send to Selected Users Function
+        async function sendToSelectedUsers() {
+            if (!currentPodcastId || selectedUsers.size === 0) return;
+
+            if (!confirm(`Send this podcast to ${selectedUsers.size} selected user(s)?`)) {
+                return;
+            }
+
+            showSpinner('sendSpinner');
+            hideMessage('sendStatus');
+            document.getElementById('sendToSelectedBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/send-podcast-to-users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        podcast_id: currentPodcastId,
+                        recipient_emails: Array.from(selectedUsers)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('sendStatus',
+                        `✓ Podcast sent! ${data.sent} sent, ${data.failed} failed to ${selectedUsers.size} selected users`,
+                        'success');
+                } else {
+                    showMessage('sendStatus', data.detail || 'Error sending podcast', 'error');
+                    document.getElementById('sendToSelectedBtn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('sendStatus', 'Network error. Please try again.', 'error');
+                document.getElementById('sendToSelectedBtn').disabled = false;
+            } finally {
+                hideSpinner('sendSpinner');
             }
         }
 
