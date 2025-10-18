@@ -1,4 +1,4 @@
-# 40k ARR SaaS - AI Research Podcast System
+# AI Research Paper Podcast Generator - Setup Guide
 
 ## Overview
 Automated system for converting arXiv research papers into podcasts and sending them to subscribers via email.
@@ -8,7 +8,7 @@ Automated system for converting arXiv research papers into podcasts and sending 
   - `email-signups` - Subscriber management
   - `paper-links` - arXiv paper metadata
   - `podcasts` - Generated podcast records
-- **S3 Bucket:** `40k-arr-saas-podcasts` - Audio file storage
+- **S3 Bucket:** Audio file storage
 
 ## Environment Variables Needed
 
@@ -37,7 +37,7 @@ PAPER_TABLE_NAME=paper-links
 PODCASTS_TABLE_NAME=podcasts
 
 # S3
-S3_BUCKET_NAME=40k-arr-saas-podcasts
+S3_BUCKET_NAME=your-bucket-name
 ```
 
 ## URLs
@@ -46,7 +46,7 @@ S3_BUCKET_NAME=40k-arr-saas-podcasts
 - **Landing Page:** https://your-vercel-domain.vercel.app
 - **Admin Dashboard:** https://your-vercel-domain.vercel.app/admin
 - **Thank You Page:** https://your-vercel-domain.vercel.app/thank-you.html
-- **Backend API:** https://four0k-arr-saas.onrender.com
+- **Backend API:** https://your-app.onrender.com
 
 ### Local Development
 - Frontend: Open `frontend/index.html` in browser
@@ -126,16 +126,17 @@ S3_BUCKET_NAME=40k-arr-saas-podcasts
 
 ### 3. Deploy to Render
 
-1. Push code to GitHub (already done ✅)
+1. Push code to GitHub
 2. Go to Render dashboard
-3. Your existing service will auto-deploy
-4. Add new environment variables (listed above)
-5. Manual redeploy after adding vars
+3. Create new Web Service
+4. Connect to your repo
+5. Add environment variables (listed above)
+6. Deploy
 
 ### 4. Deploy Frontend to Vercel
 
 1. Go to vercel.com
-2. Import `40k-arr-saas` repo
+2. Import your repo
 3. Set root directory: `frontend`
 4. Deploy
 5. Visit your Vercel URL

@@ -16,7 +16,7 @@ import stripe
 import uuid
 from pathlib import Path
 
-app = FastAPI(title="40k ARR SaaS API")
+app = FastAPI(title="Research Paper Podcast API")
 
 # Get the directory containing the frontend files
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
