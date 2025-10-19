@@ -34,16 +34,30 @@ export function Hero() {
     <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-32">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Gradient Orbs */}
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-2000" />
+        {/* Large Gradient Orbs */}
+        <div className="absolute top-1/4 -left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-purple-500/40 to-blue-500/40 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 -right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-pink-500/25 to-purple-500/25 rounded-full blur-3xl animate-pulse-slow" />
 
-        {/* Animated Grid */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+        {/* Additional accent orbs */}
+        <div className="absolute top-10 right-1/4 w-48 h-48 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-full blur-2xl animate-float-slow" />
+        <div className="absolute bottom-20 left-1/3 w-64 h-64 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-2xl animate-float" />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+        {/* Animated Grid with depth */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.15] animate-grid-flow" />
+
+        {/* Radial gradient for depth */}
+        <div className="absolute inset-0 bg-radial-gradient" />
+
+        {/* Noise texture overlay */}
+        <div className="absolute inset-0 bg-noise-pattern opacity-[0.03] mix-blend-overlay" />
+
+        {/* Animated light beams */}
+        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-purple-500/20 to-transparent animate-beam" />
+        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-blue-500/20 to-transparent animate-beam-delayed" />
+
+        {/* Gradient Overlay for content readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
       </div>
 
       {/* Content */}
