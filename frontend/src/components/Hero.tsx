@@ -89,20 +89,18 @@ export function Hero() {
             Curated podcasts, delivered daily.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          {/* Email Subscription Form */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4 max-w-md mx-auto w-full px-4">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="w-full px-6 py-4 rounded-lg bg-secondary/50 backdrop-blur-sm border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            />
             <Button
               size="lg"
-              className="text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              className="w-full sm:w-auto text-lg px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 whitespace-nowrap"
             >
-              Get Started
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-lg px-8 py-6"
-            >
-              Learn More
+              Subscribe
             </Button>
           </div>
 
