@@ -29,10 +29,14 @@ export default function Pricing() {
 
     let planType = plan === 'team' ? 'team' : billingPeriod === 'yearly' ? 'individual_yearly' : 'individual_monthly';
 
-    let giftData = { is_gift: false, gift_recipient_email: null, gift_recipient_name: null };
+    let giftData: { is_gift: boolean; gift_recipient_email: string | null; gift_recipient_name: string | null } = {
+      is_gift: false,
+      gift_recipient_email: null,
+      gift_recipient_name: null
+    };
     if (plan === 'individual' && billingPeriod === 'yearly' && isGift) {
       if (!giftEmail) {
-        alert('Please enter the recipient\\'s email address');
+        alert("Please enter the recipient's email address");
         return;
       }
       if (!emailRegex.test(giftEmail)) {
