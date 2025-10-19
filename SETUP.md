@@ -93,7 +93,7 @@ S3_BUCKET_NAME=your-bucket-name
 - `POST /api/unsubscribe` - Unsubscribe from emails
 
 ### Admin
-- `POST /api/admin/fetch-paper` - Fetch from arXiv
+- `POST /api/admin/fetch-paper` - Fetch research paper
 - `POST /api/admin/generate-podcast` - Generate audio
 - `POST /api/admin/send-podcast` - Email all subscribers
 - `GET /api/admin/stats` - Dashboard statistics
