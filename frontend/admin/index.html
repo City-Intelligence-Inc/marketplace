@@ -333,14 +333,22 @@
             <div id="fetchStatus" class="status-message"></div>
 
             <div id="paperPreview" class="paper-preview">
-                <h3 id="paperTitle"></h3>
-                <div style="margin: 10px 0;">
+                <div style="margin-bottom: 15px;">
+                    <strong>Title:</strong>
+                    <input type="text" id="paperTitleEdit" placeholder="Edit title here..." style="width: 100%; margin-top: 5px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 16px; font-weight: 600;">
+                </div>
+                <div style="margin-bottom: 15px;">
                     <strong>Authors:</strong>
                     <input type="text" id="paperAuthorsEdit" placeholder="Edit authors here..." style="width: 100%; margin-top: 5px; padding: 8px; border: 2px solid #e2e8f0; border-radius: 5px;">
-                    <p style="color: #666; font-size: 12px; margin-top: 3px; font-style: italic;">Edit the authors if parsing was incorrect</p>
                 </div>
-                <p><strong>Abstract:</strong> <span id="paperAbstract"></span></p>
-                <p><strong>Paper ID:</strong> <span id="paperId"></span></p>
+                <div style="margin-bottom: 15px;">
+                    <strong>Abstract:</strong>
+                    <textarea id="paperAbstractEdit" placeholder="Edit abstract here..." style="width: 100%; margin-top: 5px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 5px; min-height: 120px; resize: vertical; font-family: inherit; font-size: 14px;"></textarea>
+                </div>
+                <p style="color: #48bb78; font-size: 13px; font-style: italic; background: #f0fff4; padding: 10px; border-radius: 5px; border: 1px solid #48bb78;">
+                    ✏️ All fields above are editable! Fix any parsing errors before generating the podcast.
+                </p>
+                <p style="margin-top: 10px;"><strong>Paper ID:</strong> <span id="paperId"></span></p>
             </div>
         </div>
 
@@ -869,9 +877,9 @@
                     hasFullText = extractFull || data.full_text !== undefined;
 
                     // Display paper preview
-                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperTitleEdit').value = data.title;
                     document.getElementById('paperAuthorsEdit').value = data.authors.join(', ');
-                    document.getElementById('paperAbstract').textContent = data.abstract;
+                    document.getElementById('paperAbstractEdit').value = data.abstract;
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
                     document.getElementById('paperPreview').style.display = 'block';
@@ -935,9 +943,9 @@
                     hasFullText = true;
 
                     // Display paper preview
-                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperTitleEdit').value = data.title;
                     document.getElementById('paperAuthorsEdit').value = data.authors.join(', ');
-                    document.getElementById('paperAbstract').textContent = data.abstract;
+                    document.getElementById('paperAbstractEdit').value = data.abstract;
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
                     document.getElementById('paperPreview').style.display = 'block';
@@ -999,9 +1007,9 @@
                     currentTranscript = data.transcript;
 
                     // Display "paper" preview
-                    document.getElementById('paperTitle').textContent = data.title;
+                    document.getElementById('paperTitleEdit').value = data.title;
                     document.getElementById('paperAuthorsEdit').value = 'Custom Text';
-                    document.getElementById('paperAbstract').textContent = text.substring(0, 200) + '...';
+                    document.getElementById('paperAbstractEdit').value = text.substring(0, 500) + (text.length > 500 ? '...' : '');
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId2').textContent = data.paper_id;
@@ -1151,11 +1159,21 @@
                 const hostVoice = document.getElementById('hostVoice').value;
                 const expertVoice = document.getElementById('expertVoice').value;
 
+                // Get edited metadata from fields
+                const editedTitle = document.getElementById('paperTitleEdit').value.trim();
+                const editedAuthors = document.getElementById('paperAuthorsEdit').value.trim();
+                const editedAbstract = document.getElementById('paperAbstractEdit').value.trim();
+
                 const formData = new FormData();
                 formData.append('paper_id', currentPaperId);
                 formData.append('transcript', currentTranscript);
                 formData.append('host_voice_key', hostVoice);
                 formData.append('expert_voice_key', expertVoice);
+
+                // Send edited metadata
+                if (editedTitle) formData.append('edited_title', editedTitle);
+                if (editedAuthors) formData.append('edited_authors', editedAuthors);
+                if (editedAbstract) formData.append('edited_abstract', editedAbstract);
 
                 const response = await fetch(`${API_URL}/api/admin/convert-to-audio`, {
                     method: 'POST',

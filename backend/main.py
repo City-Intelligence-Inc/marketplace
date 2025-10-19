@@ -1010,9 +1010,12 @@ async def convert_to_audio(
     transcript: str = Form(...),
     voice_preset: str = Form('default'),
     host_voice_key: str = Form(None),
-    expert_voice_key: str = Form(None)
+    expert_voice_key: str = Form(None),
+    edited_title: str = Form(None),
+    edited_authors: str = Form(None),
+    edited_abstract: str = Form(None)
 ):
-    """Convert transcript to audio podcast with custom voice selection"""
+    """Convert transcript to audio podcast with custom voice selection and edited metadata"""
     try:
         # Fetch paper from DynamoDB
         response = paper_table.get_item(Key={'paper_id': paper_id})
@@ -1021,6 +1024,35 @@ async def convert_to_audio(
             raise HTTPException(status_code=404, detail="Paper not found")
 
         paper_data = response['Item']
+
+        # Use edited metadata if provided, otherwise use original
+        final_title = edited_title if edited_title else paper_data['title']
+        final_authors = edited_authors if edited_authors else ', '.join(paper_data['authors'])
+        final_abstract = edited_abstract if edited_abstract else paper_data.get('abstract', '')
+
+        # Update paper_data with edited values if they were provided
+        if edited_title or edited_authors or edited_abstract:
+            print(f"Using edited metadata for podcast:")
+            if edited_title:
+                print(f"  Title: {edited_title}")
+                paper_data['title'] = edited_title
+            if edited_authors:
+                print(f"  Authors: {edited_authors}")
+                paper_data['authors'] = [edited_authors]  # Store as list for consistency
+            if edited_abstract:
+                print(f"  Abstract updated (length: {len(edited_abstract)})")
+                paper_data['abstract'] = edited_abstract
+
+            # Update the paper in DynamoDB with edited values
+            paper_table.update_item(
+                Key={'paper_id': paper_id},
+                UpdateExpression='SET title = :title, authors = :authors, abstract = :abstract',
+                ExpressionAttributeValues={
+                    ':title': final_title,
+                    ':authors': [final_authors] if isinstance(final_authors, str) else final_authors,
+                    ':abstract': final_abstract
+                }
+            )
 
         # Generate audio from transcript with selected voices
         import uuid
@@ -1039,12 +1071,12 @@ async def convert_to_audio(
             expert_voice_key=expert_voice_key
         )
 
-        # Store podcast in DynamoDB
+        # Store podcast in DynamoDB with edited metadata
         podcast_item = {
             'podcast_id': podcast_id,
             'paper_id': paper_id,
-            'paper_title': paper_data['title'],
-            'paper_authors': ', '.join(paper_data['authors']),
+            'paper_title': final_title,
+            'paper_authors': final_authors,
             'paper_url': paper_data.get('pdf_url', 'N/A'),
             'audio_url': audio_url,
             'transcript': transcript,
