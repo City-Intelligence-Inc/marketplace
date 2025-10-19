@@ -334,7 +334,11 @@
 
             <div id="paperPreview" class="paper-preview">
                 <h3 id="paperTitle"></h3>
-                <p><strong>Authors:</strong> <span id="paperAuthors"></span></p>
+                <div style="margin: 10px 0;">
+                    <strong>Authors:</strong>
+                    <input type="text" id="paperAuthorsEdit" placeholder="Edit authors here..." style="width: 100%; margin-top: 5px; padding: 8px; border: 2px solid #e2e8f0; border-radius: 5px;">
+                    <p style="color: #666; font-size: 12px; margin-top: 3px; font-style: italic;">Edit the authors if parsing was incorrect</p>
+                </div>
                 <p><strong>Abstract:</strong> <span id="paperAbstract"></span></p>
                 <p><strong>Paper ID:</strong> <span id="paperId"></span></p>
             </div>
@@ -866,7 +870,7 @@
 
                     // Display paper preview
                     document.getElementById('paperTitle').textContent = data.title;
-                    document.getElementById('paperAuthors').textContent = data.authors.join(', ');
+                    document.getElementById('paperAuthorsEdit').value = data.authors.join(', ');
                     document.getElementById('paperAbstract').textContent = data.abstract;
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
@@ -932,7 +936,7 @@
 
                     // Display paper preview
                     document.getElementById('paperTitle').textContent = data.title;
-                    document.getElementById('paperAuthors').textContent = data.authors.join(', ');
+                    document.getElementById('paperAuthorsEdit').value = data.authors.join(', ');
                     document.getElementById('paperAbstract').textContent = data.abstract;
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
@@ -996,7 +1000,7 @@
 
                     // Display "paper" preview
                     document.getElementById('paperTitle').textContent = data.title;
-                    document.getElementById('paperAuthors').textContent = 'Custom Text';
+                    document.getElementById('paperAuthorsEdit').value = 'Custom Text';
                     document.getElementById('paperAbstract').textContent = text.substring(0, 200) + '...';
                     document.getElementById('paperId').textContent = data.paper_id;
                     document.getElementById('currentPaperId').textContent = data.paper_id;
