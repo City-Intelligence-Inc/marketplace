@@ -72,7 +72,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Curated research, delivered daily.
+            Curated podcasts, delivered daily.
           </p>
 
           {/* CTA Buttons */}
