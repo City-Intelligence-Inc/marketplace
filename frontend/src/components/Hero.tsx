@@ -92,7 +92,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Curated podcasts, delivered daily.
+            Intelligent podcasts, delivered daily.
           </p>
 
           {/* Email Subscription Form */}

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Curated Podcasts",
-  description: "Curated podcasts, delivered daily",
+  title: "Intelligent Podcasts",
+  description: "Intelligent podcasts, delivered daily",
 };
 
 export default function RootLayout({

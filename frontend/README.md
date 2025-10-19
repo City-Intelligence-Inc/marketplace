@@ -1,6 +1,6 @@
-# Curated Podcasts
+# Intelligent Podcasts
 
-A modern web application for curated podcasts, delivered daily. Built with [Next.js](https://nextjs.org) and TypeScript.
+A modern web application for intelligent podcasts, delivered daily. Built with [Next.js](https://nextjs.org) and TypeScript.
 
 ## Getting Started
 
