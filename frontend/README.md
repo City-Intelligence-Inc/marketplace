@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Curated Podcasts
+
+A modern web application for curated podcasts, delivered daily. Built with [Next.js](https://nextjs.org) and TypeScript.
 
 ## Getting Started
 
