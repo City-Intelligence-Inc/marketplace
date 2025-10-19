@@ -66,9 +66,9 @@ export function Hero() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-32">
+    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-32">
       {/* Animated Background Effects */}
-      <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="absolute inset-0 overflow-hidden bg-white">
         {/* Large Gradient Orbs - More visible */}
         <div className="absolute top-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-br from-orange-500/50 to-red-500/50 rounded-full blur-[100px] animate-float" />
         <div className="absolute bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-red-600/40 to-orange-600/40 rounded-full blur-[120px] animate-float-delayed" />
@@ -79,26 +79,13 @@ export function Hero() {
         <div className="absolute bottom-20 left-1/3 w-[500px] h-[500px] bg-gradient-to-br from-amber-600/25 to-orange-600/25 rounded-full blur-[90px] animate-float" />
         <div className="absolute top-1/3 right-1/2 w-[350px] h-[350px] bg-gradient-to-br from-red-500/30 to-amber-500/30 rounded-full blur-[70px] animate-float-delayed" />
 
-        {/* Smokey layers */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/10 via-transparent to-red-900/10" />
-
         {/* Animated Grid with depth */}
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.08] animate-grid-flow" />
-
-        {/* Radial gradient for depth */}
-        <div className="absolute inset-0 bg-radial-gradient-dark" />
-
-        {/* Enhanced noise texture overlay */}
-        <div className="absolute inset-0 bg-noise-pattern opacity-[0.15] mix-blend-overlay" />
 
         {/* Animated light beams - orange/red tones */}
         <div className="absolute top-0 left-1/4 w-[2px] h-full bg-gradient-to-b from-transparent via-orange-500/30 to-transparent animate-beam blur-sm" />
         <div className="absolute top-0 right-1/3 w-[2px] h-full bg-gradient-to-b from-transparent via-red-500/30 to-transparent animate-beam-delayed blur-sm" />
         <div className="absolute top-0 left-2/3 w-[1px] h-full bg-gradient-to-b from-transparent via-amber-500/20 to-transparent animate-beam blur-sm" style={{ animationDelay: '4s' }} />
-
-        {/* Gradient Overlay for content readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50" />
       </div>
 
       {/* Content */}
@@ -106,10 +93,10 @@ export function Hero() {
         <div className="space-y-8">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-            <span className="block text-white">
+            <span className="block text-black">
               Keep up with the latest
             </span>
-            <span className="block text-white">
+            <span className="block text-black">
               research and news in
             </span>
             <span className="block mt-8 mb-8 min-h-[10rem] py-8 flex items-center justify-center overflow-visible">
@@ -126,48 +113,31 @@ export function Hero() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
             Curated podcasts, delivered daily.
           </p>
 
           {/* Email Subscription Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4 max-w-md mx-auto w-full px-4">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch pt-4 max-w-md mx-auto w-full px-4">
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
-              className="w-full px-6 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 px-6 rounded-lg bg-white border-2 border-gray-300 text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               type="submit"
-              size="lg"
               disabled={isSubmitting}
-              className="w-full sm:w-auto text-lg px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Subscribing..." : "Subscribe"}
             </Button>
           </form>
-
-          {/* Feature Pills */}
-          <div className="flex flex-wrap gap-3 justify-center pt-8">
-            {["Daily Updates", "AI-Powered", "Personalized", "Free Trial"].map(
-              (feature) => (
-                <div
-                  key={feature}
-                  className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-gray-200"
-                >
-                  {feature}
-                </div>
-              )
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Bottom Gradient Fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </div>
   );
 }
