@@ -77,7 +77,7 @@ export function Hero() {
             <span className="block text-white">
               research and news in
             </span>
-            <span className="block mt-6 mb-6 min-h-[5rem] flex items-center justify-center">
+            <span className="block mt-8 mb-8 min-h-[8rem] py-4 flex items-center justify-center">
               <span
                 className={`inline-block bg-gradient-to-r from-orange-500 via-red-500 to-amber-600 bg-clip-text text-transparent transition-all duration-500 ${
                   isAnimating
