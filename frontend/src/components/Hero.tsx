@@ -31,7 +31,7 @@ export function Hero() {
   }, []);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
+    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-32">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Gradient Orbs */}
@@ -71,10 +71,10 @@ export function Hero() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-            Get personalized newsletters delivered straight to your inbox.
-            Stay informed with curated research papers, breakthrough discoveries,
-            and the latest developments in your field.
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Personalized newsletters with curated research
+            <br />
+            delivered to your inbox daily.
           </p>
 
           {/* CTA Buttons */}
