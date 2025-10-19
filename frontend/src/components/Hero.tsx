@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { subscribeEmail } from "@/lib/api";
 
 const categories = [
   "AI",
@@ -17,6 +19,8 @@ const categories = [
 export function Hero() {
   const [currentCategory, setCurrentCategory] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,6 +33,37 @@ export function Hero() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await subscribeEmail(email);
+
+      if (result.success) {
+        toast.success(result.message);
+        setEmail("");
+      } else {
+        toast.error(result.message);
+      }
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-background pt-32">
@@ -77,9 +112,9 @@ export function Hero() {
             <span className="block text-white">
               research and news in
             </span>
-            <span className="block mt-8 mb-8 min-h-[8rem] py-4 flex items-center justify-center">
+            <span className="block mt-8 mb-8 min-h-[10rem] py-8 flex items-center justify-center overflow-visible">
               <span
-                className={`inline-block bg-gradient-to-r from-orange-500 via-red-500 to-amber-600 bg-clip-text text-transparent transition-all duration-500 ${
+                className={`inline-block bg-gradient-to-r from-orange-500 via-red-500 to-amber-600 bg-clip-text text-transparent transition-all duration-500 leading-tight ${
                   isAnimating
                     ? "opacity-0 translate-y-4 scale-95"
                     : "opacity-100 translate-y-0 scale-100"
@@ -92,23 +127,28 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Intelligent podcasts, delivered daily.
+            Curated podcasts, delivered daily.
           </p>
 
           {/* Email Subscription Form */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4 max-w-md mx-auto w-full px-4">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4 max-w-md mx-auto w-full px-4">
             <input
               type="email"
               placeholder="Enter your email"
-              className="w-full px-6 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
+              className="w-full px-6 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
+              type="submit"
               size="lg"
-              className="w-full sm:w-auto text-lg px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto text-lg px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Subscribe
+              {isSubmitting ? "Subscribing..." : "Subscribe"}
             </Button>
-          </div>
+          </form>
 
           {/* Feature Pills */}
           <div className="flex flex-wrap gap-3 justify-center pt-8">
