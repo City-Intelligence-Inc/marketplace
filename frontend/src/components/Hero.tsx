@@ -68,7 +68,10 @@ export function Hero() {
             <span className="block text-foreground">
               Keep up with the latest
             </span>
-            <span className="block mt-2 min-h-[1.2em]">
+            <span className="block text-foreground">
+              research and news in
+            </span>
+            <span className="block mt-6 mb-6 min-h-[5rem] flex items-center justify-center">
               <span
                 className={`inline-block bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent transition-all duration-500 ${
                   isAnimating
@@ -78,9 +81,6 @@ export function Hero() {
               >
                 {categories[currentCategory]}
               </span>
-            </span>
-            <span className="block mt-2 text-foreground">
-              research and news
             </span>
           </h1>
 
