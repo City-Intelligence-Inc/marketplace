@@ -24,3 +24,29 @@ export async function subscribeEmail(email: string): Promise<{ success: boolean;
     return { success: false, message: "Network error. Please check your connection and try again." };
   }
 }
+
+export interface Episode {
+  podcast_id: string;
+  paper_title: string;
+  paper_authors: string;
+  paper_url: string;
+  audio_url: string;
+  sent_at: number;
+}
+
+export async function getEpisodes(): Promise<{ success: boolean; episodes: Episode[]; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/episodes`);
+
+    if (!response.ok) {
+      return { success: false, episodes: [], error: "Failed to fetch episodes" };
+    }
+
+    const data = await response.json();
+
+    return { success: true, episodes: data.episodes || [] };
+  } catch (error) {
+    console.error("Episodes fetch error:", error);
+    return { success: false, episodes: [], error: "Network error. Please check your connection and try again." };
+  }
+}

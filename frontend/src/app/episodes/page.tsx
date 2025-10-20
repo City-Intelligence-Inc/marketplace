@@ -1,94 +1,94 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-
-const categories = [
-  { name: "AI", color: "from-purple-500 to-pink-500" },
-  { name: "Crypto", color: "from-orange-500 to-yellow-500" },
-  { name: "Quantum Computing", color: "from-blue-500 to-cyan-500" },
-  { name: "Patent Law", color: "from-green-500 to-emerald-500" },
-  { name: "Healthcare", color: "from-red-500 to-pink-500" },
-  { name: "Climate Science", color: "from-teal-500 to-green-500" },
-  { name: "Space Exploration", color: "from-indigo-500 to-purple-500" },
-  { name: "Neuroscience", color: "from-violet-500 to-fuchsia-500" },
-  { name: "UI/UX Design", color: "from-amber-500 to-orange-500" },
-  { name: "Economics", color: "from-blue-600 to-indigo-600" },
-];
-
-// Mock podcast data
-const generatePodcasts = (category: string) => {
-  return Array.from({ length: 8 }, (_, i) => ({
-    id: `${category}-${i}`,
-    title: `${category} Podcast ${i + 1}`,
-    description: `Latest insights and research in ${category}`,
-    duration: `${Math.floor(Math.random() * 30 + 15)} min`,
-    date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-  }));
-};
+import { useEffect, useState } from "react";
+import { getEpisodes, Episode } from "@/lib/api";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function Episodes() {
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchEpisodes() {
+      setIsLoading(true);
+      const result = await getEpisodes();
+
+      if (result.success) {
+        setEpisodes(result.episodes);
+      } else {
+        setError(result.error || "Failed to load episodes");
+      }
+
+      setIsLoading(false);
+    }
+
+    fetchEpisodes();
+  }, []);
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-black pt-8 md:pt-20 pb-24 md:pb-16">
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="pt-12 pb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            Episodes
-          </h1>
-          <p className="text-xl text-gray-400 max-w-2xl">
-            Explore curated podcasts across all categories
-          </p>
-        </div>
+    <div className="min-h-screen bg-white pt-20 md:pt-32 pb-20 md:pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl md:text-6xl font-bold text-black mb-8 text-center">
+          Episodes
+        </h1>
 
-        {/* Category Rows */}
-        <div className="space-y-12">
-          {categories.map((category) => {
-            const podcasts = generatePodcasts(category.name);
-            return (
-              <div key={category.name} className="space-y-4">
-                {/* Category Title */}
-                <h2 className="text-2xl font-bold text-white">
-                  {category.name}
-                </h2>
+        {isLoading && (
+          <p className="text-xl text-gray-600 text-center">Loading episodes...</p>
+        )}
 
-                {/* Horizontal Scrolling Cards */}
-                <ScrollArea className="w-full whitespace-nowrap">
-                  <div className="flex gap-4 pb-4">
-                    {podcasts.map((podcast) => (
-                      <Card
-                        key={podcast.id}
-                        className="inline-block w-[280px] bg-zinc-900 border-zinc-800 hover:bg-zinc-800 transition-all cursor-pointer group"
-                      >
-                        {/* Podcast Thumbnail */}
-                        <div className={`h-40 bg-gradient-to-br ${category.color} rounded-t-lg relative overflow-hidden`}>
-                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
-                          <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs text-white">
-                            {podcast.duration}
-                          </div>
-                        </div>
+        {error && (
+          <p className="text-xl text-red-600 text-center">{error}</p>
+        )}
 
-                        {/* Podcast Info */}
-                        <div className="p-4 space-y-2">
-                          <h3 className="font-semibold text-white truncate group-hover:text-orange-500 transition-colors">
-                            {podcast.title}
-                          </h3>
-                          <p className="text-sm text-gray-400 line-clamp-2">
-                            {podcast.description}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {podcast.date}
-                          </p>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </div>
-            );
-          })}
-        </div>
+        {!isLoading && !error && episodes.length === 0 && (
+          <p className="text-xl text-gray-600 text-center">No episodes available yet.</p>
+        )}
+
+        {!isLoading && !error && episodes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {episodes.map((episode) => (
+              <Card key={episode.podcast_id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg line-clamp-2">{episode.paper_title}</CardTitle>
+                  <CardDescription className="text-sm">
+                    {episode.paper_authors}
+                  </CardDescription>
+                  <CardDescription className="text-xs text-gray-500">
+                    {formatDate(episode.sent_at)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <audio controls className="w-full">
+                    <source src={episode.audio_url} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                  {episode.paper_url !== 'N/A' && episode.paper_url !== '#' && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      asChild
+                    >
+                      <a href={episode.paper_url} target="_blank" rel="noopener noreferrer">
+                        View Paper
+                      </a>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
