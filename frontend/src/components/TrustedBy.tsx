@@ -10,6 +10,7 @@ import Autoplay from "embla-carousel-autoplay";
 
 export function TrustedBy() {
   const companies = [
+    { name: "Harvard Law School", logo: "/logos/harvard-law.png" },
     { name: "Stanford University", logo: "/logos/stanford.avif" },
     { name: "UC Berkeley", logo: "/logos/berkeley.png" },
     { name: "Purdue University", logo: "/logos/purdue.png" },

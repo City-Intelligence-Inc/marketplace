@@ -105,7 +105,6 @@ export default function AdminPage() {
 
 function AdminDashboard() {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [currentPodcastId, setCurrentPodcastId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -116,7 +115,6 @@ function AdminDashboard() {
       <UserManagementSection
         selectedUsers={selectedUsers}
         setSelectedUsers={setSelectedUsers}
-        currentPodcastId={currentPodcastId}
       />
     </div>
   );
@@ -248,7 +246,7 @@ function ArxivTab() {
 
 function UploadTab() {
   return <div className="space-y-4">
-    <p className="text-sm text-gray-600">Upload a PDF and we'll automatically extract the text</p>
+    <p className="text-sm text-gray-600">Upload a PDF and we&apos;ll automatically extract the text</p>
     <Input type="url" placeholder="Paper URL (required)" />
     <Input type="file" accept=".pdf" />
     <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
@@ -376,11 +374,9 @@ interface User {
 function UserManagementSection({
   selectedUsers,
   setSelectedUsers,
-  currentPodcastId,
 }: {
   selectedUsers: Set<string>;
   setSelectedUsers: (users: Set<string>) => void;
-  currentPodcastId: string | null;
 }) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
