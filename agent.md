@@ -296,6 +296,14 @@ This section will grow as we work together:
 - Preferred code style and patterns
 - How much testing/validation before committing
 
+**Critical Mistakes to Avoid:**
+- ❌ **ALWAYS check TypeScript/ESLint errors before committing** - Frontend uses strict type checking and will fail build on Vercel
+  - Never use explicit `any` types - infer from interface or use proper types
+  - Remove unused variables (use `_` prefix or remove catch parameter entirely)
+  - Test locally with `npm run build` before pushing if possible
+- ❌ **Never commit code that breaks production builds** - User deploys from main branch automatically
+- ❌ **Always add new response fields to TypeScript interfaces** - Backend changes require frontend type updates
+
 ---
 
 ## Notes for Future Claude Instances

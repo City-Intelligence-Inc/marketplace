@@ -328,7 +328,7 @@ function Step1AddPaper({
         try {
           const errorData = JSON.parse(errorText);
           errorMsg = errorData.detail || errorMsg;
-        } catch (e) {
+        } catch {
           errorMsg = errorText || errorMsg;
         }
         throw new Error(errorMsg);
@@ -555,7 +555,7 @@ function Step1AddPaper({
                     📋 View Page-by-Page Breakdown ({paperData.ocr_details.pages.length} pages)
                   </summary>
                   <div className="mt-3 max-h-96 overflow-y-auto space-y-2">
-                    {paperData.ocr_details.pages.map((page: any) => (
+                    {paperData.ocr_details.pages.map((page) => (
                       <details key={page.page_number} className="p-3 bg-white rounded border border-blue-200">
                         <summary className="cursor-pointer font-mono text-sm text-gray-700 hover:text-blue-700">
                           Page {page.page_number}: {page.char_count} chars, {page.line_count} lines
