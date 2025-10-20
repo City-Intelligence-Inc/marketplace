@@ -11,6 +11,8 @@ export function TrustedBy() {
     { name: "Purdue University", logo: "/logos/purdue.png", height: 35 },
     { name: "Meta", logo: "/logos/meta.png", height: 25 },
     { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 60 },
+    { name: "Jindal Global University", logo: "/logos/jindal.png", height: 60 },
+    { name: "University of Adelaide", logo: "/logos/adelaide.png", height: 60 },
   ];
 
   return (
