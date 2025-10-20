@@ -32,6 +32,11 @@ const categories = [
   "Chemistry",
   "Antitrust Law",
   "Securities Law",
+  "UI/UX Design",
+  "Product Design",
+  "Architecture",
+  "Graphic Design",
+  "Industrial Design",
 ];
 
 export function Hero() {
