@@ -4,15 +4,15 @@ import Image from "next/image";
 
 export function TrustedBy() {
   const companies = [
-    { name: "MIT", logo: "/logos/mit.png", height: 50 },
-    { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 40 },
-    { name: "Stanford University", logo: "/logos/stanford.avif", height: 80 },
-    { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 40 },
-    { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 80 },
-    { name: "Princeton University", logo: "/logos/princeton.png", height: 80 },
-    { name: "Purdue University", logo: "/logos/purdue.png", height: 35 },
-    { name: "Meta", logo: "/logos/meta.png", height: 25 },
-    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 60 },
+    { name: "MIT", logo: "/logos/mit.png", height: 35 },
+    { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 28 },
+    { name: "Stanford University", logo: "/logos/stanford.avif", height: 56 },
+    { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 28 },
+    { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 56 },
+    { name: "Princeton University", logo: "/logos/princeton.png", height: 56 },
+    { name: "Purdue University", logo: "/logos/purdue.png", height: 25 },
+    { name: "Meta", logo: "/logos/meta.png", height: 18 },
+    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 42 },
   ];
 
   return (
@@ -22,8 +22,8 @@ export function TrustedBy() {
           Trusted by listeners from
         </p>
 
-        {/* 2 rows of 3 logos */}
-        <div className="grid grid-cols-3 gap-8 max-w-4xl mx-auto">
+        {/* 2 rows of 5 logos */}
+        <div className="grid grid-cols-5 gap-8 max-w-6xl mx-auto">
           {companies.map((company) => (
             <div
               key={company.name}
