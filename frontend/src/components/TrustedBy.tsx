@@ -1,11 +1,21 @@
+"use client";
+
+import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+
 export function TrustedBy() {
   const companies = [
-    "Stanford University",
-    "MIT",
-    "Google Research",
-    "OpenAI",
-    "DeepMind",
-    "Harvard",
+    { name: "Stanford University", logo: "/logos/stanford.png" },
+    { name: "MIT", logo: "/logos/mit.png" },
+    { name: "Google Research", logo: "/logos/google.png" },
+    { name: "OpenAI", logo: "/logos/openai.png" },
+    { name: "DeepMind", logo: "/logos/deepmind.png" },
+    { name: "Harvard", logo: "/logos/harvard.png" },
   ];
 
   return (
@@ -15,16 +25,34 @@ export function TrustedBy() {
           Trusted by researchers and professionals at
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center">
-          {companies.map((company) => (
-            <div
-              key={company}
-              className="text-gray-400 hover:text-gray-600 transition-colors text-center font-medium text-sm"
-            >
-              {company}
-            </div>
-          ))}
-        </div>
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          plugins={[
+            Autoplay({
+              delay: 2000,
+            }),
+          ]}
+          className="w-full"
+        >
+          <CarouselContent>
+            {companies.map((company) => (
+              <CarouselItem key={company.name} className="md:basis-1/3 lg:basis-1/6">
+                <div className="p-4 flex items-center justify-center h-24">
+                  <Image
+                    src={company.logo}
+                    alt={company.name}
+                    width={120}
+                    height={60}
+                    className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </div>
     </section>
   );
