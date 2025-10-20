@@ -11,23 +11,23 @@ export function Navbar() {
   return (
     <>
       {/* Desktop Navbar - Top */}
-      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-md border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+      <nav className="hidden md:flex fixed top-4 left-0 right-0 z-50 justify-center px-4">
+        <div className="bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-full shadow-sm px-6 py-3">
+          <div className="flex items-center gap-8">
             {/* Logo/Brand */}
-            <Link href="/" className="text-xl font-bold text-black hover:text-orange-600 transition-colors">
+            <Link href="/" className="text-lg font-bold text-black hover:text-orange-600 transition-colors">
               Research Club
             </Link>
 
             {/* Navigation Links */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
               <Link href="/">
-                <Button variant="ghost" className="text-black hover:text-orange-600 hover:bg-orange-50">
+                <Button variant="ghost" size="sm" className="text-black hover:text-orange-600 hover:bg-orange-50 rounded-full">
                   Home
                 </Button>
               </Link>
               <Link href="/episodes">
-                <Button variant="ghost" className="text-black hover:text-orange-600 hover:bg-orange-50">
+                <Button variant="ghost" size="sm" className="text-black hover:text-orange-600 hover:bg-orange-50 rounded-full">
                   Episodes
                 </Button>
               </Link>
