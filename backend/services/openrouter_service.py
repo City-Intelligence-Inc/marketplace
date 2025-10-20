@@ -45,6 +45,16 @@ Paper text:
 Return ONLY valid JSON, no other text."""
 
         try:
+            print("=" * 80)
+            print("🤖 [OPENROUTER] METADATA EXTRACTION - API CALL")
+            print("=" * 80)
+            print(f"Model: {self.default_model}")
+            print(f"Text length: {len(text)} chars")
+            print("\n📤 PROMPT SENT TO LLM:")
+            print("-" * 80)
+            print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
+            print("-" * 80)
+
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -65,11 +75,18 @@ Return ONLY valid JSON, no other text."""
                 timeout=30
             )
 
+            print(f"Response status: {response.status_code}")
             response.raise_for_status()
             result = response.json()
+            print(f"✅ API call successful")
 
             # Extract the response text
             content = result['choices'][0]['message']['content']
+
+            print("\n📥 RAW RESPONSE FROM LLM:")
+            print("-" * 80)
+            print(content)
+            print("-" * 80)
 
             # Parse JSON from response
             # Handle markdown code blocks if present
@@ -80,10 +97,15 @@ Return ONLY valid JSON, no other text."""
 
             metadata = json.loads(content)
 
-            print(f"✓ Extracted metadata via OpenRouter:")
-            print(f"  Title: {metadata.get('title', 'N/A')}")
-            print(f"  Authors: {len(metadata.get('authors', []))} found")
-            print(f"  Abstract: {len(metadata.get('abstract', ''))} chars")
+            print("\n✅ PARSED METADATA (JSON):")
+            print("-" * 80)
+            print(json.dumps(metadata, indent=2))
+            print("-" * 80)
+            print(f"Title: {metadata.get('title', 'N/A')}")
+            print(f"Authors: {metadata.get('authors', [])} ({len(metadata.get('authors', []))} found)")
+            print(f"Abstract: {len(metadata.get('abstract', ''))} chars")
+            print(f"Keywords: {metadata.get('keywords', [])}")
+            print("=" * 80)
 
             return metadata
 
@@ -130,6 +152,16 @@ Paper text:
 Write a clear, concise abstract (max 300 words):"""
 
         try:
+            print("=" * 80)
+            print("🤖 [OPENROUTER] ABSTRACT GENERATION - API CALL")
+            print("=" * 80)
+            print(f"Model: {self.default_model}")
+            print(f"Text length: {len(text)} chars")
+            print("\n📤 PROMPT SENT TO LLM:")
+            print("-" * 80)
+            print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
+            print("-" * 80)
+
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -145,11 +177,19 @@ Write a clear, concise abstract (max 300 words):"""
                 timeout=30
             )
 
+            print(f"Response status: {response.status_code}")
             response.raise_for_status()
             result = response.json()
+            print(f"✅ API call successful")
+
             abstract = result['choices'][0]['message']['content'].strip()
 
-            print(f"✓ Generated abstract via OpenRouter: {len(abstract)} chars")
+            print("\n📥 GENERATED ABSTRACT:")
+            print("-" * 80)
+            print(abstract)
+            print("-" * 80)
+            print(f"Length: {len(abstract)} chars")
+            print("=" * 80)
             return abstract
 
         except Exception as e:

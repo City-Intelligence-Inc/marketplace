@@ -1,6 +1,6 @@
 import pdfplumber
 import requests
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import tempfile
 import os
 
@@ -40,6 +40,46 @@ class PDFService:
         return text.strip()
 
     @staticmethod
+    def extract_text_page_by_page(file_path: str) -> Dict:
+        """
+        Extract text from PDF page-by-page with detailed results
+
+        Returns:
+            Dict with:
+                - full_text: Complete text
+                - pages: List of dicts with page_number, text, char_count
+                - total_pages: Number of pages
+                - total_chars: Total character count
+        """
+        pages_data = []
+        full_text = ""
+
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                for i, page in enumerate(pdf.pages, start=1):
+                    page_text = page.extract_text() or ""
+
+                    pages_data.append({
+                        'page_number': i,
+                        'text': page_text,
+                        'char_count': len(page_text),
+                        'line_count': len(page_text.split('\n')) if page_text else 0
+                    })
+
+                    if page_text:
+                        full_text += page_text + "\n\n"
+
+            return {
+                'full_text': full_text.strip(),
+                'pages': pages_data,
+                'total_pages': len(pages_data),
+                'total_chars': len(full_text)
+            }
+        except Exception as e:
+            print(f"Error extracting text page-by-page: {e}")
+            raise
+
+    @staticmethod
     def extract_text_from_bytes(pdf_bytes: bytes) -> str:
         """Extract text from PDF bytes"""
         # Save bytes to temp file
@@ -50,6 +90,21 @@ class PDFService:
         try:
             text = PDFService.extract_text_from_file(temp_file.name)
             return text
+        finally:
+            # Clean up temp file
+            os.unlink(temp_file.name)
+
+    @staticmethod
+    def extract_text_from_bytes_detailed(pdf_bytes: bytes) -> Dict:
+        """Extract text from PDF bytes with page-by-page details"""
+        # Save bytes to temp file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        temp_file.write(pdf_bytes)
+        temp_file.close()
+
+        try:
+            result = PDFService.extract_text_page_by_page(temp_file.name)
+            return result
         finally:
             # Clean up temp file
             os.unlink(temp_file.name)

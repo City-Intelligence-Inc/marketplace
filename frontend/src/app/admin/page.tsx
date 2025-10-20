@@ -585,6 +585,48 @@ function Step1AddPaper({
               </span>
             </div>
 
+            {/* OCR Details - Page by Page */}
+            {paperData.ocr_details && (
+              <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg space-y-3">
+                <h4 className="font-semibold text-blue-800">📄 OCR Extraction Results</h4>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="p-2 bg-white rounded border border-blue-200">
+                    <div className="text-xs text-gray-500">Total Pages</div>
+                    <div className="text-lg font-bold text-blue-700">{paperData.ocr_details.total_pages}</div>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-blue-200">
+                    <div className="text-xs text-gray-500">Total Characters</div>
+                    <div className="text-lg font-bold text-blue-700">{paperData.ocr_details.total_chars.toLocaleString()}</div>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-blue-200">
+                    <div className="text-xs text-gray-500">Avg Chars/Page</div>
+                    <div className="text-lg font-bold text-blue-700">
+                      {Math.round(paperData.ocr_details.total_chars / paperData.ocr_details.total_pages)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Page-by-Page Breakdown */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-sm font-semibold text-blue-700 hover:text-blue-900">
+                    📋 View Page-by-Page Breakdown ({paperData.ocr_details.pages.length} pages)
+                  </summary>
+                  <div className="mt-3 max-h-96 overflow-y-auto space-y-2">
+                    {paperData.ocr_details.pages.map((page: any) => (
+                      <details key={page.page_number} className="p-3 bg-white rounded border border-blue-200">
+                        <summary className="cursor-pointer font-mono text-sm text-gray-700 hover:text-blue-700">
+                          Page {page.page_number}: {page.char_count} chars, {page.line_count} lines
+                        </summary>
+                        <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
+                          {page.text}
+                        </pre>
+                      </details>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            )}
+
             <div className="p-3 bg-amber-50 border border-amber-200 rounded">
               <p className="text-sm text-amber-800">
                 <strong>Fix Parsing Errors:</strong> Review and edit the fields below. Common issues include incorrect author names or formatting.

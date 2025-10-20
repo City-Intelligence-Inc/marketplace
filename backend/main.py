@@ -841,7 +841,7 @@ async def add_test_subscriber(email: str = Form(...), name: str = Form(None)):
 
 @app.post("/api/admin/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
-    """Upload PDF and extract full text with LLM-powered metadata extraction"""
+    """Upload PDF and extract full text with page-by-page OCR and LLM metadata extraction"""
     try:
         print(f"Received file: {file.filename}, content_type: {file.content_type}")
         print(f"Paper URL: {paper_url}")
@@ -854,16 +854,36 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
         pdf_bytes = await file.read()
         print(f"PDF size: {len(pdf_bytes)} bytes")
 
-        # Extract text from PDF
+        # Extract text from PDF with page-by-page details
         pdf_service = PDFService()
-        full_text = pdf_service.extract_text_from_bytes(pdf_bytes)
-        print(f"Extracted full text: {len(full_text)} characters (NO TRUNCATION - full paper preserved)")
+        extraction_result = pdf_service.extract_text_from_bytes_detailed(pdf_bytes)
+
+        full_text = extraction_result['full_text']
+        pages = extraction_result['pages']
+        total_pages = extraction_result['total_pages']
+        total_chars = extraction_result['total_chars']
+
+        print(f"✓ Extracted {total_pages} pages, {total_chars} total characters")
+        print(f"✓ Page-by-page breakdown:")
+        for page_info in pages[:5]:  # Show first 5 pages
+            print(f"  Page {page_info['page_number']}: {page_info['char_count']} chars, {page_info['line_count']} lines")
+        if total_pages > 5:
+            print(f"  ... and {total_pages - 5} more pages")
 
         # Use OpenRouter LLM to extract metadata intelligently
         from services.openrouter_service import OpenRouterService
 
+        print("=" * 80)
+        print("🔍 STARTING LLM METADATA EXTRACTION")
+        print("=" * 80)
+
         openrouter = OpenRouterService()
         metadata = openrouter.extract_paper_metadata(full_text)
+
+        print("=" * 80)
+        print("📥 LLM RESPONSE - RAW METADATA:")
+        print(json.dumps(metadata, indent=2))
+        print("=" * 80)
 
         # Extract fields with fallbacks
         title = metadata.get('title', 'Uploaded Paper')
@@ -872,12 +892,19 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
 
         # If abstract is missing or too short, generate one
         if not abstract or len(abstract) < 100:
-            print("Abstract missing or too short, generating with LLM...")
+            print("=" * 80)
+            print("⚠️  ABSTRACT TOO SHORT - GENERATING WITH LLM")
+            print(f"   Current abstract length: {len(abstract)} chars")
+            print("=" * 80)
             abstract = openrouter.improve_abstract(full_text)
 
-        print(f"✓ LLM-extracted title: {title}")
-        print(f"✓ LLM-extracted authors: {authors}")
-        print(f"✓ Abstract length: {len(abstract)} chars")
+        print("=" * 80)
+        print("✅ FINAL EXTRACTED METADATA:")
+        print(f"   Title: {title}")
+        print(f"   Authors: {authors}")
+        print(f"   Abstract length: {len(abstract)} chars")
+        print(f"   Abstract preview: {abstract[:200]}...")
+        print("=" * 80)
 
         # Generate paper ID from timestamp
         paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
@@ -896,10 +923,33 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
         }
 
         # Store in DynamoDB
+        print("=" * 80)
+        print("💾 SAVING TO DYNAMODB:")
+        print(json.dumps({
+            'paper_id': paper_data['paper_id'],
+            'title': paper_data['title'],
+            'authors': paper_data['authors'],
+            'abstract': paper_data['abstract'][:200] + "...",
+            'full_text_length': len(paper_data['full_text']),
+            'pdf_url': paper_data['pdf_url'],
+            'categories': paper_data['categories']
+        }, indent=2))
+        print("=" * 80)
+
         paper_table.put_item(Item=paper_data)
 
-        print(f"✓ Stored paper {paper_id} in DynamoDB")
-        return paper_data
+        print(f"✅ Successfully stored paper {paper_id} in DynamoDB")
+        print("=" * 80)
+
+        # Return paper data WITH page-by-page OCR results for UI display
+        return {
+            **paper_data,
+            'ocr_details': {
+                'total_pages': total_pages,
+                'total_chars': total_chars,
+                'pages': pages  # Include all page details for admin UI
+            }
+        }
 
     except HTTPException:
         raise
