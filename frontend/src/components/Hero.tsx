@@ -15,6 +15,17 @@ const categories = [
   "Climate Science",
   "Biotechnology",
   "Economics",
+  "Psychology",
+  "Space Exploration",
+  "Neuroscience",
+  "Physics",
+  "Finance",
+  "Cybersecurity",
+  "Data Science",
+  "Politics",
+  "Philosophy",
+  "Engineering",
+  "Chemistry",
 ];
 
 export function Hero() {
