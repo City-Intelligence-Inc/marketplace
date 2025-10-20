@@ -15,9 +15,9 @@ export function TrustedBy() {
   ];
 
   return (
-    <section className="py-16 bg-white border-t border-gray-100">
+    <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-8">
+        <p className="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">
           Trusted by listeners from
         </p>
 
@@ -50,6 +50,6 @@ export function TrustedBy() {
           </CarouselContent>
         </Carousel>
       </div>
-    </section>
+    </div>
   );
 }

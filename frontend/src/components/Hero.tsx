@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { subscribeEmail } from "@/lib/api";
+import { TrustedBy } from "@/components/TrustedBy";
 
 const categories = [
   "AI",
@@ -147,6 +148,11 @@ export function Hero() {
               {isSubmitting ? "Subscribing..." : "Subscribe"}
             </Button>
           </form>
+
+          {/* Trusted By Section */}
+          <div className="mt-16">
+            <TrustedBy />
+          </div>
         </div>
       </div>
 
