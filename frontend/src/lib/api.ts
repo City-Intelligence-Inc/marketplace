@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://four0k-arr-saas.onrender.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
 
 export async function subscribeEmail(email: string): Promise<{ success: boolean; message: string }> {
   try {

@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 const ADMIN_PASSWORD = "podcast025";
-const API_URL = "https://four0k-arr-saas.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
 
 // Types
 interface PaperData {
