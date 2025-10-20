@@ -1,12 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 
 export function TrustedBy() {
   const companies = [
@@ -25,36 +19,27 @@ export function TrustedBy() {
           Trusted by listeners from
         </p>
 
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          plugins={[
-            Autoplay({
-              delay: 2000,
-            }),
-          ]}
-          className="w-full"
-        >
-          <CarouselContent>
-            {companies.map((company) => (
-              <CarouselItem key={company.name} className="md:basis-1/3 lg:basis-1/6">
-                <div className="py-2 px-1 flex items-center justify-center min-h-[100px]">
-                  <Image
-                    src={company.logo}
-                    alt={company.name}
-                    width={240}
-                    height={company.height}
-                    unoptimized
-                    style={{ height: `${company.height}px`, width: 'auto' }}
-                    className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+        {/* 2 rows of 3 logos */}
+        <div className="grid grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {companies.map((company) => (
+            <div
+              key={company.name}
+              className={`flex items-center justify-center py-4 ${
+                company.name === "IIT Kharagpur" ? "pl-0" : "px-4"
+              }`}
+            >
+              <Image
+                src={company.logo}
+                alt={company.name}
+                width={240}
+                height={company.height}
+                unoptimized
+                style={{ height: `${company.height}px`, width: 'auto' }}
+                className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
