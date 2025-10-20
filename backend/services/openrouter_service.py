@@ -9,7 +9,8 @@ class OpenRouterService:
     def __init__(self):
         self.api_key = os.getenv('OPENROUTER_API_KEY')
         self.base_url = "https://openrouter.ai/api/v1"
-        self.default_model = "anthropic/claude-3.5-sonnet"  # Best for structured extraction
+        # Use Gemini Flash 1.5 for PDF parsing - faster, cheaper, excellent quality
+        self.default_model = "google/gemini-flash-1.5"
 
         if not self.api_key:
             print("⚠ No OPENROUTER_API_KEY found - OpenRouter unavailable")
