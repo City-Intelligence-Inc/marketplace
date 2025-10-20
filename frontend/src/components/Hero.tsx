@@ -7,6 +7,7 @@ import { subscribeEmail } from "@/lib/api";
 import { TrustedBy } from "@/components/TrustedBy";
 
 const categories = [
+  "Mathematics",
   "AI",
   "Crypto",
   "Quantum Computing",

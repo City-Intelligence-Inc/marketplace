@@ -11,7 +11,7 @@
  * 4. Send -> Select users and send podcast
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,12 @@ interface Voice {
   key: string;
   name: string;
   description: string;
+}
+
+interface Stats {
+  total_subscribers: number;
+  total_podcasts: number;
+  last_podcast_date: string | null;
 }
 
 interface User {
@@ -181,7 +187,7 @@ function AdminDashboard() {
 }
 
 function StatsSection() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
