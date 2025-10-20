@@ -10,12 +10,8 @@ import Autoplay from "embla-carousel-autoplay";
 
 export function TrustedBy() {
   const companies = [
-    { name: "Stanford University", logo: "/logos/stanford.png" },
-    { name: "MIT", logo: "/logos/mit.png" },
-    { name: "Google Research", logo: "/logos/google.png" },
-    { name: "OpenAI", logo: "/logos/openai.png" },
-    { name: "DeepMind", logo: "/logos/deepmind.png" },
-    { name: "Harvard", logo: "/logos/harvard.png" },
+    { name: "Stanford University", logo: "/logos/stanford.avif" },
+    { name: "UC Berkeley", logo: "/logos/berkeley.png" },
   ];
 
   return (
