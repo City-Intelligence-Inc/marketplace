@@ -9,6 +9,7 @@ export function TrustedBy() {
     { name: "Stanford University", logo: "/logos/stanford.avif", height: 80 },
     { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 40 },
     { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 70 },
+    { name: "Princeton University", logo: "/logos/princeton.png", height: 50 },
     { name: "Purdue University", logo: "/logos/purdue.png", height: 35 },
     { name: "Meta", logo: "/logos/meta.png", height: 25 },
     { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 60 },
