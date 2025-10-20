@@ -11,7 +11,10 @@ const categories = [
   "Crypto",
   "Quantum Computing",
   "Education",
-  "Legal",
+  "Patent Law",
+  "IP Law",
+  "Constitutional Law",
+  "Corporate Law",
   "Healthcare",
   "Climate Science",
   "Biotechnology",
@@ -27,6 +30,8 @@ const categories = [
   "Philosophy",
   "Engineering",
   "Chemistry",
+  "Antitrust Law",
+  "Securities Law",
 ];
 
 export function Hero() {
