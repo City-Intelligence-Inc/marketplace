@@ -1,11 +1,12 @@
 import os
 import uuid
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from openai import OpenAI
 import boto3
 from elevenlabs.client import ElevenLabs
 from io import BytesIO
+import google.generativeai as genai
 
 class PodcastService:
     """Service for generating podcasts from research papers"""
@@ -15,6 +16,21 @@ class PodcastService:
         self.elevenlabs_client = ElevenLabs(api_key=os.getenv('ELEVENLABS_API_KEY'))
         self.s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-east-1'))
         self.bucket_name = os.getenv('S3_BUCKET_NAME', '40k-arr-saas-podcasts')
+
+        # Initialize Gemini if API key is available
+        self.gemini_available = False
+        gemini_api_key = os.getenv('GOOGLE_API_KEY')
+        if gemini_api_key:
+            try:
+                genai.configure(api_key=gemini_api_key)
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
+                self.gemini_available = True
+                print("✓ Gemini API initialized successfully")
+            except Exception as e:
+                print(f"⚠ Gemini initialization failed: {e}")
+                self.gemini_available = False
+        else:
+            print("ℹ No GOOGLE_API_KEY found - Gemini unavailable")
 
         # Voice presets - different persona combinations using 11Labs voices
         self.voice_presets = {
@@ -570,6 +586,148 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         )
 
         return response.choices[0].message.content
+
+    def generate_podcast_script_with_gemini(self, paper_data: Dict, use_full_text: bool = False,
+                                           technical_level: str = 'undergrad', custom_topics: str = None,
+                                           host_persona: str = 'curious_journalist',
+                                           expert_persona: str = 'academic_expert') -> str:
+        """Generate podcast script using Gemini (handles much larger contexts than GPT-4)"""
+
+        if not self.gemini_available:
+            raise ValueError("Gemini API not available - falling back to GPT-4")
+
+        # Determine content to use (NO TRUNCATION with Gemini!)
+        if use_full_text and 'full_text' in paper_data:
+            content = f"Full Paper Text:\n{paper_data['full_text']}"
+            length_guidance = "10-15 minute"
+            word_count = "1400-2000 words"
+        else:
+            content = f"Abstract: {paper_data['abstract']}"
+            length_guidance = "5-7 minute"
+            word_count = "700-900 words"
+
+        # Get technical level guidance
+        level_config = self.technical_levels.get(technical_level, self.technical_levels['undergrad'])
+        audience_description = level_config['audience']
+        language_guidance = level_config['language']
+
+        # Get persona configurations
+        host_config = self.personas.get(host_persona, self.personas['curious_journalist'])
+        expert_config = self.personas.get(expert_persona, self.personas['academic_expert'])
+
+        # Build custom topics section
+        custom_topics_section = ""
+        if custom_topics and custom_topics.strip():
+            custom_topics_section = f"""
+
+**CUSTOM TOPICS TO COVER:**
+The following specific areas MUST be addressed in the podcast (while maintaining natural flow):
+{custom_topics}
+
+IMPORTANT: Weave these topics naturally into the conversation. Don't make it feel like a checklist - integrate them organically while keeping the podcast structure and quality standards."""
+
+        # CRAFT Framework Prompt (same structure as GPT-4 but optimized for Gemini)
+        prompt = f"""# CONTEXT & ROLE
+You are an award-winning podcast producer creating a {length_guidance} conversational podcast episode about cutting-edge research for {audience_description}.
+
+The podcast features two distinct personalities:
+- HOST: {host_config['name']} - {host_config['personality']}
+- EXPERT: {expert_config['name']} - {expert_config['personality']}
+
+**CRITICAL TECHNICAL LEVEL GUIDANCE:**
+{language_guidance}{custom_topics_section}
+
+# ACTION & TASK
+Create a complete podcast script for this research paper that transforms dense academic content into an engaging, natural conversation between Alex (Host) and Dr. Chen (Expert).
+
+## Paper Details:
+Title: {paper_data['title']}
+Authors: {', '.join(paper_data['authors'])}
+{content}
+
+## Script Requirements:
+Your script must be {word_count} and follow this three-act structure:
+
+**ACT 1 - THE HOOK (10% of script):**
+- Alex opens with a relatable scenario or current event that connects to the paper
+- Immediately establish why listeners should care (personal impact, societal relevance)
+- Dr. Chen validates the excitement with a compelling "why now" statement
+- Create intrigue without revealing everything upfront
+
+**ACT 2 - THE EXPLORATION (70% of script):**
+- Alex asks progressively deeper questions that build understanding
+- Dr. Chen explains:
+  * What problem does this research solve?
+  * What's the key innovation or breakthrough?
+  * How does it actually work? (use analogies)
+  * What did they discover/achieve?
+- Keep exchanges dynamic: question → concise answer → follow-up → deeper explanation
+- Include natural reactions: "Wait, that's huge!" / "Okay so let me make sure I understand..."
+- Maximum 2-3 sentences per speaking turn before switching speakers
+
+**ACT 3 - THE IMPACT (20% of script):**
+- Discuss real-world applications and implications
+- Alex asks about timeline/feasibility
+- Dr. Chen provides balanced perspective (exciting but honest about challenges)
+- Alex summarizes key takeaways in plain language
+- End with forward-looking statement or question that leaves listeners thinking
+
+# FORMAT & CONSTRAINTS
+
+**Critical Formatting Rules:**
+1. Use ONLY these exact labels: "Host:" and "Expert:"
+2. NO stage directions, NO asterisks, NO parentheticals, NO bold/italics
+3. Write EXACTLY how people speak: contractions, filler words, natural pauses
+4. Every speaking turn must be 1-3 sentences maximum (conversational ping-pong)
+5. Never write labels like [Host] or (Host) - always "Host:" at start of line
+
+**CRITICAL: Make It Sound Like REAL PEOPLE Talking**
+
+This is NOT a formal interview. This is two friends having an excited conversation at a coffee shop. Write EXACTLY how people actually speak:
+
+**Natural Speech Patterns (USE THESE HEAVILY):**
+- Filler words: "um", "uh", "like", "you know", "I mean", "so", "well", "actually"
+- Reactions: "Oh!", "Wait", "Whoa", "Hmm", "Interesting", "No way!", "Really?"
+- Incomplete thoughts: "So it's like... wait, how do I explain this..."
+- Self-corrections: "It's kind of... well, no, it's more like..."
+- Thinking out loud: "Let me think... okay so..."
+- Casual agreements: "Yeah", "Totally", "Exactly", "Right", "For sure", "Absolutely"
+
+**Conversation Flow:**
+- Short bursts, not speeches (1-2 sentences MAX per turn)
+- Natural interruptions and build on each other's ideas
+- Questions should be casual: "Wait, so how does that work?" not "Could you explain the mechanism?"
+- Avoid ANY formal transitions - just flow naturally
+- Show they're listening: "Mhm", "Okay", "I see", "Got it"
+
+# TONE & STYLE
+- Enthusiastic but credible
+- Conversational but informative
+- Accessible but respecting listener intelligence
+- Natural humor when appropriate
+- Genuine curiosity and discovery
+
+Now generate the complete {word_count} podcast script following ALL the rules above."""
+
+        print(f"Generating script with Gemini (content length: {len(content)} chars)...")
+
+        try:
+            # Generate with Gemini
+            response = self.gemini_model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.9,  # Higher temperature for more creative, natural dialogue
+                    max_output_tokens=4000,  # Enough for long scripts
+                ),
+            )
+
+            script = response.text
+            print(f"✓ Gemini generated {len(script)} character script")
+            return script
+
+        except Exception as e:
+            print(f"✗ Gemini generation failed: {e}")
+            raise
 
     def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
         """Parse script into (speaker, text) tuples, removing speaker labels"""

@@ -857,10 +857,10 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
         # Extract text from PDF
         pdf_service = PDFService()
         full_text = pdf_service.extract_text_from_bytes(pdf_bytes)
-        print(f"Extracted text length: {len(full_text)} characters")
+        print(f"Extracted full text: {len(full_text)} characters (NO TRUNCATION - full paper preserved)")
 
-        # Truncate if needed
-        truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
+        # NO TRUNCATION - Store full text for Gemini to handle
+        # Gemini 1.5 Flash can handle 1M+ tokens (~750k characters)
 
         # Try to extract title and authors from first few lines of text
         lines = full_text.split('\n')[:20]  # First 20 lines
@@ -920,7 +920,7 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
 
 @app.post("/api/admin/extract-pdf-from-arxiv")
 async def extract_pdf_from_arxiv(request: FetchPaperRequest):
-    """Fetch paper from arXiv and extract full PDF text"""
+    """Fetch paper from arXiv and extract full PDF text (NO TRUNCATION for Gemini support)"""
     try:
         # Extract paper ID
         paper_id = arxiv_service.extract_paper_id(request.arxiv_url)
@@ -935,11 +935,11 @@ async def extract_pdf_from_arxiv(request: FetchPaperRequest):
         pdf_service = PDFService()
         full_text = pdf_service.extract_from_arxiv(paper_data['pdf_url'])
 
-        # Truncate if needed
-        truncated_text = pdf_service.smart_truncate(full_text, max_chars=15000)
+        print(f"Extracted full text: {len(full_text)} characters (NO TRUNCATION - full paper preserved)")
 
-        # Add full text to paper data
-        paper_data['full_text'] = truncated_text
+        # NO TRUNCATION - Store full text for Gemini to handle
+        # Gemini 1.5 Flash can handle 1M+ tokens (~750k characters)
+        paper_data['full_text'] = full_text
 
         # Store in DynamoDB
         paper_table.put_item(

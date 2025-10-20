@@ -74,11 +74,19 @@ class PDFService:
                 os.unlink(temp_file_path)
 
     @staticmethod
-    def smart_truncate(text: str, max_chars: int = 15000) -> str:
+    def smart_truncate(text: str, max_chars: int = 15000, enable_truncation: bool = True) -> str:
         """
         Intelligently truncate text to fit within token limits
         Keeps introduction and conclusion, summarizes middle
+
+        Args:
+            text: Text to truncate
+            max_chars: Maximum characters to keep (default 15000 for GPT-4)
+            enable_truncation: If False, returns full text regardless of length (for Gemini)
         """
+        if not enable_truncation:
+            return text
+
         if len(text) <= max_chars:
             return text
 
