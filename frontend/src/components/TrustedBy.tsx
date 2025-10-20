@@ -45,8 +45,8 @@ export function TrustedBy() {
                     src={company.logo}
                     alt={company.name}
                     width={180}
-                    height={90}
-                    className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
+                    height={60}
+                    className="h-[60px] w-auto object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
                   />
                 </div>
               </CarouselItem>
