@@ -90,30 +90,32 @@ def mock_dynamodb():
 @pytest.fixture
 def mock_openai():
     """Mock OpenAI API for transcript generation"""
-    with patch('services.podcast_service.openai.chat.completions.create') as mock:
-        mock.return_value = Mock(
+    with patch('services.podcast_service.OpenAI') as mock_openai_class:
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = Mock(
             choices=[Mock(message=Mock(content='Host: Welcome!\nExpert: Thank you!'))]
         )
-        yield mock
+        mock_openai_class.return_value = mock_client
+        yield mock_client
 
 
 @pytest.fixture
 def mock_elevenlabs():
     """Mock ElevenLabs API for audio generation"""
-    with patch('services.podcast_service.requests.post') as mock:
-        mock.return_value = Mock(
-            status_code=200,
-            content=b'fake audio data'
-        )
-        yield mock
+    with patch('services.podcast_service.ElevenLabs') as mock_elevenlabs_class:
+        mock_client = Mock()
+        # Mock the convert method to return audio bytes
+        mock_client.text_to_speech.convert.return_value = iter([b'fake audio data'])
+        mock_elevenlabs_class.return_value = mock_client
+        yield mock_client
 
 
 @pytest.fixture
 def mock_s3():
     """Mock S3 upload"""
-    with patch('services.podcast_service.boto3.client') as mock:
+    with patch('services.podcast_service.boto3') as mock_boto:
         s3_client = Mock()
-        mock.return_value = s3_client
+        mock_boto.client.return_value = s3_client
         yield s3_client
 
 
@@ -195,9 +197,7 @@ class TestPublicEndpoints:
         mock_dynamodb['email_table'].update_item.return_value = {}
 
         response = client.post(
-            "/api/unsubscribe",
-            json="test@example.com",
-            headers={"Content-Type": "application/json"}
+            "/api/unsubscribe?email=test@example.com"
         )
         assert response.status_code == 200
         assert 'Successfully unsubscribed' in response.json()['message']
