@@ -263,12 +263,8 @@ function Step1AddPaper({
   setPaperData: (data: PaperData | null) => void;
   setTranscript: (transcript: string) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"arxiv" | "upload" | "text">("arxiv");
+  const [activeTab, setActiveTab] = useState<"upload" | "text">("upload");
   const [isLoading, setIsLoading] = useState(false);
-
-  // For arXiv
-  const [arxivUrl, setArxivUrl] = useState("");
-  const [extractFull, setExtractFull] = useState(false);
 
   // For upload
   const [paperUrl, setPaperUrl] = useState("");
@@ -291,39 +287,6 @@ function Step1AddPaper({
       setEditAbstract(paperData.abstract);
     }
   }, [paperData]);
-
-  const handleFetchArxiv = async () => {
-    if (!arxivUrl) {
-      toast.error("Please enter an arXiv URL");
-      return;
-    }
-
-    setIsLoading(true);
-    toast.info("Fetching paper...");
-
-    try {
-      const endpoint = extractFull
-        ? `${API_URL}/api/admin/extract-pdf-from-arxiv`
-        : `${API_URL}/api/admin/fetch-paper`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ arxiv_url: arxivUrl }),
-      });
-
-      if (!response.ok) throw new Error("Failed to fetch paper");
-
-      const data = await response.json();
-      setPaperData(data);
-      toast.success(extractFull ? "Paper fetched with full text!" : "Paper fetched!");
-    } catch (error) {
-      toast.error("Failed to fetch paper");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleUploadPDF = async () => {
     if (!paperUrl || !pdfFile) {
@@ -448,18 +411,11 @@ function Step1AddPaper({
     <Card>
       <CardHeader>
         <CardTitle>1. Add Paper</CardTitle>
-        <CardDescription>Fetch from arXiv, upload PDF, or paste text</CardDescription>
+        <CardDescription>Upload PDF or paste text</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Tabs */}
         <div className="flex gap-2 border-b">
-          <Button
-            variant="ghost"
-            className={activeTab === "arxiv" ? "border-b-2 border-orange-600 rounded-none" : "rounded-none"}
-            onClick={() => setActiveTab("arxiv")}
-          >
-            From arXiv
-          </Button>
           <Button
             variant="ghost"
             className={activeTab === "upload" ? "border-b-2 border-orange-600 rounded-none" : "rounded-none"}
@@ -476,38 +432,6 @@ function Step1AddPaper({
           </Button>
         </div>
 
-        {/* arXiv Tab */}
-        {activeTab === "arxiv" && (
-          <div className="space-y-4">
-            <Input
-              type="url"
-              placeholder="https://arxiv.org/abs/2401.12345"
-              value={arxivUrl}
-              onChange={(e) => setArxivUrl(e.target.value)}
-              disabled={isLoading}
-            />
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="extractFull"
-                checked={extractFull}
-                onChange={(e) => setExtractFull(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <label htmlFor="extractFull" className="text-sm">
-                Extract full PDF text (7-10 min podcast)
-              </label>
-            </div>
-            <Button
-              onClick={handleFetchArxiv}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-orange-600 to-red-600"
-            >
-              {isLoading ? "Fetching..." : "Fetch Paper"}
-            </Button>
-          </div>
-        )}
-
         {/* Upload Tab */}
         {activeTab === "upload" && (
           <div className="space-y-4">
@@ -518,7 +442,7 @@ function Step1AddPaper({
             </div>
             <Input
               type="url"
-              placeholder="Paper URL (e.g., https://arxiv.org/abs/2401.12345)"
+              placeholder="Paper URL (e.g., https://example.com/paper.pdf)"
               value={paperUrl}
               onChange={(e) => setPaperUrl(e.target.value)}
               disabled={isLoading}
