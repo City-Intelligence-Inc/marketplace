@@ -90,18 +90,18 @@ export function Hero() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-20 md:pt-32 pb-20 md:pb-0">
+    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-16 sm:pt-20 md:pt-32 pb-16 sm:pb-20 md:pb-0">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden bg-white">
         {/* Large Gradient Orbs - Subtle */}
-        <div className="absolute top-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-[100px] animate-float" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-red-600/15 to-orange-600/15 rounded-full blur-[120px] animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-amber-500/15 to-red-500/15 rounded-full blur-[100px] animate-pulse-slow" />
+        <div className="absolute top-1/4 -left-1/4 w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-[80px] sm:blur-[100px] animate-float" />
+        <div className="absolute bottom-1/4 -right-1/4 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-br from-red-600/15 to-orange-600/15 rounded-full blur-[100px] sm:blur-[120px] animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-gradient-to-br from-amber-500/15 to-red-500/15 rounded-full blur-[80px] sm:blur-[100px] animate-pulse-slow" />
 
         {/* Additional subtle accent orbs */}
-        <div className="absolute top-10 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-orange-400/12 to-red-400/12 rounded-full blur-[80px] animate-float-slow" />
-        <div className="absolute bottom-20 left-1/3 w-[500px] h-[500px] bg-gradient-to-br from-amber-600/10 to-orange-600/10 rounded-full blur-[90px] animate-float" />
-        <div className="absolute top-1/3 right-1/2 w-[350px] h-[350px] bg-gradient-to-br from-red-500/12 to-amber-500/12 rounded-full blur-[70px] animate-float-delayed" />
+        <div className="absolute top-10 right-1/4 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-gradient-to-br from-orange-400/12 to-red-400/12 rounded-full blur-[60px] sm:blur-[80px] animate-float-slow" />
+        <div className="absolute bottom-20 left-1/3 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-amber-600/10 to-orange-600/10 rounded-full blur-[70px] sm:blur-[90px] animate-float" />
+        <div className="absolute top-1/3 right-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-gradient-to-br from-red-500/12 to-amber-500/12 rounded-full blur-[60px] sm:blur-[70px] animate-float-delayed" />
 
         {/* Animated Grid with depth */}
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.08] animate-grid-flow" />
@@ -113,17 +113,17 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="space-y-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-6 lg:px-8 text-center">
+        <div className="space-y-6 sm:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight">
             <span className="block text-black">
               Daily podcasts on #1 trending
             </span>
             <span className="block text-black">
               research and news in
             </span>
-            <span className="block mt-8 mb-8 min-h-[10rem] py-8 flex items-center justify-center overflow-visible">
+            <span className="block mt-6 sm:mt-8 mb-6 sm:mb-8 min-h-[7rem] sm:min-h-[10rem] py-6 sm:py-8 flex items-center justify-center overflow-visible">
               <span
                 className={`inline-block bg-gradient-to-r from-orange-500 via-red-500 to-amber-600 bg-clip-text text-transparent transition-all duration-500 leading-tight ${
                   isAnimating
@@ -137,32 +137,33 @@ export function Hero() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
-            5-10 min expert-curated podcasts delivered to your inbox daily.<br />
-            Never miss breakthrough research again.
+          <p className="text-lg sm:text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed px-4">
+            5-10 min expert-curated podcasts delivered to your inbox daily.
+            <br className="hidden sm:block" />
+            <span className="block sm:inline mt-1 sm:mt-0"> Never miss breakthrough research again.</span>
           </p>
 
           {/* Email Subscription Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch pt-4 max-w-md mx-auto w-full px-4">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch pt-4 max-w-md mx-auto w-full px-2 sm:px-4">
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
-              className="w-full h-12 px-6 rounded-lg bg-white border-2 border-gray-300 text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 sm:h-12 px-6 text-base sm:text-sm rounded-lg bg-white border-2 border-gray-300 text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto h-14 sm:h-12 px-8 text-base sm:text-sm bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isSubmitting ? "Entering..." : "Enter the Club"}
             </Button>
           </form>
 
           {/* Trusted By Section */}
-          <div className="mt-16">
+          <div className="mt-12 sm:mt-16">
             <TrustedBy />
           </div>
         </div>
