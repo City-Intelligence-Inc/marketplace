@@ -138,7 +138,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
-            Curated podcasts, delivered daily.
+            Curated 5-10 min podcasts, delivered daily.
           </p>
 
           {/* Email Subscription Form */}
