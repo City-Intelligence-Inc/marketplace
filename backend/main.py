@@ -678,6 +678,12 @@ async def preview_podcast(podcast_id: str):
 async def send_podcast(request: SendPodcastRequest):
     """Send podcast to all subscribers"""
     try:
+        print("=" * 80)
+        print("📧 SENDING PODCAST TO ALL SUBSCRIBERS")
+        print("=" * 80)
+        print(f"Podcast ID: {request.podcast_id}")
+        print("-" * 80)
+
         # Fetch podcast
         podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
 
@@ -685,6 +691,11 @@ async def send_podcast(request: SendPodcastRequest):
             raise HTTPException(status_code=404, detail="Podcast not found")
 
         podcast_data = podcast_response['Item']
+
+        print(f"📄 Podcast Details:")
+        print(f"   Title: {podcast_data.get('paper_title', 'N/A')[:60]}...")
+        print(f"   Audio URL: {podcast_data.get('audio_url', 'N/A')[:60]}...")
+        print("-" * 80)
 
         # Fetch all subscribed emails
         scan_response = email_table.scan(
@@ -694,24 +705,49 @@ async def send_podcast(request: SendPodcastRequest):
 
         subscribers = scan_response.get('Items', [])
 
+        print(f"👥 Found {len(subscribers)} active subscribers")
+
         if not subscribers:
-            return {"message": "No subscribers found", "sent": 0, "failed": 0}
+            print("⚠️  No subscribers found")
+            print("=" * 80)
+            return {
+                "message": "No subscribers found",
+                "sent": 0,
+                "failed": 0,
+                "stats": {
+                    "total_subscribers": 0,
+                    "sent_count": 0,
+                    "failed_count": 0,
+                    "success_rate": 0
+                }
+            }
 
         # Send emails
+        print(f"📤 Starting bulk email send...")
         result = email_service.send_bulk_podcast_emails(subscribers, podcast_data)
 
+        print("-" * 80)
+        print(f"✉️  Email Send Results:")
+        print(f"   Sent: {result['sent']}")
+        print(f"   Failed: {result['failed']}")
+        print(f"   Success Rate: {(result['sent'] / len(subscribers) * 100):.1f}%")
+        print("-" * 80)
+
         # Update podcast record
+        sent_timestamp = int(datetime.utcnow().timestamp())
         podcast_table.update_item(
             Key={'podcast_id': request.podcast_id},
             UpdateExpression='SET sent_at = :sent_at, recipients_count = :count',
             ExpressionAttributeValues={
-                ':sent_at': int(datetime.utcnow().timestamp()),
+                ':sent_at': sent_timestamp,
                 ':count': result['sent']
             }
         )
+        print(f"💾 Updated podcast record in database")
 
         # Update last_email_sent for each subscriber
         current_time = datetime.utcnow().isoformat()
+        updated_count = 0
         for subscriber in subscribers:
             try:
                 email_table.update_item(
@@ -719,20 +755,38 @@ async def send_podcast(request: SendPodcastRequest):
                     UpdateExpression='SET last_email_sent = :time',
                     ExpressionAttributeValues={':time': current_time}
                 )
+                updated_count += 1
             except:
                 pass  # Continue even if individual update fails
+
+        print(f"💾 Updated last_email_sent for {updated_count} subscribers")
+        print("=" * 80)
+        print("✅ PODCAST SEND COMPLETED SUCCESSFULLY")
+        print("=" * 80)
 
         return {
             "message": "Podcast sent successfully",
             "sent": result['sent'],
             "failed": result['failed'],
-            "total_subscribers": len(subscribers)
+            "total_subscribers": len(subscribers),
+            "stats": {
+                "podcast_id": request.podcast_id,
+                "podcast_title": podcast_data.get('paper_title', 'N/A'),
+                "sent_at": sent_timestamp,
+                "sent_count": result['sent'],
+                "failed_count": result['failed'],
+                "total_subscribers": len(subscribers),
+                "success_rate": round((result['sent'] / len(subscribers) * 100), 2) if len(subscribers) > 0 else 0,
+                "subscribers_updated": updated_count
+            }
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error sending podcast: {e}")
+        print(f"❌ Error sending podcast: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error sending podcast: {str(e)}")
 
 @app.get("/api/admin/stats")
@@ -1030,11 +1084,18 @@ async def generate_transcript(
         paper_data = response['Item']
 
         # Generate only the script with all parameters
-        print(f"Generating transcript for {paper_data['title']}...")
-        print(f"Technical level: {technical_level}")
-        print(f"Host persona: {host_persona}, Expert persona: {expert_persona}")
+        print("=" * 80)
+        print("🎙️  GENERATING TRANSCRIPT")
+        print("=" * 80)
+        print(f"Paper ID: {paper_id}")
+        print(f"Title: {paper_data['title'][:60]}...")
+        print(f"Technical Level: {technical_level}")
+        print(f"Host Persona: {host_persona}")
+        print(f"Expert Persona: {expert_persona}")
+        print(f"Use Full Text: {use_full_text}")
         if custom_topics:
-            print(f"Custom topics: {custom_topics[:100]}...")
+            print(f"Custom Topics: {custom_topics[:100]}...")
+        print("-" * 80)
 
         transcript = podcast_service.generate_podcast_script(
             paper_data,
@@ -1045,10 +1106,22 @@ async def generate_transcript(
             expert_persona=expert_persona
         )
 
+        print("=" * 80)
+        print("✅ TRANSCRIPT GENERATED SUCCESSFULLY")
+        print(f"   Length: {len(transcript)} characters")
+        print(f"   Word count: ~{len(transcript.split())} words")
+        print("=" * 80)
+
         return {
             "transcript": transcript,
             "paper_id": paper_id,
-            "paper_title": paper_data['title']
+            "paper_title": paper_data['title'],
+            "stats": {
+                "char_count": len(transcript),
+                "word_count": len(transcript.split()),
+                "technical_level": technical_level,
+                "personas": {"host": host_persona, "expert": expert_persona}
+            }
         }
 
     except HTTPException:
@@ -1110,11 +1183,19 @@ async def convert_to_audio(
         # Generate audio from transcript with selected voices
         import uuid
         podcast_id = str(uuid.uuid4())
-        print(f"Converting transcript to audio for podcast {podcast_id}...")
+
+        print("=" * 80)
+        print("🎧 CONVERTING TRANSCRIPT TO AUDIO")
+        print("=" * 80)
+        print(f"Podcast ID: {podcast_id}")
+        print(f"Paper ID: {paper_id}")
+        print(f"Title: {final_title[:60]}...")
+        print(f"Transcript Length: {len(transcript)} chars")
         if host_voice_key and expert_voice_key:
-            print(f"Using custom voices: Host={host_voice_key}, Expert={expert_voice_key}")
+            print(f"Custom Voices: Host={host_voice_key}, Expert={expert_voice_key}")
         else:
-            print(f"Using voice preset: {voice_preset}")
+            print(f"Voice Preset: {voice_preset}")
+        print("-" * 80)
 
         audio_url = podcast_service.generate_audio(
             transcript,
@@ -1140,11 +1221,27 @@ async def convert_to_audio(
 
         podcast_table.put_item(Item=podcast_item)
 
+        print("=" * 80)
+        print("✅ PODCAST CREATED SUCCESSFULLY")
+        print(f"   Podcast ID: {podcast_id}")
+        print(f"   Audio URL: {audio_url[:80]}...")
+        print(f"   Saved to DynamoDB: podcasts table")
+        print("=" * 80)
+
         return {
             "podcast_id": podcast_id,
             "audio_url": audio_url,
             "transcript": transcript,
-            "paper_title": paper_data['title']
+            "paper_title": final_title,
+            "stats": {
+                "audio_url": audio_url,
+                "created_at": podcast_item['created_at'],
+                "voice_config": {
+                    "preset": voice_preset,
+                    "host_voice": host_voice_key,
+                    "expert_voice": expert_voice_key
+                }
+            }
         }
 
     except HTTPException:
@@ -1252,24 +1349,77 @@ async def get_voice_preview(voice_key: str, role: str = 'host'):
 async def get_all_users():
     """Get all users from DynamoDB"""
     try:
+        print("=" * 80)
+        print("👥 FETCHING ALL USERS FROM DATABASE")
+        print("=" * 80)
+
         # Scan all users from email table
         response = email_table.scan()
         users = response.get('Items', [])
+        scan_count = 1
 
         # Handle pagination if there are many users
         while 'LastEvaluatedKey' in response:
             response = email_table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             users.extend(response.get('Items', []))
+            scan_count += 1
+
+        print(f"📊 Database Scans: {scan_count} (paginated)")
+        print(f"📊 Total Users Found: {len(users)}")
+        print("-" * 80)
 
         # Sort by signup timestamp (most recent first)
         users.sort(key=lambda x: x.get('signup_timestamp', 0), reverse=True)
 
+        # Calculate statistics
+        subscribed_count = sum(1 for u in users if u.get('subscribed', False))
+        unsubscribed_count = len(users) - subscribed_count
+
+        # Subscription tier breakdown
+        tier_counts = {}
+        for user in users:
+            tier = user.get('subscription_tier', 'free')
+            tier_counts[tier] = tier_counts.get(tier, 0) + 1
+
+        # Source breakdown
+        source_counts = {}
+        for user in users:
+            source = user.get('source', 'organic')
+            source_counts[source] = source_counts.get(source, 0) + 1
+
+        print(f"📈 User Statistics:")
+        print(f"   Active (subscribed): {subscribed_count}")
+        print(f"   Unsubscribed: {unsubscribed_count}")
+        print(f"   Subscription Rate: {(subscribed_count / len(users) * 100):.1f}%")
+        print("-" * 80)
+
+        print(f"💰 Subscription Tiers:")
+        for tier, count in sorted(tier_counts.items(), key=lambda x: x[1], reverse=True):
+            print(f"   {tier}: {count} ({(count / len(users) * 100):.1f}%)")
+        print("-" * 80)
+
+        print(f"📍 User Sources:")
+        for source, count in sorted(source_counts.items(), key=lambda x: x[1], reverse=True):
+            print(f"   {source}: {count} ({(count / len(users) * 100):.1f}%)")
+        print("=" * 80)
+        print("✅ USER DATA FETCHED SUCCESSFULLY")
+        print("=" * 80)
+
         return {
             "users": users,
-            "total": len(users)
+            "total": len(users),
+            "stats": {
+                "total_users": len(users),
+                "subscribed": subscribed_count,
+                "unsubscribed": unsubscribed_count,
+                "subscription_rate": round((subscribed_count / len(users) * 100), 2) if len(users) > 0 else 0,
+                "tiers": tier_counts,
+                "sources": source_counts,
+                "database_scans": scan_count
+            }
         }
     except Exception as e:
-        print(f"Error fetching users: {e}")
+        print(f"❌ Error fetching users: {e}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
@@ -1454,6 +1604,13 @@ class SendPodcastToUsersRequest(BaseModel):
 async def send_podcast_to_users(request: SendPodcastToUsersRequest):
     """Send podcast to specific users"""
     try:
+        print("=" * 80)
+        print("📧 SENDING PODCAST TO SELECTED USERS")
+        print("=" * 80)
+        print(f"Podcast ID: {request.podcast_id}")
+        print(f"Recipients: {len(request.recipient_emails)} selected users")
+        print("-" * 80)
+
         # Fetch podcast
         podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
 
@@ -1462,33 +1619,91 @@ async def send_podcast_to_users(request: SendPodcastToUsersRequest):
 
         podcast_data = podcast_response['Item']
 
+        print(f"📄 Podcast Details:")
+        print(f"   Title: {podcast_data.get('paper_title', 'N/A')[:60]}...")
+        print(f"   Audio URL: {podcast_data.get('audio_url', 'N/A')[:60]}...")
+        print("-" * 80)
+
         # Get user data for selected emails
         subscribers = []
+        not_found_emails = []
+        print(f"🔍 Fetching user data for {len(request.recipient_emails)} recipients...")
+
         for email in request.recipient_emails:
             try:
                 user_response = email_table.get_item(Key={'email': email.lower()})
                 if 'Item' in user_response:
                     subscribers.append(user_response['Item'])
+                    print(f"   ✓ Found: {email.lower()}")
+                else:
+                    not_found_emails.append(email.lower())
+                    print(f"   ✗ Not found: {email.lower()}")
             except Exception as e:
-                print(f"Warning: Could not fetch user {email}: {e}")
+                not_found_emails.append(email.lower())
+                print(f"   ✗ Error fetching {email}: {e}")
+
+        print("-" * 80)
+        print(f"👥 User Lookup Results:")
+        print(f"   Found: {len(subscribers)}")
+        print(f"   Not Found: {len(not_found_emails)}")
+        if not_found_emails:
+            print(f"   Missing emails: {', '.join(not_found_emails[:5])}")
+            if len(not_found_emails) > 5:
+                print(f"   ... and {len(not_found_emails) - 5} more")
+        print("-" * 80)
 
         if not subscribers:
-            return {"message": "No valid subscribers found", "sent": 0, "failed": 0}
+            print("⚠️  No valid subscribers found")
+            print("=" * 80)
+            return {
+                "message": "No valid subscribers found",
+                "sent": 0,
+                "failed": 0,
+                "stats": {
+                    "requested": len(request.recipient_emails),
+                    "found": 0,
+                    "not_found": len(not_found_emails),
+                    "sent": 0,
+                    "failed": 0,
+                    "not_found_emails": not_found_emails
+                }
+            }
 
         # Send emails
+        print(f"📤 Starting email send to {len(subscribers)} users...")
         result = email_service.send_bulk_podcast_emails(subscribers, podcast_data)
+
+        print("-" * 80)
+        print(f"✉️  Email Send Results:")
+        print(f"   Sent: {result['sent']}")
+        print(f"   Failed: {result['failed']}")
+        print(f"   Success Rate: {(result['sent'] / len(subscribers) * 100):.1f}%")
+        print("=" * 80)
+        print("✅ TARGETED SEND COMPLETED SUCCESSFULLY")
+        print("=" * 80)
 
         return {
             "message": "Podcast sent to selected users",
             "sent": result['sent'],
             "failed": result['failed'],
-            "total_subscribers": len(subscribers)
+            "total_subscribers": len(subscribers),
+            "stats": {
+                "podcast_id": request.podcast_id,
+                "podcast_title": podcast_data.get('paper_title', 'N/A'),
+                "requested": len(request.recipient_emails),
+                "found": len(subscribers),
+                "not_found": len(not_found_emails),
+                "sent_count": result['sent'],
+                "failed_count": result['failed'],
+                "success_rate": round((result['sent'] / len(subscribers) * 100), 2) if len(subscribers) > 0 else 0,
+                "not_found_emails": not_found_emails
+            }
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error sending podcast to users: {e}")
+        print(f"❌ Error sending podcast to users: {e}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error sending podcast to users: {str(e)}")
