@@ -36,7 +36,7 @@ export function TrustedBy() {
           <CarouselContent>
             {companies.map((company) => (
               <CarouselItem key={company.name} className="md:basis-1/3 lg:basis-1/6">
-                <div className="p-4 flex items-center justify-center h-32">
+                <div className="p-2 flex items-center justify-center h-24">
                   <Image
                     src={company.logo}
                     alt={company.name}
