@@ -4,6 +4,7 @@ import Image from "next/image";
 
 export function TrustedBy() {
   const companies = [
+    { name: "MIT", logo: "/logos/mit.png", height: 50 },
     { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 40 },
     { name: "Stanford University", logo: "/logos/stanford.avif", height: 80 },
     { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 40 },
