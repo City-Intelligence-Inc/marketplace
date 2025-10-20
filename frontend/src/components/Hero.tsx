@@ -118,7 +118,7 @@ export function Hero() {
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
             <span className="block text-black">
-              Never miss daily breakthrough
+              Daily podcasts on #1 trending
             </span>
             <span className="block text-black">
               research and news in
@@ -138,7 +138,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
-            5-10 min expert-curated podcasts delivered to your inbox daily.
+            Never miss breakthrough research. 5-10 min expert-curated podcasts delivered to your inbox daily.
           </p>
 
           {/* Email Subscription Form */}
