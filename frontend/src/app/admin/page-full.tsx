@@ -465,26 +465,38 @@ function Step1AddPaper({
         {/* Upload Tab */}
         {activeTab === "upload" && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">Upload a PDF and we&apos;ll automatically extract the text</p>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> After uploading, you can edit the extracted title, authors, and abstract below to fix any parsing errors.
+              </p>
+            </div>
             <Input
               type="url"
-              placeholder="Paper URL (required)"
+              placeholder="Paper URL (e.g., https://arxiv.org/abs/2401.12345)"
               value={paperUrl}
               onChange={(e) => setPaperUrl(e.target.value)}
               disabled={isLoading}
             />
-            <Input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-              disabled={isLoading}
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select PDF File:</label>
+              <Input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                disabled={isLoading}
+              />
+              {pdfFile && (
+                <p className="text-xs text-green-600">
+                  Selected: {pdfFile.name}
+                </p>
+              )}
+            </div>
             <Button
               onClick={handleUploadPDF}
-              disabled={isLoading}
+              disabled={isLoading || !paperUrl || !pdfFile}
               className="w-full bg-gradient-to-r from-orange-600 to-red-600"
             >
-              {isLoading ? "Uploading..." : "Upload PDF"}
+              {isLoading ? "Uploading & Extracting..." : "Upload PDF"}
             </Button>
           </div>
         )}
@@ -519,38 +531,62 @@ function Step1AddPaper({
 
         {/* Paper Preview (Editable) */}
         {paperData && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg space-y-4">
-            <h3 className="font-semibold text-green-800">Paper Loaded - Edit Below</h3>
+          <div className="mt-6 p-4 bg-green-50 border-2 border-green-300 rounded-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-green-800 text-lg">✓ Paper Loaded Successfully</h3>
+              <span className="text-xs text-green-700 font-mono bg-green-100 px-2 py-1 rounded">
+                ID: {paperData.paper_id}
+              </span>
+            </div>
+
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded">
+              <p className="text-sm text-amber-800">
+                <strong>Fix Parsing Errors:</strong> Review and edit the fields below. Common issues include incorrect author names or formatting.
+              </p>
+            </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">Title:</label>
+              <label className="text-sm font-semibold text-gray-700">Title:</label>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="bg-white"
+                className="bg-white border-2"
+                placeholder="Enter paper title"
               />
             </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">Authors:</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Authors: <span className="text-xs font-normal text-gray-500">(comma-separated)</span>
+              </label>
               <Input
                 value={editAuthors}
                 onChange={(e) => setEditAuthors(e.target.value)}
-                className="bg-white"
+                className="bg-white border-2"
+                placeholder="e.g., John Doe, Jane Smith, Bob Johnson"
               />
+              <p className="text-xs text-gray-500">
+                Tip: Separate multiple authors with commas
+              </p>
             </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">Abstract:</label>
+              <label className="text-sm font-semibold text-gray-700">Abstract:</label>
               <Textarea
                 value={editAbstract}
                 onChange={(e) => setEditAbstract(e.target.value)}
-                rows={4}
-                className="bg-white"
+                rows={5}
+                className="bg-white border-2"
+                placeholder="Enter paper abstract"
               />
             </div>
-            <p className="text-xs text-green-700">
-              Paper ID: <span className="font-mono">{paperData.paper_id}</span>
-            </p>
-            <Button onClick={saveEdits} variant="outline" size="sm">
-              Save Changes
+
+            <Button
+              onClick={saveEdits}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              size="lg"
+            >
+              Save Changes & Continue
             </Button>
           </div>
         )}
