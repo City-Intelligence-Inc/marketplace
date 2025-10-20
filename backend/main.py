@@ -184,7 +184,19 @@ async def create_podcast_from_text(
 
 @app.get("/api/health")
 async def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "version": "2025-01-20-ocr-v2",
+        "features": {
+            "ocr_page_by_page": True,
+            "openrouter_metadata": True,
+            "llm_logging": True
+        },
+        "endpoints": {
+            "upload_pdf": "/api/admin/upload-pdf",
+            "returns_ocr": True
+        }
+    }
 
 @app.post("/api/signup", response_model=SignupResponse, status_code=201)
 async def signup(data: EmailSignup):
