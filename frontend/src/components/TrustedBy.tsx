@@ -4,12 +4,12 @@ import Image from "next/image";
 
 export function TrustedBy() {
   const companies = [
-    { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 45 },
+    { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 40 },
     { name: "Stanford University", logo: "/logos/stanford.avif", height: 80 },
-    { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 45 },
+    { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 40 },
     { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 60 },
-    { name: "Purdue University", logo: "/logos/purdue.png", height: 45 },
-    { name: "Meta", logo: "/logos/meta.png", height: 45 },
+    { name: "Purdue University", logo: "/logos/purdue.png", height: 40 },
+    { name: "Meta", logo: "/logos/meta.png", height: 30 },
     { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 60 },
   ];
 
