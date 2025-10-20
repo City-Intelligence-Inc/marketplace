@@ -64,26 +64,40 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("=== ADMIN PAGE MOUNTED ===");
+    console.log("API URL:", API_URL);
+    console.log("Checking authentication status...");
+
     const authStatus = sessionStorage.getItem("adminAuth");
+    console.log("Auth status from session:", authStatus);
+
     if (authStatus === "true") {
+      console.log("✓ User is authenticated");
       setIsAuthenticated(true);
+    } else {
+      console.log("✗ User is not authenticated");
     }
     setIsLoading(false);
+    console.log("=== ADMIN PAGE READY ===");
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login attempt...");
     if (password === ADMIN_PASSWORD) {
+      console.log("✓ Password correct, granting access");
       setIsAuthenticated(true);
       sessionStorage.setItem("adminAuth", "true");
       toast.success("Access granted");
     } else {
+      console.log("✗ Incorrect password");
       toast.error("Incorrect password");
       setPassword("");
     }
   };
 
   const handleLogout = () => {
+    console.log("Logging out...");
     setIsAuthenticated(false);
     sessionStorage.removeItem("adminAuth");
     toast.success("Logged out");
@@ -191,12 +205,16 @@ function StatsSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("📊 Fetching admin stats...");
     async function fetchStats() {
       try {
         const response = await fetch(`${API_URL}/api/admin/stats`);
+        console.log("Stats response status:", response.status);
         const data = await response.json();
+        console.log("✓ Stats loaded:", data);
         setStats(data);
-      } catch {
+      } catch (error) {
+        console.error("✗ Failed to load stats:", error);
         toast.error("Failed to load stats");
       } finally {
         setIsLoading(false);
@@ -267,6 +285,7 @@ function Step1AddPaper({
 
   useEffect(() => {
     if (paperData) {
+      console.log("📄 Paper data loaded:", paperData);
       setEditTitle(paperData.title);
       setEditAuthors(Array.isArray(paperData.authors) ? paperData.authors.join(", ") : paperData.authors);
       setEditAbstract(paperData.abstract);
@@ -410,12 +429,16 @@ function Step1AddPaper({
 
   const saveEdits = () => {
     if (paperData) {
+      console.log("💾 Saving paper edits...");
+      console.log("Title:", editTitle);
+      console.log("Authors:", editAuthors);
       const updatedData: PaperData = {
         ...paperData,
         title: editTitle,
         authors: editAuthors.split(",").map(a => a.trim()),
         abstract: editAbstract,
       };
+      console.log("✓ Updated paper data:", updatedData);
       setPaperData(updatedData);
       toast.success("Paper metadata updated");
     }
@@ -638,13 +661,17 @@ function Step2GenerateTranscript({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+    console.log("🎭 Loading personas...");
     async function loadPersonas() {
       try {
         const response = await fetch(`${API_URL}/api/admin/personas`);
+        console.log("Personas response status:", response.status);
         const data = await response.json();
+        console.log("✓ Personas loaded:", data.personas?.length || 0, "personas");
+        console.log("Personas data:", data.personas);
         setPersonas(data.personas || []);
       } catch (error) {
-        console.error("Failed to load personas:", error);
+        console.error("✗ Failed to load personas:", error);
       }
     }
     loadPersonas();
@@ -659,6 +686,22 @@ function Step2GenerateTranscript({
     setIsLoading(true);
     toast.info("Generating transcript (this may take a few minutes)...");
 
+    console.log("=== 🤖 GENERATING TRANSCRIPT WITH LLM ===");
+    console.log("📝 CONTEXT BEING SENT TO LLM:");
+    console.log({
+      paper_id: paperData.paper_id,
+      paper_title: paperData.title,
+      paper_authors: paperData.authors,
+      use_full_text: useFullText,
+      technical_level: technicalLevel,
+      host_persona: hostPersona,
+      expert_persona: expertPersona,
+      custom_topics: customTopics || "(none)",
+      paper_abstract: paperData.abstract.substring(0, 200) + "...",
+      full_text_included: useFullText ? "YES - full paper content" : "NO - abstract only"
+    });
+    console.log("=".repeat(50));
+
     try {
       const formData = new FormData();
       formData.append("paper_id", paperData.paper_id);
@@ -670,17 +713,27 @@ function Step2GenerateTranscript({
         formData.append("custom_topics", customTopics);
       }
 
+      console.log("📡 Sending request to:", `${API_URL}/api/admin/generate-transcript`);
+
       const response = await fetch(`${API_URL}/api/admin/generate-transcript`, {
         method: "POST",
         body: formData,
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) throw new Error("Failed to generate transcript");
 
       const data = await response.json();
+      console.log("✓ Transcript generated successfully");
+      console.log("Transcript length:", data.transcript?.length || 0, "characters");
+      console.log("Transcript preview:", data.transcript?.substring(0, 300) + "...");
+      console.log("=== END LLM GENERATION ===");
+
       setTranscript(data.transcript);
       toast.success("Transcript generated!");
     } catch (error) {
+      console.error("✗ TRANSCRIPT GENERATION FAILED:", error);
       toast.error("Failed to generate transcript");
       console.error(error);
     } finally {
@@ -837,13 +890,17 @@ function Step3ConvertToAudio({
   const [currentPodcastId, setCurrentPodcastId] = useState("");
 
   useEffect(() => {
+    console.log("🎤 Loading voices...");
     async function loadVoices() {
       try {
         const response = await fetch(`${API_URL}/api/admin/individual-voices`);
+        console.log("Voices response status:", response.status);
         const data = await response.json();
+        console.log("✓ Voices loaded:", data.voices?.length || 0, "voices");
+        console.log("Voices data:", data.voices);
         setVoices(data.voices || []);
       } catch (error) {
-        console.error("Failed to load voices:", error);
+        console.error("✗ Failed to load voices:", error);
       }
     }
     loadVoices();
@@ -1010,12 +1067,17 @@ function Step4SendToUsers({
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
+    console.log("👥 Loading users...");
     async function fetchUsers() {
       try {
         const response = await fetch(`${API_URL}/api/admin/users`);
+        console.log("Users response status:", response.status);
         const data = await response.json();
+        console.log("✓ Users loaded:", data.users?.length || 0, "users");
+        console.log("Users data:", data.users);
         setUsers(data.users || []);
-      } catch {
+      } catch (error) {
+        console.error("✗ Failed to load users:", error);
         toast.error("Failed to load users");
       } finally {
         setIsLoading(false);
