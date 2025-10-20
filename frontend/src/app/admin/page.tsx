@@ -29,6 +29,16 @@ interface PaperData {
   abstract: string;
   pdf_url: string;
   full_text?: string;
+  ocr_details?: {
+    total_pages: number;
+    total_chars: number;
+    pages: Array<{
+      page_number: number;
+      text: string;
+      char_count: number;
+      line_count: number;
+    }>;
+  };
 }
 
 interface Persona {
@@ -325,7 +335,16 @@ function Step1AddPaper({
       }
 
       const data = await response.json();
-      console.log("Received paper data:", data);
+      console.log("📄 Received paper data:", data);
+
+      if (data.ocr_details) {
+        console.log("✅ OCR Details found:");
+        console.log(`   - Total Pages: ${data.ocr_details.total_pages}`);
+        console.log(`   - Total Chars: ${data.ocr_details.total_chars}`);
+        console.log(`   - Pages array length: ${data.ocr_details.pages?.length}`);
+      } else {
+        console.warn("⚠️  NO OCR DETAILS IN RESPONSE!");
+      }
 
       // Ensure authors is an array
       if (typeof data.authors === 'string') {
