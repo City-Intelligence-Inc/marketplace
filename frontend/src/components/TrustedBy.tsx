@@ -10,12 +10,12 @@ import Autoplay from "embla-carousel-autoplay";
 
 export function TrustedBy() {
   const companies = [
-    { name: "Harvard Law School", logo: "/logos/harvard-law.png" },
-    { name: "Stanford University", logo: "/logos/stanford.avif" },
-    { name: "UC Berkeley", logo: "/logos/berkeley.png" },
-    { name: "Purdue University", logo: "/logos/purdue.png" },
-    { name: "Meta", logo: "/logos/meta.png" },
-    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg" },
+    { name: "Harvard Law School", logo: "/logos/harvard-law.png", height: 60 },
+    { name: "Stanford University", logo: "/logos/stanford.avif", height: 80 },
+    { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 60 },
+    { name: "Purdue University", logo: "/logos/purdue.png", height: 60 },
+    { name: "Meta", logo: "/logos/meta.png", height: 60 },
+    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 60 },
   ];
 
   return (
@@ -44,9 +44,10 @@ export function TrustedBy() {
                   <Image
                     src={company.logo}
                     alt={company.name}
-                    width={180}
-                    height={60}
-                    className="h-[60px] w-auto object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
+                    width={240}
+                    height={company.height}
+                    style={{ height: `${company.height}px`, width: 'auto' }}
+                    className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
                   />
                 </div>
               </CarouselItem>
