@@ -29,7 +29,7 @@ const generatePodcasts = (category: string) => {
 
 export default function Episodes() {
   return (
-    <div className="min-h-screen bg-black pt-20 pb-16">
+    <div className="min-h-screen bg-black pt-8 md:pt-20 pb-24 md:pb-16">
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="pt-12 pb-8">

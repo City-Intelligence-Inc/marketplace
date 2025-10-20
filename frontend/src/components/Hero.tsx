@@ -89,7 +89,7 @@ export function Hero() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-32">
+    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-20 md:pt-32 pb-20 md:pb-0">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden bg-white">
         {/* Large Gradient Orbs - Subtle */}
