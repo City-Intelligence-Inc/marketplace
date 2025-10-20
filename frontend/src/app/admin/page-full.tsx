@@ -313,28 +313,51 @@ function Step1AddPaper({
     }
 
     setIsLoading(true);
-    toast.info("Uploading PDF...");
+    toast.info("Uploading PDF and extracting text...");
 
     try {
       const formData = new FormData();
       formData.append("file", pdfFile);
       formData.append("paper_url", paperUrl);
 
+      console.log("Uploading PDF:", pdfFile.name, "URL:", paperUrl);
+
       const response = await fetch(`${API_URL}/api/admin/upload-pdf`, {
         method: "POST",
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Failed to upload PDF");
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Upload error:", errorText);
+        let errorMsg = "Failed to upload PDF";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMsg = errorData.detail || errorMsg;
+        } catch (e) {
+          errorMsg = errorText || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
 
       const data = await response.json();
+      console.log("Received paper data:", data);
+
+      // Ensure authors is an array
+      if (typeof data.authors === 'string') {
+        data.authors = [data.authors];
+      }
+
       setPaperData(data);
       setPaperUrl("");
       setPdfFile(null);
       toast.success("PDF uploaded and text extracted!");
     } catch (error) {
-      toast.error("Failed to upload PDF");
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload PDF";
+      toast.error(errorMessage);
+      console.error("Upload PDF error:", error);
     } finally {
       setIsLoading(false);
     }
