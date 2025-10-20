@@ -1,6 +1,6 @@
-# Intelligent Podcasts
+# Research Club
 
-A modern web application for intelligent podcasts, delivered daily. Built with [Next.js](https://nextjs.org) and TypeScript.
+A modern web application for curated 5-10 min podcasts, delivered daily. Built with [Next.js](https://nextjs.org) and TypeScript.
 
 ## Getting Started
 

@@ -16,7 +16,7 @@ export function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo/Brand */}
             <Link href="/" className="text-xl font-bold text-black hover:text-orange-600 transition-colors">
-              Intelligent Podcasts
+              Research Club
             </Link>
 
             {/* Navigation Links */}

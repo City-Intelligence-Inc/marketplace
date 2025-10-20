@@ -156,7 +156,7 @@ export function Hero() {
               disabled={isSubmitting}
               className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Subscribing..." : "Subscribe"}
+              {isSubmitting ? "Joining..." : "Join the Club"}
             </Button>
           </form>
 
