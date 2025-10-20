@@ -19,7 +19,7 @@ export function TrustedBy() {
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p className="text-center text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">
-          Trusted by listeners from
+          Join listeners from
         </p>
 
         {/* 2 rows of 5 logos */}

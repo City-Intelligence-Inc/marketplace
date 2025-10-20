@@ -118,7 +118,7 @@ export function Hero() {
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
             <span className="block text-black">
-              Keep up with the latest
+              Never miss breakthrough
             </span>
             <span className="block text-black">
               research and news in
@@ -138,7 +138,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
-            Curated 5-10 min podcasts across 30+ topics, delivered daily.
+            5-10 min expert-curated podcasts delivered to your inbox daily. Choose from 30+ topics.
           </p>
 
           {/* Email Subscription Form */}
@@ -156,7 +156,7 @@ export function Hero() {
               disabled={isSubmitting}
               className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Joining..." : "Join the Club"}
+              {isSubmitting ? "Entering..." : "Enter the Club"}
             </Button>
           </form>
 
