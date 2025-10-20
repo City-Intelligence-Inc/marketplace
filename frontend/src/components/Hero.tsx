@@ -138,8 +138,8 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed">
-            Never miss breakthrough research.<br />
-            5-10 min expert-curated podcasts delivered to your inbox daily.
+            5-10 min expert-curated podcasts delivered to your inbox daily.<br />
+            Never miss breakthrough research again.
           </p>
 
           {/* Email Subscription Form */}
