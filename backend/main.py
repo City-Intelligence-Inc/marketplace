@@ -841,7 +841,7 @@ async def add_test_subscriber(email: str = Form(...), name: str = Form(None)):
 
 @app.post("/api/admin/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
-    """Upload PDF and extract full text with metadata"""
+    """Upload PDF and extract full text with LLM-powered metadata extraction"""
     try:
         print(f"Received file: {file.filename}, content_type: {file.content_type}")
         print(f"Paper URL: {paper_url}")
@@ -859,55 +859,46 @@ async def upload_pdf(file: UploadFile = File(...), paper_url: str = Form(...)):
         full_text = pdf_service.extract_text_from_bytes(pdf_bytes)
         print(f"Extracted full text: {len(full_text)} characters (NO TRUNCATION - full paper preserved)")
 
-        # NO TRUNCATION - Store full text for Gemini to handle
-        # Gemini 1.5 Flash can handle 1M+ tokens (~750k characters)
+        # Use OpenRouter LLM to extract metadata intelligently
+        from services.openrouter_service import OpenRouterService
 
-        # Try to extract title and authors from first few lines of text
-        lines = full_text.split('\n')[:20]  # First 20 lines
+        openrouter = OpenRouterService()
+        metadata = openrouter.extract_paper_metadata(full_text)
 
-        # Simple heuristics to extract title (usually first non-empty line)
-        title = "Uploaded Paper"
-        for line in lines:
-            line = line.strip()
-            if len(line) > 10 and not line.isupper():  # Skip all-caps headers
-                title = line[:200]  # Limit title length
-                break
+        # Extract fields with fallbacks
+        title = metadata.get('title', 'Uploaded Paper')
+        authors = metadata.get('authors', ['Unknown'])
+        abstract = metadata.get('abstract', '')
 
-        print(f"Extracted title: {title}")
+        # If abstract is missing or too short, generate one
+        if not abstract or len(abstract) < 100:
+            print("Abstract missing or too short, generating with LLM...")
+            abstract = openrouter.improve_abstract(full_text)
 
-        # Try to find authors (look for common patterns)
-        authors = ["Unknown"]
-        for i, line in enumerate(lines):
-            line_lower = line.lower()
-            if any(keyword in line_lower for keyword in ['author', 'by']):
-                # Next line might be authors
-                if i + 1 < len(lines):
-                    author_line = lines[i + 1].strip()
-                    if author_line and len(author_line) < 200:
-                        authors = [a.strip() for a in author_line.split(',')]
-                break
-
-        print(f"Extracted authors: {authors}")
+        print(f"✓ LLM-extracted title: {title}")
+        print(f"✓ LLM-extracted authors: {authors}")
+        print(f"✓ Abstract length: {len(abstract)} chars")
 
         # Generate paper ID from timestamp
         paper_id = f"upload-{int(datetime.utcnow().timestamp())}"
 
-        # Prepare paper data with provided paper URL
+        # Prepare paper data with LLM-extracted metadata
         paper_data = {
             'paper_id': paper_id,
             'title': title,
             'authors': authors,
-            'abstract': truncated_text[:500] + "..." if len(truncated_text) > 500 else truncated_text,
-            'full_text': truncated_text,
-            'pdf_url': paper_url.strip(),  # Use provided URL
+            'abstract': abstract,
+            'full_text': full_text,  # Store full text
+            'pdf_url': paper_url.strip(),
             'published': datetime.utcnow().isoformat(),
-            'categories': ['uploaded'],
+            'categories': metadata.get('keywords', ['uploaded']),
             'created_at': int(datetime.utcnow().timestamp())
         }
 
         # Store in DynamoDB
         paper_table.put_item(Item=paper_data)
 
+        print(f"✓ Stored paper {paper_id} in DynamoDB")
         return paper_data
 
     except HTTPException:
