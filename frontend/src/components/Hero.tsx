@@ -14,6 +14,7 @@ const categories = [
   "Healthcare",
   "Climate Science",
   "Biotechnology",
+  "Economics",
 ];
 
 export function Hero() {
@@ -69,15 +70,15 @@ export function Hero() {
     <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-32">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden bg-white">
-        {/* Large Gradient Orbs - More visible */}
-        <div className="absolute top-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-br from-orange-500/50 to-red-500/50 rounded-full blur-[100px] animate-float" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-red-600/40 to-orange-600/40 rounded-full blur-[120px] animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-amber-500/35 to-red-500/35 rounded-full blur-[100px] animate-pulse-slow" />
+        {/* Large Gradient Orbs - Subtle */}
+        <div className="absolute top-1/4 -left-1/4 w-[700px] h-[700px] bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-[100px] animate-float" />
+        <div className="absolute bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-red-600/15 to-orange-600/15 rounded-full blur-[120px] animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-amber-500/15 to-red-500/15 rounded-full blur-[100px] animate-pulse-slow" />
 
-        {/* Additional smokey accent orbs */}
-        <div className="absolute top-10 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-orange-400/30 to-red-400/30 rounded-full blur-[80px] animate-float-slow" />
-        <div className="absolute bottom-20 left-1/3 w-[500px] h-[500px] bg-gradient-to-br from-amber-600/25 to-orange-600/25 rounded-full blur-[90px] animate-float" />
-        <div className="absolute top-1/3 right-1/2 w-[350px] h-[350px] bg-gradient-to-br from-red-500/30 to-amber-500/30 rounded-full blur-[70px] animate-float-delayed" />
+        {/* Additional subtle accent orbs */}
+        <div className="absolute top-10 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-orange-400/12 to-red-400/12 rounded-full blur-[80px] animate-float-slow" />
+        <div className="absolute bottom-20 left-1/3 w-[500px] h-[500px] bg-gradient-to-br from-amber-600/10 to-orange-600/10 rounded-full blur-[90px] animate-float" />
+        <div className="absolute top-1/3 right-1/2 w-[350px] h-[350px] bg-gradient-to-br from-red-500/12 to-amber-500/12 rounded-full blur-[70px] animate-float-delayed" />
 
         {/* Animated Grid with depth */}
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.08] animate-grid-flow" />
