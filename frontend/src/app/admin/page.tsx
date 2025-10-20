@@ -126,8 +126,14 @@ function AdminDashboard() {
   );
 }
 
+interface Stats {
+  total_subscribers: number;
+  total_podcasts: number;
+  last_podcast_date: string | null;
+}
+
 function StatsSection() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -136,7 +142,7 @@ function StatsSection() {
         const response = await fetch("https://four0k-arr-saas.onrender.com/api/admin/stats");
         const data = await response.json();
         setStats(data);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load stats");
       } finally {
         setIsLoading(false);
@@ -188,6 +194,13 @@ function StatsSection() {
   );
 }
 
+interface User {
+  email: string;
+  name?: string;
+  subscribed: boolean;
+  signup_timestamp: number;
+}
+
 function UsersSection({
   selectedUsers,
   setSelectedUsers,
@@ -195,7 +208,7 @@ function UsersSection({
   selectedUsers: Set<string>;
   setSelectedUsers: (users: Set<string>) => void;
 }) {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -204,7 +217,7 @@ function UsersSection({
         const response = await fetch("https://four0k-arr-saas.onrender.com/api/admin/users");
         const data = await response.json();
         setUsers(data.users || []);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load users");
       } finally {
         setIsLoading(false);
