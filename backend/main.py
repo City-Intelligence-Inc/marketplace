@@ -14,6 +14,7 @@ from services.email_service import EmailService
 from services.pdf_service import PDFService
 import stripe
 import uuid
+import json
 from pathlib import Path
 
 app = FastAPI(title="Research Paper Podcast API")
