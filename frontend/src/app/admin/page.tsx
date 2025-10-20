@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 const ADMIN_PASSWORD = "podcast025";
+const API_URL = "https://four0k-arr-saas.onrender.com";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,7 +16,6 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if already authenticated in session
     const authStatus = sessionStorage.getItem("adminAuth");
     if (authStatus === "true") {
       setIsAuthenticated(true);
@@ -24,7 +25,6 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       sessionStorage.setItem("adminAuth", "true");
@@ -105,23 +105,19 @@ export default function AdminPage() {
 
 function AdminDashboard() {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [latestPodcastId, setLatestPodcastId] = useState<string | null>(null);
+  const [currentPodcastId, setCurrentPodcastId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
       <StatsSection />
-      <UsersSection selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />
-      <PodcastGenerationSection
+      <AddPaperSection />
+      <GenerateTranscriptSection />
+      <ConvertToAudioSection />
+      <UserManagementSection
         selectedUsers={selectedUsers}
-        onPodcastGenerated={setLatestPodcastId}
+        setSelectedUsers={setSelectedUsers}
+        currentPodcastId={currentPodcastId}
       />
-      {latestPodcastId && selectedUsers.size > 0 && (
-        <SendPodcastSection
-          podcastId={latestPodcastId}
-          selectedUsers={selectedUsers}
-          onSent={() => setLatestPodcastId(null)}
-        />
-      )}
     </div>
   );
 }
@@ -139,7 +135,7 @@ function StatsSection() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch("https://four0k-arr-saas.onrender.com/api/admin/stats");
+        const response = await fetch(`${API_URL}/api/admin/stats`);
         const data = await response.json();
         setStats(data);
       } catch {
@@ -148,7 +144,6 @@ function StatsSection() {
         setIsLoading(false);
       }
     }
-
     fetchStats();
   }, []);
 
@@ -194,6 +189,183 @@ function StatsSection() {
   );
 }
 
+function AddPaperSection() {
+  const [activeTab, setActiveTab] = useState<"arxiv" | "upload" | "text">("arxiv");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>1. Add Paper</CardTitle>
+        <CardDescription>Fetch from arXiv, upload PDF, or paste text</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2 border-b">
+          <Button
+            variant="ghost"
+            className={activeTab === "arxiv" ? "border-b-2 border-orange-600 text-orange-600 rounded-none" : "rounded-none"}
+            onClick={() => setActiveTab("arxiv")}
+          >
+            From arXiv
+          </Button>
+          <Button
+            variant="ghost"
+            className={activeTab === "upload" ? "border-b-2 border-orange-600 text-orange-600 rounded-none" : "rounded-none"}
+            onClick={() => setActiveTab("upload")}
+          >
+            Upload PDF
+          </Button>
+          <Button
+            variant="ghost"
+            className={activeTab === "text" ? "border-b-2 border-orange-600 text-orange-600 rounded-none" : "rounded-none"}
+            onClick={() => setActiveTab("text")}
+          >
+            From Text
+          </Button>
+        </div>
+
+        {activeTab === "arxiv" && <ArxivTab />}
+        {activeTab === "upload" && <UploadTab />}
+        {activeTab === "text" && <TextTab />}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ArxivTab() {
+  return <div className="space-y-4">
+    <Input type="url" placeholder="https://arxiv.org/abs/2401.12345" />
+    <div className="flex items-center gap-2">
+      <input type="checkbox" id="extractFull" className="w-4 h-4" />
+      <label htmlFor="extractFull" className="text-sm">
+        Extract full PDF text (7-10 min podcast instead of 5-7 min)
+      </label>
+    </div>
+    <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+      Fetch Paper
+    </Button>
+  </div>;
+}
+
+function UploadTab() {
+  return <div className="space-y-4">
+    <p className="text-sm text-gray-600">Upload a PDF and we'll automatically extract the text</p>
+    <Input type="url" placeholder="Paper URL (required)" />
+    <Input type="file" accept=".pdf" />
+    <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+      Upload PDF
+    </Button>
+  </div>;
+}
+
+function TextTab() {
+  return <div className="space-y-4">
+    <p className="text-sm text-gray-600">Paste any text to generate a podcast transcript</p>
+    <Input type="text" placeholder="Podcast Title" />
+    <Textarea placeholder="Paste your text here... (minimum 100 characters)" rows={10} />
+    <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+      Generate from Text
+    </Button>
+  </div>;
+}
+
+function GenerateTranscriptSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>2. Generate Transcript</CardTitle>
+        <CardDescription>Configure personas, technical level, and topics</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-gray-600">Paper ID: <span className="font-mono">-</span></p>
+
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+          <h3 className="font-semibold">Podcast Personas</h3>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Host Persona</label>
+            <select className="w-full p-2 border rounded-md">
+              <option>Curious Tech Journalist</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Expert Persona</label>
+            <select className="w-full p-2 border rounded-md">
+              <option>Academic Researcher</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Technical Level</label>
+          <select className="w-full p-2 border rounded-md">
+            <option value="baby">👶 Explain to a Child (5 year old)</option>
+            <option value="highschool">🎒 High School Level</option>
+            <option value="undergrad" selected>🎓 Undergraduate Level</option>
+            <option value="graduate">👨‍🎓 Graduate/Professional</option>
+            <option value="expert">🔬 Expert Researcher</option>
+            <option value="nobel">🏆 Nobel Laureate Level</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Custom Topics (Optional)</label>
+          <Textarea placeholder="Enter specific areas to cover..." rows={4} />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="useFullText" className="w-4 h-4" />
+          <label htmlFor="useFullText" className="text-sm">
+            Use full PDF text (7-10 min script)
+          </label>
+        </div>
+
+        <Button disabled className="w-full bg-gradient-to-r from-orange-600 to-red-600">
+          Generate Transcript
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ConvertToAudioSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>3. Convert to Audio</CardTitle>
+        <CardDescription>Select voices and generate podcast audio</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-gray-600">Paper ID: <span className="font-mono">-</span></p>
+
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+          <h3 className="font-semibold">Custom Voice Selection</h3>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Host Voice</label>
+            <div className="flex gap-2">
+              <select className="flex-1 p-2 border rounded-md">
+                <option>Rachel - Warm, curious, engaging</option>
+              </select>
+              <Button variant="outline">▶️ Preview</Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Expert Voice</label>
+            <div className="flex gap-2">
+              <select className="flex-1 p-2 border rounded-md">
+                <option>Adam - Knowledgeable, calm, clear</option>
+              </select>
+              <Button variant="outline">▶️ Preview</Button>
+            </div>
+          </div>
+        </div>
+
+        <Button disabled className="w-full bg-gradient-to-r from-orange-600 to-red-600">
+          Convert to Audio
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface User {
   email: string;
   name?: string;
@@ -201,12 +373,14 @@ interface User {
   signup_timestamp: number;
 }
 
-function UsersSection({
+function UserManagementSection({
   selectedUsers,
   setSelectedUsers,
+  currentPodcastId,
 }: {
   selectedUsers: Set<string>;
   setSelectedUsers: (users: Set<string>) => void;
+  currentPodcastId: string | null;
 }) {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -214,7 +388,7 @@ function UsersSection({
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const response = await fetch("https://four0k-arr-saas.onrender.com/api/admin/users");
+        const response = await fetch(`${API_URL}/api/admin/users`);
         const data = await response.json();
         setUsers(data.users || []);
       } catch {
@@ -223,7 +397,6 @@ function UsersSection({
         setIsLoading(false);
       }
     }
-
     fetchUsers();
   }, []);
 
@@ -241,7 +414,7 @@ function UsersSection({
     if (selectedUsers.size === users.length) {
       setSelectedUsers(new Set());
     } else {
-      setSelectedUsers(new Set(users.map(u => u.email)));
+      setSelectedUsers(new Set(users.map((u) => u.email)));
     }
   };
 
@@ -250,7 +423,7 @@ function UsersSection({
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Users</CardTitle>
+            <CardTitle>4. Send to Subscribers</CardTitle>
             <CardDescription>
               {selectedUsers.size > 0
                 ? `${selectedUsers.size} user(s) selected`
@@ -258,24 +431,20 @@ function UsersSection({
             </CardDescription>
           </div>
           {users.length > 0 && (
-            <Button
-              variant="outline"
-              onClick={toggleAll}
-              size="sm"
-            >
+            <Button variant="outline" onClick={toggleAll} size="sm">
               {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {isLoading ? (
           <p className="text-gray-600">Loading users...</p>
         ) : users.length === 0 ? (
           <p className="text-gray-600">No users found</p>
         ) : (
-          <div className="max-h-96 overflow-y-auto">
-            <div className="space-y-2">
+          <div className="max-h-96 overflow-y-auto border rounded-lg">
+            <div className="space-y-2 p-4">
               {users.map((user) => (
                 <div
                   key={user.email}
@@ -290,9 +459,7 @@ function UsersSection({
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{user.email}</p>
-                    {user.name && (
-                      <p className="text-xs text-gray-500">{user.name}</p>
-                    )}
+                    {user.name && <p className="text-xs text-gray-500">{user.name}</p>}
                   </div>
                   <div className="text-xs text-gray-500">
                     {user.subscribed ? (
@@ -306,165 +473,24 @@ function UsersSection({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
 
-function PodcastGenerationSection({
-  selectedUsers,
-  onPodcastGenerated,
-}: {
-  selectedUsers: Set<string>;
-  onPodcastGenerated: (podcastId: string) => void;
-}) {
-  const [arxivUrl, setArxivUrl] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleGenerate = async () => {
-    if (!arxivUrl) {
-      toast.error("Please enter an arXiv URL");
-      return;
-    }
-
-    setIsGenerating(true);
-
-    try {
-      // Step 1: Fetch paper
-      toast.info("Fetching paper...");
-      const fetchResponse = await fetch("https://four0k-arr-saas.onrender.com/api/admin/fetch-paper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ arxiv_url: arxivUrl }),
-      });
-
-      if (!fetchResponse.ok) {
-        throw new Error("Failed to fetch paper");
-      }
-
-      const paperData = await fetchResponse.json();
-      toast.success("Paper fetched successfully");
-
-      // Step 2: Generate podcast
-      toast.info("Generating podcast (this may take a few minutes)...");
-      const formData = new FormData();
-      formData.append("paper_id", paperData.paper_id);
-      formData.append("use_full_text", "false");
-      formData.append("voice_preset", "default");
-
-      const podcastResponse = await fetch("https://four0k-arr-saas.onrender.com/api/admin/generate-podcast", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!podcastResponse.ok) {
-        throw new Error("Failed to generate podcast");
-      }
-
-      const podcastData = await podcastResponse.json();
-      toast.success("Podcast generated successfully!");
-      onPodcastGenerated(podcastData.podcast_id);
-      setArxivUrl("");
-
-    } catch (error) {
-      console.error("Generation error:", error);
-      toast.error("Failed to generate podcast");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Generate Podcast</CardTitle>
-        <CardDescription>
-          {selectedUsers.size > 0
-            ? `Selected ${selectedUsers.size} user(s). Generate podcast to send to them.`
-            : "Enter an arXiv URL to create a new podcast"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Input
-          type="url"
-          placeholder="https://arxiv.org/abs/2401.12345"
-          value={arxivUrl}
-          onChange={(e) => setArxivUrl(e.target.value)}
-          disabled={isGenerating}
-        />
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating || !arxivUrl}
-          className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
-        >
-          {isGenerating ? "Generating..." : "Generate Podcast"}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SendPodcastSection({
-  podcastId,
-  selectedUsers,
-  onSent,
-}: {
-  podcastId: string;
-  selectedUsers: Set<string>;
-  onSent: () => void;
-}) {
-  const [isSending, setIsSending] = useState(false);
-
-  const handleSend = async () => {
-    if (selectedUsers.size === 0) {
-      toast.error("No users selected");
-      return;
-    }
-
-    setIsSending(true);
-
-    try {
-      const response = await fetch("https://four0k-arr-saas.onrender.com/api/admin/send-podcast-to-users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          podcast_id: podcastId,
-          recipient_emails: Array.from(selectedUsers),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send podcast");
-      }
-
-      const data = await response.json();
-      toast.success(`Podcast sent to ${data.sent} user(s)!`);
-      onSent();
-
-    } catch (error) {
-      console.error("Send error:", error);
-      toast.error("Failed to send podcast");
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  return (
-    <Card className="border-green-200 bg-green-50">
-      <CardHeader>
-        <CardTitle className="text-green-800">Podcast Ready to Send</CardTitle>
-        <CardDescription className="text-green-700">
-          Send this podcast to {selectedUsers.size} selected user(s)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button
-          onClick={handleSend}
-          disabled={isSending}
-          className="w-full bg-green-600 hover:bg-green-700"
-        >
-          {isSending ? "Sending..." : `Send to ${selectedUsers.size} User(s)`}
-        </Button>
+        <div className="flex gap-2 pt-4">
+          <Button variant="outline" className="flex-1" disabled>
+            Send Test
+          </Button>
+          <Button
+            className="flex-1 bg-green-600 hover:bg-green-700"
+            disabled={selectedUsers.size === 0}
+          >
+            Send to Selected ({selectedUsers.size})
+          </Button>
+          <Button
+            className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+            disabled
+          >
+            Send to ALL
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

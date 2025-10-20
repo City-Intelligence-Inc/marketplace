@@ -12,6 +12,9 @@ export function TrustedBy() {
   const companies = [
     { name: "Stanford University", logo: "/logos/stanford.avif" },
     { name: "UC Berkeley", logo: "/logos/berkeley.png" },
+    { name: "Purdue University", logo: "/logos/purdue.png" },
+    { name: "Meta", logo: "/logos/meta.png" },
+    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg" },
   ];
 
   return (
