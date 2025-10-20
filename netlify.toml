@@ -1,0 +1,11 @@
+[build]
+  base = "frontend"
+  command = "pnpm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_PUBLIC_BACKEND_URL = "https://marketplace-wtvs.onrender.com"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
