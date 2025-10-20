@@ -46,6 +46,7 @@ export function TrustedBy() {
                     alt={company.name}
                     width={240}
                     height={company.height}
+                    unoptimized
                     style={{ height: `${company.height}px`, width: 'auto' }}
                     className="object-contain grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300"
                   />
