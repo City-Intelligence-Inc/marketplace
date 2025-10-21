@@ -354,6 +354,18 @@ async def verify_admin_password(request: DeleteEpisodeRequest):
     else:
         return {"valid": False, "message": "Invalid password"}
 
+@app.get("/api/admin/email-config")
+async def get_email_config():
+    """Get email service configuration for debugging"""
+    return {
+        "mailgun_domain": os.getenv('MAILGUN_DOMAIN', 'ai.complete.city'),
+        "from_email": os.getenv('FROM_EMAIL', 'arihant@ai.complete.city'),
+        "from_name": os.getenv('FROM_NAME', 'City Secretary'),
+        "mailgun_api_key_set": bool(os.getenv('MAILGUN_API_KEY')),
+        "mailgun_api_key_length": len(os.getenv('MAILGUN_API_KEY', '')) if os.getenv('MAILGUN_API_KEY') else 0,
+        "frontend_url": os.getenv('FRONTEND_URL', 'https://marketplace-wtvs.onrender.com')
+    }
+
 @app.delete("/api/admin/episodes/{podcast_id}")
 async def delete_episode(podcast_id: str, request: DeleteEpisodeRequest):
     """Delete a podcast episode (admin only - requires password)"""

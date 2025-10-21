@@ -417,6 +417,10 @@ class EmailService:
 
         try:
             print(f"📧 Sending weekly digest to {email}")
+            print(f"   From: {self.from_name} <{self.from_email}>")
+            print(f"   Subject: 🎧 Your Weekly Research Digest - {len(podcasts)} Episodes")
+            print(f"   HTML Length: {len(html_content)} chars")
+
             response = requests.post(
                 self.mailgun_url,
                 auth=("api", self.mailgun_api_key),
@@ -427,12 +431,21 @@ class EmailService:
                     "html": html_content
                 }
             )
+
+            print(f"   Mailgun Response: {response.status_code}")
+            if response.status_code != 200:
+                print(f"   Response Body: {response.text}")
+
             success = response.status_code == 200
             if success:
                 print(f"   ✅ Weekly digest sent to {email}")
+                print(f"   Mailgun Message ID: {response.json().get('id', 'N/A')}")
             else:
                 print(f"   ❌ Weekly digest failed: {response.status_code}")
+                print(f"   Error: {response.text}")
             return success
         except Exception as e:
-            print(f"Error sending weekly digest to {email}: {e}")
+            print(f"❌ Error sending weekly digest to {email}: {e}")
+            import traceback
+            print(f"   Traceback: {traceback.format_exc()}")
             return False
