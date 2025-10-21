@@ -1882,7 +1882,7 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
             'category': request.category,  # NEW
             'paper_title': f"Custom Podcast - {request.category}",
             'paper_authors': request.podcast_hosts,
-            'created_at': datetime.now().isoformat(),
+            'created_at': int(datetime.now().timestamp()),  # Unix timestamp as number
             'sent_at': None,
         }
         print(f"   Table: podcasts")
