@@ -12,6 +12,12 @@ def analyze_text_emotion(text: str) -> Dict[str, float]:
     """
     Analyze text to determine emotional tone and adjust voice settings dynamically.
     Returns voice settings optimized for the content.
+
+    This makes the TTS sound MORE HUMAN and LESS ROBOTIC by:
+    - Detecting excitement/questions/technical content
+    - Adjusting expressiveness (stability)
+    - Adding personality (style)
+    - Making it more natural (similarity_boost)
     """
     text_lower = text.lower()
 
@@ -42,6 +48,7 @@ def analyze_text_emotion(text: str) -> Dict[str, float]:
     stability = 0.35
     similarity_boost = 0.85
     style = 0.65
+    emotion_details = "neutral tone"
 
     # Adjust based on content type
     if excitement_score > 2 or exclamation_count > 2:
@@ -49,28 +56,33 @@ def analyze_text_emotion(text: str) -> Dict[str, float]:
         stability = 0.20  # Very expressive
         style = 0.85      # Lots of personality
         similarity_boost = 0.88
+        emotion_details = f"EXCITED ({excitement_score} excitement words, {exclamation_count} exclamations)"
 
     elif question_score > 2 or question_count > 2:
         # Questioning, curious content
         stability = 0.25  # Expressive with variation
         style = 0.75      # Good personality
         similarity_boost = 0.87
+        emotion_details = f"QUESTIONING ({question_score} question words, {question_count} question marks)"
 
     elif technical_score > 3:
         # Technical, detailed explanation
         stability = 0.45  # More stable for clarity
         style = 0.55      # Less exaggerated
         similarity_boost = 0.85
+        emotion_details = f"TECHNICAL ({technical_score} technical terms)"
 
     elif conversational_score > 3 or example_score > 1:
         # Conversational, storytelling
         stability = 0.22  # Very natural variation
         style = 0.80      # Strong personality
         similarity_boost = 0.90  # Very human-like
+        emotion_details = f"CONVERSATIONAL ({conversational_score} casual phrases, {example_score} examples)"
 
     # Long sentences = more stability for clarity
     if len(text) > 200:
         stability = min(stability + 0.05, 0.5)
+        emotion_details += f" [long text: +stability]"
 
     return {
         "stability": stability,
@@ -84,7 +96,8 @@ def analyze_text_emotion(text: str) -> Dict[str, float]:
             "technical" if technical_score > 3 else
             "conversational" if conversational_score > 3 else
             "neutral"
-        )
+        ),
+        "_emotion_details": emotion_details
     }
 
 class PodcastService:
@@ -1029,12 +1042,21 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
                 try:
                     # DYNAMIC voice settings based on what's being said
+                    print(f"  🎭 EMOTION ANALYSIS (making it sound human, not robotic):")
                     dynamic_settings = analyze_text_emotion(text)
                     emotion_type = dynamic_settings.pop('_emotion_type')
+                    emotion_details = dynamic_settings.pop('_emotion_details')
 
-                    print(f"   Segment {i+1}: {emotion_type} tone "
-                          f"(stability={dynamic_settings['stability']:.2f}, "
-                          f"style={dynamic_settings['style']:.2f})")
+                    # Enhanced logging to show human-like adjustments
+                    print(f"     ✓ Detected: {emotion_details}")
+                    print(f"     🎚️  Voice Settings (automatically optimized):")
+                    print(f"        • Stability: {dynamic_settings['stability']:.2f} "
+                          f"→ {'MORE expressive' if dynamic_settings['stability'] < 0.3 else 'BALANCED' if dynamic_settings['stability'] < 0.4 else 'CLEAR & stable'}")
+                    print(f"        • Style: {dynamic_settings['style']:.2f} "
+                          f"→ {'LOTS of personality' if dynamic_settings['style'] > 0.75 else 'Good personality' if dynamic_settings['style'] > 0.6 else 'Subtle personality'}")
+                    print(f"        • Similarity Boost: {dynamic_settings['similarity_boost']:.2f} "
+                          f"→ {'VERY human-like' if dynamic_settings['similarity_boost'] > 0.87 else 'Human-like'}")
+                    print(f"        • Speaker Boost: ENABLED (enhanced clarity)")
 
                     # Build request payload with continuity parameters
                     payload = {
