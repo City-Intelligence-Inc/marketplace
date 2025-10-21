@@ -934,13 +934,18 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
         Args:
             script: The cleaned transcript
-            target_words: Target word count (1000 = ~5-7 mins, 1500 = ~8-10 mins)
+            target_words: Target word count (0 = no shortening, 1000 = ~5-7 mins, 1500 = ~8-10 mins)
         """
         words = script.split()
         current_word_count = len(words)
 
         print(f"📏 TRANSCRIPT LENGTH CHECK:")
         print(f"   Current: {current_word_count} words (~{current_word_count // 150}-{current_word_count // 130} minutes)")
+
+        if target_words == 0:
+            print(f"   ✓ NO SHORTENING (target_words=0) - using full transcript")
+            return script
+
         print(f"   Target: {target_words} words (~{target_words // 150}-{target_words // 130} minutes)")
 
         if current_word_count <= target_words:
@@ -1109,7 +1114,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         return segments
 
     def generate_audio(self, script: str, podcast_id: str, voice_preset: str = 'default',
-                      host_voice_key: str = None, expert_voice_key: str = None) -> str:
+                      host_voice_key: str = None, expert_voice_key: str = None, target_words: int = 1000) -> str:
         """Generate multi-voice audio from script using ElevenLabs API directly with continuity
 
         Args:
@@ -1118,6 +1123,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             voice_preset: Voice preset to use (ignored if custom voices provided)
             host_voice_key: Custom host voice key (e.g., 'rachel', 'adam')
             expert_voice_key: Custom expert voice key
+            target_words: Target word count (0 = no shortening, 1000 = ~5-7 mins, 1500 = ~8-10 mins)
         """
         import requests
         temp_file = f"/tmp/{podcast_id}.mp3"
@@ -1147,7 +1153,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             print(f"Script length: {len(script)} characters")
 
             # Parse script into segments by speaker
-            segments = self.parse_script_by_speaker(script)
+            segments = self.parse_script_by_speaker(script, target_words=target_words)
             print(f"Parsed {len(segments)} speech segments")
 
             if not segments:

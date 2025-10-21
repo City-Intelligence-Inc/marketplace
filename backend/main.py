@@ -1772,6 +1772,7 @@ class CustomWorkflowGenerateAudioRequest(BaseModel):
     category: str
     host_voice_key: str
     expert_voice_key: str
+    target_words: int = 0  # 0 = no shortening, otherwise target word count (e.g., 1000, 1500, 2000)
 
 class CustomWorkflowPreviewEmailRequest(BaseModel):
     podcast_id: str
@@ -1905,11 +1906,13 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
         print(f"   This may take several minutes depending on transcript length")
         audio_generation_start = datetime.now()
 
+        # Pass target_words to generate_audio (0 = no shortening)
         audio_result = podcast_service.generate_audio(
             script=request.transcript,
             podcast_id=podcast_id,
             host_voice_key=request.host_voice_key,
-            expert_voice_key=request.expert_voice_key
+            expert_voice_key=request.expert_voice_key,
+            target_words=request.target_words
         )
 
         audio_generation_end = datetime.now()

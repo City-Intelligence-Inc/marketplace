@@ -458,6 +458,7 @@ function CustomWorkflowTab() {
   const [category, setCategory] = useState("AI");
   const [hostVoice, setHostVoice] = useState("rachel");
   const [expertVoice, setExpertVoice] = useState("adam");
+  const [targetWords, setTargetWords] = useState(0); // 0 = no shortening
   const [audioUrl, setAudioUrl] = useState("");
   const [podcastId, setPodcastId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("podcast");
@@ -504,6 +505,7 @@ function CustomWorkflowTab() {
       category,
       host_voice_key: hostVoice,
       expert_voice_key: expertVoice,
+      target_words: targetWords,
     };
 
     console.log("📤 REQUEST:");
@@ -1900,6 +1902,25 @@ function Step3ConvertToAudio({
                   ▶️
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Audio Length Limit</label>
+              <select
+                value={targetWords}
+                onChange={(e) => setTargetWords(Number(e.target.value))}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isLoading}
+              >
+                <option value={0}>No Limit (Full Transcript)</option>
+                <option value={1000}>~5-7 minutes (1000 words)</option>
+                <option value={1500}>~8-10 minutes (1500 words)</option>
+                <option value={2000}>~11-13 minutes (2000 words)</option>
+                <option value={2500}>~14-17 minutes (2500 words)</option>
+              </select>
+              <p className="text-xs text-slate-500">
+                Choose "No Limit" to use your entire transcript without any shortening
+              </p>
             </div>
           </div>
 
