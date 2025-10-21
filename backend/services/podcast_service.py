@@ -975,7 +975,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         """Parse script into (speaker, text) tuples, removing speaker labels
 
         Supports multiple formats:
-        1. "Host:" and "Expert:" labels (preferred)
+        1. "Host:" and "Expert:" labels (preferred) - can be mid-line or start of line
         2. Plain text with paragraph breaks (alternates speakers)
         3. Plain text as single block (uses expert voice only for monologue)
 
@@ -991,53 +991,54 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         # Second, shorten if too long
         script = self.shorten_transcript(script, target_words=target_words)
 
-        # Split by speaker labels using regex
-        # This will catch "HOST:" "EXPERT:" "Host:" "Expert:" at the beginning of a line
-        # Pattern explanation: optional whitespace, HOST or EXPERT (case insensitive), colon, optional whitespace, then the text
-        pattern = r'^\s*(HOST|EXPERT|Host|Expert)\s*:\s*(.*)$'
-
-        lines = script.strip().split('\n')
-        segments = []
-        current_speaker = None
-        current_text = []
+        # CRITICAL FIX: Split by HOST:/EXPERT: labels ANYWHERE in the text, not just at line start
+        # This handles both:
+        # 1. Multi-line format:
+        #    HOST: text
+        #    EXPERT: text
+        # 2. Single-line format:
+        #    HOST: text EXPERT: text HOST: text
 
         print(f"🔍 PARSING SCRIPT BY SPEAKER:")
-        print(f"   Total lines to parse: {len(lines)}")
+        print(f"   Script length: {len(script)} chars")
 
-        for line in lines:
-            line = line.strip()
-            if not line:
+        # Split the entire script by HOST: or EXPERT: labels
+        # Pattern: (HOST|EXPERT):\s* - captures the label and splits on it
+        parts = re.split(r'\b(HOST|EXPERT|Host|Expert)\s*:\s*', script, flags=re.IGNORECASE)
+
+        # parts will be like: ['', 'HOST', 'text1', 'EXPERT', 'text2', 'HOST', 'text3', ...]
+        # Every odd index is a speaker label, every even index is the text
+
+        segments = []
+        i = 0
+        while i < len(parts):
+            part = parts[i].strip()
+
+            # Skip empty parts
+            if not part:
+                i += 1
                 continue
 
-            # Check if line matches speaker pattern
-            match = re.match(pattern, line)
+            # Check if this is a speaker label
+            if re.match(r'^(HOST|EXPERT|Host|Expert)$', part, re.IGNORECASE):
+                # Next part should be the text
+                if i + 1 < len(parts):
+                    speaker_label = part.lower()
+                    text = parts[i + 1].strip()
 
-            if match:
-                # Save previous segment
-                if current_speaker and current_text:
-                    text = ' '.join(current_text).strip()
                     if text:  # Only add non-empty segments
-                        segments.append((current_speaker, text))
-                        print(f"   ✓ Added segment: {current_speaker.upper()} ({len(text)} chars)")
+                        speaker = 'host' if speaker_label == 'host' else 'expert'
+                        segments.append((speaker, text))
+                        print(f"   ✓ Found {speaker.upper()} segment ({len(text)} chars)")
 
-                # Start new segment
-                speaker_label = match.group(1).lower()
-                text_content = match.group(2).strip()
-
-                current_speaker = 'host' if speaker_label.lower() == 'host' else 'expert'
-                current_text = [text_content] if text_content else []
-                print(f"   → New speaker: {current_speaker.upper()}")
+                    i += 2  # Skip both label and text
+                else:
+                    i += 1
             else:
-                # Continuation of current speaker's text
-                if current_speaker:
-                    current_text.append(line)
+                # This shouldn't happen if the split worked correctly, but handle it
+                i += 1
 
-        # Add final segment
-        if current_speaker and current_text:
-            text = ' '.join(current_text).strip()
-            if text:
-                segments.append((current_speaker, text))
-                print(f"   ✓ Added final segment: {current_speaker.upper()} ({len(text)} chars)")
+        print(f"   ✓ Parsed {len(segments)} segments from script")
 
         # CRITICAL CLEANUP: Remove ANY stray HOST:/EXPERT: labels from the actual text
         print(f"\n🔧 FINAL CLEANUP PASS (removing any stray labels from text):")
