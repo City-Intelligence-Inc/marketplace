@@ -180,6 +180,16 @@ class EmailService:
         # Truncate title if too long
         title = podcast_data['paper_title'][:80] + "..." if len(podcast_data['paper_title']) > 80 else podcast_data['paper_title']
 
+        # Get transcript and clean it
+        transcript = podcast_data.get('transcript', '')
+        import re
+        clean_transcript = re.sub(r'\b(HOST|EXPERT|Host|Expert)\s*:\s*', '', transcript)
+        transcript_paragraphs = clean_transcript.split('\n\n') if clean_transcript else []
+        transcript_html = ''.join([
+            f'<p style="margin-bottom: 12px; line-height: 1.7; color: #374151; font-size: 14px;">{p.strip()}</p>'
+            for p in transcript_paragraphs if p.strip()
+        ])
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -195,7 +205,7 @@ class EmailService:
                 .title {{ font-size: 22px; font-weight: 700; color: #000; margin-bottom: 12px; line-height: 1.3; }}
                 .meta {{ color: #666; font-size: 14px; margin-bottom: 20px; }}
                 .player {{ background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0; }}
-                .play-btn {{ display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 12px 0; }}
+                .play-btn {{ display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white !important; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 12px 0; }}
                 .audio {{ width: 100%; margin: 16px 0; }}
                 .link-btn {{ display: inline-block; color: #ea580c; text-decoration: none; font-weight: 600; margin-top: 12px; }}
                 .footer {{ text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb; }}
@@ -219,10 +229,19 @@ class EmailService:
                         <audio controls class="audio">
                             <source src="{podcast_data['audio_url']}" type="audio/mpeg">
                         </audio>
-                        <a href="{podcast_data['audio_url']}" class="play-btn">▶ Play Now</a>
+                        <a href="{podcast_data['audio_url']}" class="play-btn" style="color: white !important;">▶ Play Now</a>
                     </div>
 
                     {self._build_paper_references_html(podcast_data)}
+
+                    {f'''
+                    <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px;">📄 Full Transcript</h3>
+                        <div style="color: #374151; line-height: 1.7; font-size: 14px;">
+                            {transcript_html}
+                        </div>
+                    </div>
+                    ''' if transcript_html else ''}
                 </div>
                 <div class="footer">
                     <p>Tomorrow's podcast arrives same time, same inbox.</p>
