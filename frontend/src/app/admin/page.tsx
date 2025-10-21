@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
+import { CheckCircle2, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
 
 const ADMIN_PASSWORD = "podcast025";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
@@ -56,6 +56,12 @@ interface User {
   name?: string;
   subscribed: boolean;
   signup_timestamp: number;
+}
+
+interface Step {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
 }
 
 export default function AdminPage() {
@@ -254,7 +260,7 @@ function WorkflowTab({
 }: {
   currentStep: number;
   setCurrentStep: (step: number) => void;
-  steps: any[];
+  steps: Step[];
   canGoNext: () => boolean;
   paperData: PaperData | null;
   setPaperData: (data: PaperData | null) => void;
