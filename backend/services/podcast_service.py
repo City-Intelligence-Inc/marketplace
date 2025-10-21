@@ -336,6 +336,40 @@ class PodcastService:
             })
         return voices
 
+    def get_elevenlabs_voices_from_api(self) -> List[Dict]:
+        """Fetch ALL voices from user's ElevenLabs account via API"""
+        import requests
+
+        try:
+            url = "https://api.elevenlabs.io/v1/voices"
+            headers = {
+                "xi-api-key": os.getenv('ELEVENLABS_API_KEY')
+            }
+
+            print("🎤 Fetching voices from ElevenLabs API...")
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+
+            data = response.json()
+            voices = []
+
+            for voice in data.get('voices', []):
+                voices.append({
+                    'id': voice['voice_id'],
+                    'name': voice['name'],
+                    'category': voice.get('category', 'unknown'),
+                    'labels': voice.get('labels', {}),
+                    'preview_url': voice.get('preview_url'),
+                    'description': voice.get('description', ''),
+                })
+
+            print(f"   ✓ Fetched {len(voices)} voices from your account")
+            return voices
+
+        except Exception as e:
+            print(f"   ✗ Error fetching voices: {e}")
+            return []
+
     def get_technical_levels(self) -> List[Dict]:
         """Get list of available technical levels"""
         levels = []
@@ -827,7 +861,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             raise
 
     def clean_transcript(self, script: str) -> str:
-        """Clean transcript by removing junk headers, footers, and system messages"""
+        """Clean transcript by removing junk, markdown, headers, and speaker labels"""
         import re
 
         # Remove common junk patterns
@@ -837,19 +871,29 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         for line in lines:
             line_stripped = line.strip()
 
-            # Skip lines that are:
-            # - Just separators (dashes, equals, etc.)
-            # - System messages (contain phrases like "Respond as helpfully", "do not reproduce")
-            # - Very short non-sentences (less than 20 chars and no punctuation)
-            # - URLs or file paths
-            # - Metadata headers
-
+            # Skip empty lines (but preserve paragraph breaks for now)
             if not line_stripped:
-                cleaned_lines.append('')  # Preserve paragraph breaks
+                cleaned_lines.append('')
                 continue
 
-            # Skip separator lines
+            # Skip separator lines (---, ===, ***)
             if re.match(r'^[\s\-_=*#]+$', line_stripped):
+                continue
+
+            # Skip markdown headers (# Header, ## Subheader, etc.)
+            if re.match(r'^#{1,6}\s+', line_stripped):
+                continue
+
+            # Skip time markers like (60 seconds), (2 minutes), **TOTAL RUNTIME: 10 minutes**
+            if re.search(r'\(\d+\s*(seconds?|minutes?|mins?)\)', line_stripped, re.IGNORECASE):
+                continue
+            if re.search(r'(total|runtime|duration).*:\s*\d+\s*(seconds?|minutes?|mins?)', line_stripped, re.IGNORECASE):
+                continue
+
+            # Skip speaker labels at start of line (Host:, Expert:, **HOST:**)
+            if re.match(r'^(\*\*)?HOST(\*\*)?:', line_stripped, re.IGNORECASE):
+                continue
+            if re.match(r'^(\*\*)?EXPERT(\*\*)?:', line_stripped, re.IGNORECASE):
                 continue
 
             # Skip system instruction lines
@@ -868,25 +912,84 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if len(line_stripped) < 15 and not re.search(r'[.!?]', line_stripped):
                 continue
 
-            cleaned_lines.append(line)
+            # Clean markdown formatting from the line
+            # Remove bold: **text** -> text
+            line_stripped = re.sub(r'\*\*([^*]+)\*\*', r'\1', line_stripped)
+            # Remove italic: *text* -> text (but not if it's part of longer asterisk sequence)
+            line_stripped = re.sub(r'(?<!\*)\*(?!\*)([^*]+)\*(?!\*)', r'\1', line_stripped)
 
-        cleaned_script = '\n'.join(cleaned_lines).strip()
+            cleaned_lines.append(line_stripped)
+
+        # Join and collapse multiple blank lines into single paragraph breaks
+        cleaned_script = '\n'.join(cleaned_lines)
+        cleaned_script = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned_script)  # Max 2 newlines
+        cleaned_script = cleaned_script.strip()
+
         print(f"🧹 CLEANED TRANSCRIPT: {len(script)} → {len(cleaned_script)} chars")
 
         return cleaned_script
 
-    def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
+    def shorten_transcript(self, script: str, target_words: int = 1000) -> str:
+        """Shorten transcript to target word count (default 1000 words ≈ 5-7 minutes audio)
+
+        Args:
+            script: The cleaned transcript
+            target_words: Target word count (1000 = ~5-7 mins, 1500 = ~8-10 mins)
+        """
+        words = script.split()
+        current_word_count = len(words)
+
+        print(f"📏 TRANSCRIPT LENGTH CHECK:")
+        print(f"   Current: {current_word_count} words (~{current_word_count // 150}-{current_word_count // 130} minutes)")
+        print(f"   Target: {target_words} words (~{target_words // 150}-{target_words // 130} minutes)")
+
+        if current_word_count <= target_words:
+            print(f"   ✓ Within limit, no shortening needed")
+            return script
+
+        print(f"   ⚠️  Exceeds limit by {current_word_count - target_words} words")
+        print(f"   ✂️  Shortening to {target_words} words...")
+
+        # Simple approach: truncate to target words, then back up to last sentence
+        truncated_words = words[:target_words]
+        truncated_text = ' '.join(truncated_words)
+
+        # Find the last complete sentence
+        last_sentence_end = max(
+            truncated_text.rfind('.'),
+            truncated_text.rfind('!'),
+            truncated_text.rfind('?')
+        )
+
+        if last_sentence_end > 0:
+            shortened = truncated_text[:last_sentence_end + 1]
+        else:
+            shortened = truncated_text
+
+        final_word_count = len(shortened.split())
+        print(f"   ✓ Shortened to {final_word_count} words (~{final_word_count // 150}-{final_word_count // 130} minutes)")
+
+        return shortened
+
+    def parse_script_by_speaker(self, script: str, target_words: int = 1000) -> List[Tuple[str, str]]:
         """Parse script into (speaker, text) tuples, removing speaker labels
 
         Supports multiple formats:
         1. "Host:" and "Expert:" labels (preferred)
         2. Plain text with paragraph breaks (alternates speakers)
         3. Plain text as single block (uses expert voice only for monologue)
+
+        Args:
+            script: Raw transcript
+            target_words: Target word count for shortening (1000 = ~5-7 mins)
         """
         import re
 
-        # First, clean the transcript
+        # First, clean the transcript (remove markdown, headers, speaker labels)
         script = self.clean_transcript(script)
+
+        # Second, shorten if too long
+        script = self.shorten_transcript(script, target_words=target_words)
 
         # Split by speaker labels using regex
         # This will catch "Host:" or "Expert:" at the beginning of a line

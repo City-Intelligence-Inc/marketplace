@@ -1313,6 +1313,16 @@ async def get_individual_voices():
         print(f"Error fetching individual voices: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching individual voices: {str(e)}")
 
+@app.get("/api/admin/elevenlabs-voices")
+async def get_elevenlabs_voices():
+    """Fetch ALL voices from user's ElevenLabs account"""
+    try:
+        voices = podcast_service.get_elevenlabs_voices_from_api()
+        return {"voices": voices}
+    except Exception as e:
+        print(f"Error fetching ElevenLabs voices: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching ElevenLabs voices: {str(e)}")
+
 @app.get("/api/admin/technical-levels")
 async def get_technical_levels():
     """Get list of technical difficulty levels"""
@@ -1342,6 +1352,49 @@ async def get_voice_preview(voice_key: str, role: str = 'host'):
         return Response(content=audio_bytes, media_type="audio/mpeg")
     except Exception as e:
         print(f"Error generating voice preview: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generating voice preview: {str(e)}")
+
+@app.get("/api/admin/voice-preview-by-id/{voice_id}")
+async def get_voice_preview_by_id(voice_id: str):
+    """Generate audio preview for ANY ElevenLabs voice by ID"""
+    import requests
+    try:
+        print(f"🎤 Generating preview for voice ID: {voice_id}")
+
+        sample_text = "Hey! So I'm really excited to dive into this topic. It's one of those things that sounds complex at first, but once you get it, it's actually pretty cool!"
+
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+        headers = {
+            "xi-api-key": os.getenv('ELEVENLABS_API_KEY'),
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "text": sample_text,
+            "model_id": "eleven_turbo_v2_5",
+            "voice_settings": {
+                "stability": 0.3,
+                "similarity_boost": 0.85,
+                "style": 0.7,
+                "use_speaker_boost": True
+            }
+        }
+        params = {"output_format": "mp3_44100_128"}
+
+        response = requests.post(url, json=payload, headers=headers, params=params, stream=True)
+        response.raise_for_status()
+
+        audio_bytes = b''
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                audio_bytes += chunk
+
+        print(f"   ✓ Generated {len(audio_bytes)} bytes")
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+
+    except Exception as e:
+        print(f"   ✗ Error: {e}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating voice preview: {str(e)}")
