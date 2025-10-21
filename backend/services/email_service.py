@@ -22,6 +22,42 @@ class EmailService:
         print(f"   From: {self.from_name} <{self.from_email}>")
         print(f"   Frontend URL: {self.frontend_url}")
 
+    def _build_paper_references_html(self, podcast_data: Dict) -> str:
+        """Build HTML for paper references section"""
+        paper_references = podcast_data.get('paper_references', [])
+
+        # If no references, check for legacy paper_url field
+        if not paper_references:
+            paper_url = podcast_data.get('paper_url', '')
+            if paper_url and paper_url not in ['N/A', '#', '']:
+                return f'''
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                    <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 12px;">📄 Read the Paper</h3>
+                    <a href="{paper_url}" style="display: inline-block; color: #ea580c; text-decoration: none; font-weight: 600; padding: 12px 24px; border: 2px solid #ea580c; border-radius: 8px; transition: all 0.3s;">
+                        View Full Paper →
+                    </a>
+                </div>
+                '''
+            return ""
+
+        # Build references list
+        references_html = ""
+        for i, ref in enumerate(paper_references):
+            references_html += f'''
+            <div style="margin-bottom: 12px;">
+                <a href="{ref['url']}" style="display: block; color: #ea580c; text-decoration: none; font-weight: 600; padding: 12px 16px; border: 2px solid #ea580c; border-radius: 8px; transition: all 0.3s;">
+                    📄 {ref['title']} →
+                </a>
+            </div>
+            '''
+
+        return f'''
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 12px;">📄 Referenced Papers</h3>
+            {references_html}
+        </div>
+        '''
+
     def generate_title_from_transcript(self, transcript: str) -> str:
         """Generate a catchy title from the transcript using AI"""
         try:
@@ -184,9 +220,9 @@ class EmailService:
                             <source src="{podcast_data['audio_url']}" type="audio/mpeg">
                         </audio>
                         <a href="{podcast_data['audio_url']}" class="play-btn">▶ Play Now</a>
-                        <br>
-                        <a href="{podcast_data['paper_url']}" class="link-btn">📄 Read Full Paper →</a>
                     </div>
+
+                    {self._build_paper_references_html(podcast_data)}
                 </div>
                 <div class="footer">
                     <p>Tomorrow's podcast arrives same time, same inbox.</p>
@@ -361,15 +397,23 @@ class EmailService:
                   {transcript_html}
                 </div>
               </div>
+
+              {self._build_paper_references_html(podcast)}
             </div>
             """
 
-            # Estimate duration
+            # Parse duration - handle "5-10" format or single numbers
             if isinstance(duration, str) and '-' in duration:
+                # Range format like "5-10" - take average
                 avg = sum(int(x) for x in duration.split('-')) / 2
                 total_duration += int(avg)
-            else:
-                total_duration += 7  # default estimate
+            elif isinstance(duration, (int, float)):
+                # Already a number
+                total_duration += int(duration)
+            elif isinstance(duration, str) and duration.replace('.', '', 1).isdigit():
+                # String number like "7" or "7.5"
+                total_duration += int(float(duration))
+            # If duration is invalid/missing, don't add anything (skip it)
 
         # Build unsubscribe URL
         import urllib.parse

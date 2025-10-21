@@ -477,6 +477,7 @@ function CustomWorkflowTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [paperReferences, setPaperReferences] = useState<Array<{title: string, url: string}>>([{title: "", url: ""}]);
 
   useEffect(() => {
     async function loadData() {
@@ -516,6 +517,7 @@ function CustomWorkflowTab() {
       host_voice_key: hostVoice,
       expert_voice_key: expertVoice,
       target_words: targetWords,
+      paper_references: paperReferences.filter(ref => ref.title && ref.url),
     };
 
     console.log("📤 REQUEST:");
@@ -856,6 +858,59 @@ function CustomWorkflowTab() {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700">Paper References</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPaperReferences([...paperReferences, {title: "", url: ""}])}
+                className="h-8"
+              >
+                + Add Another Paper
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500">Add links to papers mentioned in the podcast (displayed in email)</p>
+            {paperReferences.map((ref, index) => (
+              <div key={index} className="flex gap-2 items-start">
+                <div className="flex-1 space-y-2">
+                  <Input
+                    placeholder="Paper title (e.g., 'Attention Is All You Need')"
+                    value={ref.title}
+                    onChange={(e) => {
+                      const newRefs = [...paperReferences];
+                      newRefs[index].title = e.target.value;
+                      setPaperReferences(newRefs);
+                    }}
+                    className="h-10"
+                  />
+                  <Input
+                    placeholder="Paper URL (e.g., https://arxiv.org/abs/...)"
+                    value={ref.url}
+                    onChange={(e) => {
+                      const newRefs = [...paperReferences];
+                      newRefs[index].url = e.target.value;
+                      setPaperReferences(newRefs);
+                    }}
+                    className="h-10"
+                  />
+                </div>
+                {paperReferences.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPaperReferences(paperReferences.filter((_, i) => i !== index))}
+                    className="h-10 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

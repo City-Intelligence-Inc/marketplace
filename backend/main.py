@@ -1393,7 +1393,10 @@ async def convert_to_audio(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error converting to audio: {e}")
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ ERROR CONVERTING TO AUDIO:")
+        print(error_details)
         raise HTTPException(status_code=500, detail=f"Error converting to audio: {str(e)}")
 
 @app.post("/api/admin/generate-from-text")
@@ -1911,6 +1914,10 @@ class SendTestEmailRequest(BaseModel):
     template_type: str  # welcome, podcast, or custom
     test_email: EmailStr
 
+class PaperReference(BaseModel):
+    title: str
+    url: str
+
 class CustomWorkflowGenerateAudioRequest(BaseModel):
     transcript: str
     podcast_hosts: str
@@ -1918,6 +1925,7 @@ class CustomWorkflowGenerateAudioRequest(BaseModel):
     host_voice_key: str
     expert_voice_key: str
     target_words: int = 0  # 0 = no shortening, otherwise target word count (e.g., 1000, 1500, 2000)
+    paper_references: List[PaperReference] = []
 
 class CustomWorkflowPreviewEmailRequest(BaseModel):
     podcast_id: str
@@ -2122,6 +2130,7 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
             'duration': duration_minutes,  # Actual duration in minutes
             'created_at': int(datetime.now().timestamp()),  # Unix timestamp as number
             'sent_at': None,
+            'paper_references': [{'title': ref.title, 'url': ref.url} for ref in request.paper_references] if request.paper_references else [],
         }
         print(f"   Table: podcasts")
         print(f"   Item Keys: {list(podcast_item.keys())}")
@@ -2240,15 +2249,25 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
                   {transcript_html}
                 </div>
               </div>
+
+              {email_service._build_paper_references_html(podcast_data)}
             </div>
             """
 
-            # Estimate duration
+            # Parse duration - handle "5-10" format or single numbers
             if isinstance(duration, str) and '-' in duration:
+                # Range format like "5-10" - take average
                 avg = sum(int(x) for x in duration.split('-')) / 2
                 total_duration = int(avg)
+            elif isinstance(duration, (int, float)):
+                # Already a number
+                total_duration = int(duration)
+            elif isinstance(duration, str) and duration.replace('.', '', 1).isdigit():
+                # String number like "7" or "7.5"
+                total_duration = int(float(duration))
             else:
-                total_duration = 7
+                # If no valid duration, use 5 as reasonable default
+                total_duration = 5
 
             # Build unsubscribe URL (using dummy email for preview)
             import urllib.parse
@@ -2313,6 +2332,8 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
                         </audio>
                         <a href="{podcast_data.get('audio_url', '#')}" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 12px 0;">▶ Play Now</a>
                     </div>
+
+                    {email_service._build_paper_references_html(podcast_data)}
                 </div>
             </div>
             """
