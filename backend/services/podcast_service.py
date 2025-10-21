@@ -989,13 +989,17 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
         script = self.shorten_transcript(script, target_words=target_words)
 
         # Split by speaker labels using regex
-        # This will catch "Host:" or "Expert:" at the beginning of a line
-        pattern = r'^(Host|Expert):\s*(.*)$'
+        # This will catch "HOST:" "EXPERT:" "Host:" "Expert:" at the beginning of a line
+        # Pattern explanation: optional whitespace, HOST or EXPERT (case insensitive), colon, optional whitespace, then the text
+        pattern = r'^\s*(HOST|EXPERT|Host|Expert)\s*:\s*(.*)$'
 
         lines = script.strip().split('\n')
         segments = []
         current_speaker = None
         current_text = []
+
+        print(f"🔍 PARSING SCRIPT BY SPEAKER:")
+        print(f"   Total lines to parse: {len(lines)}")
 
         for line in lines:
             line = line.strip()
@@ -1003,7 +1007,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 continue
 
             # Check if line matches speaker pattern
-            match = re.match(pattern, line, re.IGNORECASE)
+            match = re.match(pattern, line)
 
             if match:
                 # Save previous segment
@@ -1011,13 +1015,15 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                     text = ' '.join(current_text).strip()
                     if text:  # Only add non-empty segments
                         segments.append((current_speaker, text))
+                        print(f"   ✓ Added segment: {current_speaker.upper()} ({len(text)} chars)")
 
                 # Start new segment
                 speaker_label = match.group(1).lower()
                 text_content = match.group(2).strip()
 
-                current_speaker = 'host' if speaker_label == 'host' else 'expert'
+                current_speaker = 'host' if speaker_label.lower() == 'host' else 'expert'
                 current_text = [text_content] if text_content else []
+                print(f"   → New speaker: {current_speaker.upper()}")
             else:
                 # Continuation of current speaker's text
                 if current_speaker:
