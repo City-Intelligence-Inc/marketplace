@@ -172,6 +172,7 @@ function AdminDashboard() {
   const [podcastId, setPodcastId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [targetWords, setTargetWords] = useState(0); // 0 = no shortening
 
   const steps = [
     { title: "Upload Paper", icon: Upload, description: "Add research paper or text" },
@@ -246,6 +247,8 @@ function AdminDashboard() {
           setAudioUrl={setAudioUrl}
           selectedUsers={selectedUsers}
           setSelectedUsers={setSelectedUsers}
+          targetWords={targetWords}
+          setTargetWords={setTargetWords}
         />
       ) : activeTab === "custom" ? (
         <CustomWorkflowTab />
@@ -271,6 +274,8 @@ function WorkflowTab({
   setAudioUrl,
   selectedUsers,
   setSelectedUsers,
+  targetWords,
+  setTargetWords,
 }: {
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -286,6 +291,8 @@ function WorkflowTab({
   setAudioUrl: (url: string | null) => void;
   selectedUsers: Set<string>;
   setSelectedUsers: (users: Set<string>) => void;
+  targetWords: number;
+  setTargetWords: (value: number) => void;
 }) {
   return (
     <div className="space-y-8">
