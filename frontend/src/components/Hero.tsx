@@ -138,7 +138,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p className="text-lg sm:text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed px-4">
-            <span className="whitespace-nowrap">Daily 5-10 min expert-curated podcasts</span> delivered to your inbox.
+            <span className="whitespace-nowrap">Every day of the year.</span> <span className="whitespace-nowrap">5-10 min expert-curated podcasts</span> delivered to your inbox.
             <br className="hidden sm:block" />
             <span className="block sm:inline mt-1 sm:mt-0">Never miss breakthrough research again.</span>
           </p>
