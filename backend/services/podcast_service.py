@@ -8,6 +8,85 @@ from elevenlabs.client import ElevenLabs
 from io import BytesIO
 import google.generativeai as genai
 
+def analyze_text_emotion(text: str) -> Dict[str, float]:
+    """
+    Analyze text to determine emotional tone and adjust voice settings dynamically.
+    Returns voice settings optimized for the content.
+    """
+    text_lower = text.lower()
+
+    # Count emotional indicators
+    excitement_words = ['amazing', 'incredible', 'fascinating', 'wow', 'exciting', 'breakthrough',
+                        'revolutionary', 'extraordinary', 'fantastic', 'awesome', '!']
+    question_words = ['?', 'what', 'why', 'how', 'when', 'where', 'which', 'who']
+    technical_words = ['algorithm', 'equation', 'theorem', 'hypothesis', 'methodology',
+                       'coefficient', 'variable', 'function', 'parameter', 'matrix']
+    conversational_words = ['you know', 'i mean', 'right?', 'well', 'so', 'actually',
+                            'basically', 'honestly', 'really', 'totally', 'literally']
+    examples_words = ['for example', 'like when', 'imagine', 'let\'s say', 'think about',
+                      'picture this', 'suppose']
+
+    # Calculate scores
+    excitement_score = sum(1 for word in excitement_words if word in text_lower)
+    question_score = sum(1 for word in question_words if word in text_lower)
+    technical_score = sum(1 for word in technical_words if word in text_lower)
+    conversational_score = sum(1 for word in conversational_words if word in text_lower)
+    example_score = sum(1 for word in examples_words if word in text_lower)
+
+    # Count punctuation
+    exclamation_count = text.count('!')
+    question_count = text.count('?')
+
+    # Determine voice settings based on analysis
+    # Base settings (neutral)
+    stability = 0.35
+    similarity_boost = 0.85
+    style = 0.65
+
+    # Adjust based on content type
+    if excitement_score > 2 or exclamation_count > 2:
+        # Excited, enthusiastic content
+        stability = 0.20  # Very expressive
+        style = 0.85      # Lots of personality
+        similarity_boost = 0.88
+
+    elif question_score > 2 or question_count > 2:
+        # Questioning, curious content
+        stability = 0.25  # Expressive with variation
+        style = 0.75      # Good personality
+        similarity_boost = 0.87
+
+    elif technical_score > 3:
+        # Technical, detailed explanation
+        stability = 0.45  # More stable for clarity
+        style = 0.55      # Less exaggerated
+        similarity_boost = 0.85
+
+    elif conversational_score > 3 or example_score > 1:
+        # Conversational, storytelling
+        stability = 0.22  # Very natural variation
+        style = 0.80      # Strong personality
+        similarity_boost = 0.90  # Very human-like
+
+    # Long sentences = more stability for clarity
+    if len(text) > 200:
+        stability = min(stability + 0.05, 0.5)
+
+    return {
+        "stability": stability,
+        "similarity_boost": similarity_boost,
+        "style": style,
+        "use_speaker_boost": True,
+        # Metadata for debugging
+        "_emotion_type": (
+            "excited" if excitement_score > 2 else
+            "questioning" if question_score > 2 else
+            "technical" if technical_score > 3 else
+            "conversational" if conversational_score > 3 else
+            "neutral"
+        )
+    }
+
 class PodcastService:
     """Service for generating podcasts from research papers"""
 
@@ -283,17 +362,22 @@ class PodcastService:
         print(f"Generating preview for {voice_name} ({role})...")
 
         try:
-            # Generate preview audio with conversational settings
+            # Generate preview audio with DYNAMIC settings based on content
+            dynamic_settings = analyze_text_emotion(sample_text)
+            print(f"   Dynamic settings: {dynamic_settings['_emotion_type']} "
+                  f"(stability={dynamic_settings['stability']:.2f}, "
+                  f"style={dynamic_settings['style']:.2f})")
+
             audio_generator = self.elevenlabs_client.text_to_speech.convert(
                 text=sample_text,
                 voice_id=voice_id,
                 model_id="eleven_turbo_v2_5",
                 output_format="mp3_44100_128",
                 voice_settings={
-                    "stability": 0.35,  # Very expressive and natural
-                    "similarity_boost": 0.85,  # Closer to real human voice
-                    "style": 0.65,  # Higher style for more personality
-                    "use_speaker_boost": True
+                    "stability": dynamic_settings["stability"],
+                    "similarity_boost": dynamic_settings["similarity_boost"],
+                    "style": dynamic_settings["style"],
+                    "use_speaker_boost": dynamic_settings["use_speaker_boost"]
                 }
             )
 
@@ -842,20 +926,20 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 print(f"  Text: {text[:80]}...")
 
                 try:
-                    # Generate audio for this segment with natural settings
-                    # Lower stability = more expressive, less robotic
-                    # Higher similarity boost = closer to natural voice
+                    # DYNAMIC voice settings based on what's being said
+                    dynamic_settings = analyze_text_emotion(text)
+                    emotion_type = dynamic_settings.pop('_emotion_type')
+
+                    print(f"   Segment {i+1}: {emotion_type} tone "
+                          f"(stability={dynamic_settings['stability']:.2f}, "
+                          f"style={dynamic_settings['style']:.2f})")
+
                     audio_generator = self.elevenlabs_client.text_to_speech.convert(
                         text=text,
                         voice_id=voice_id,
                         model_id="eleven_turbo_v2_5",
                         output_format="mp3_44100_128",
-                        voice_settings={
-                            "stability": 0.35,  # Much lower = very expressive and natural
-                            "similarity_boost": 0.85,  # Higher = closer to real human voice
-                            "style": 0.65,  # Higher style for more personality
-                            "use_speaker_boost": True  # Enhanced clarity
-                        }
+                        voice_settings=dynamic_settings
                     )
 
                     # Collect audio chunks for this segment
