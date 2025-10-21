@@ -255,14 +255,29 @@ async def unsubscribe(email: EmailStr):
     """Unsubscribe user from emails"""
     try:
         email_lower = email.lower()
+        print(f"🔕 Unsubscribing: {email_lower}")
+
+        # Check if email exists in database
+        response = email_table.get_item(Key={'email': email_lower})
+
+        if 'Item' not in response:
+            print(f"   ⚠️  Email not found in database: {email_lower}")
+            # Still return success - don't reveal if email exists or not
+            return {"message": "Successfully unsubscribed", "success": True}
+
+        # Update subscription status
         email_table.update_item(
             Key={'email': email_lower},
             UpdateExpression='SET subscribed = :val',
             ExpressionAttributeValues={':val': False}
         )
-        return {"message": "Successfully unsubscribed"}
+
+        print(f"   ✅ Successfully unsubscribed: {email_lower}")
+        return {"message": "Successfully unsubscribed", "success": True}
     except Exception as e:
-        print(f"Error unsubscribing: {e}")
+        print(f"❌ Error unsubscribing: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Error unsubscribing")
 
 @app.get("/api/episodes")
