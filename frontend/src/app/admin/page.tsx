@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CheckCircle2, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
+import { AudioEditor } from "@/components/AudioEditor";
 
 const ADMIN_PASSWORD = "podcast025";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://marketplace-wtvs.onrender.com";
@@ -829,17 +830,27 @@ function CustomWorkflowTab() {
           </Button>
 
           {audioUrl && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-green-900">Audio Generated!</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <h3 className="font-semibold text-green-900">Audio Generated!</h3>
+                </div>
+                <p className="text-sm text-green-700 mt-2">
+                  Podcast ID: <span className="font-mono">{podcastId}</span>
+                </p>
               </div>
-              <audio controls className="w-full">
-                <source src={audioUrl} type="audio/mpeg" />
-              </audio>
-              <p className="text-sm text-green-700">
-                Podcast ID: <span className="font-mono">{podcastId}</span>
-              </p>
+
+              <AudioEditor
+                audioUrl={audioUrl}
+                transcript={transcript}
+                podcastId={podcastId}
+                onSave={(clippedUrl, editedTranscript) => {
+                  setAudioUrl(clippedUrl);
+                  setTranscript(editedTranscript);
+                  toast.success("Changes saved!");
+                }}
+              />
             </div>
           )}
         </div>
