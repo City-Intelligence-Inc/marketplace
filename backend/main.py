@@ -341,16 +341,39 @@ async def get_episodes():
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 
+class DeleteEpisodeRequest(BaseModel):
+    admin_password: str
+
+@app.post("/api/admin/verify-password")
+async def verify_admin_password(request: DeleteEpisodeRequest):
+    """Verify admin password"""
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'podcast025')
+
+    if request.admin_password == ADMIN_PASSWORD:
+        return {"valid": True, "message": "Password verified"}
+    else:
+        return {"valid": False, "message": "Invalid password"}
+
 @app.delete("/api/admin/episodes/{podcast_id}")
-async def delete_episode(podcast_id: str):
-    """Delete a podcast episode (admin only)"""
+async def delete_episode(podcast_id: str, request: DeleteEpisodeRequest):
+    """Delete a podcast episode (admin only - requires password)"""
     try:
-        print(f"🗑️ Deleting podcast: {podcast_id}")
+        print(f"🗑️ DELETE REQUEST for podcast: {podcast_id}")
+
+        # Verify admin password
+        ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'podcast025')
+
+        if request.admin_password != ADMIN_PASSWORD:
+            print(f"❌ Invalid admin password attempt")
+            raise HTTPException(status_code=401, detail="Invalid admin password")
+
+        print(f"✅ Admin password verified")
 
         # Get podcast to check if it exists
         response = podcast_table.get_item(Key={'podcast_id': podcast_id})
 
         if 'Item' not in response:
+            print(f"❌ Podcast not found: {podcast_id}")
             raise HTTPException(status_code=404, detail="Podcast not found")
 
         # Delete from DynamoDB

@@ -4,11 +4,19 @@ import { useEffect, useState } from "react";
 import { getEpisodes, Episode } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://four0k-arr-saas.onrender.com";
 
 export default function Episodes() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchEpisodes() {
@@ -34,6 +42,69 @@ export default function Episodes() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleDeleteClick = (episodeId: string) => {
+    setSelectedEpisodeId(episodeId);
+    setShowDeleteModal(true);
+    setAdminPassword("");
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!adminPassword) {
+      toast.error("Please enter admin password");
+      return;
+    }
+
+    if (!selectedEpisodeId) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/episodes/${selectedEpisodeId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          admin_password: adminPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Invalid admin password");
+        } else {
+          toast.error(data.detail || "Failed to delete episode");
+        }
+        return;
+      }
+
+      toast.success("Episode deleted successfully");
+
+      // Remove from local state
+      setEpisodes(episodes.filter(ep => ep.podcast_id !== selectedEpisodeId));
+
+      // Close modal
+      setShowDeleteModal(false);
+      setSelectedEpisodeId(null);
+      setAdminPassword("");
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("An error occurred while deleting");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    if (!isDeleting) {
+      setShowDeleteModal(false);
+      setSelectedEpisodeId(null);
+      setAdminPassword("");
+    }
   };
 
   return (
@@ -73,23 +144,84 @@ export default function Episodes() {
                     <source src={episode.audio_url} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
-                  {episode.paper_url !== 'N/A' && episode.paper_url !== '#' && (
+                  <div className="flex gap-2">
+                    {episode.paper_url !== 'N/A' && episode.paper_url !== '#' && (
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        asChild
+                      >
+                        <a href={episode.paper_url} target="_blank" rel="noopener noreferrer">
+                          View Paper
+                        </a>
+                      </Button>
+                    )}
                     <Button
-                      variant="outline"
-                      className="w-full"
-                      asChild
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteClick(episode.podcast_id)}
+                      title="Delete episode (admin only)"
                     >
-                      <a href={episode.paper_url} target="_blank" rel="noopener noreferrer">
-                        View Paper
-                      </a>
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-slate-900">Delete Episode</h2>
+            <p className="text-slate-600">
+              Are you sure you want to delete this episode? This action cannot be undone.
+            </p>
+
+            <div className="space-y-2">
+              <label htmlFor="admin-password" className="text-sm font-medium text-slate-700">
+                Admin Password
+              </label>
+              <input
+                id="admin-password"
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter admin password"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                disabled={isDeleting}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isDeleting) {
+                    handleDeleteConfirm();
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleModalClose}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Episode"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
