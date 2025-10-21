@@ -361,6 +361,8 @@ function WorkflowTab({
             transcript={transcript}
             setPodcastId={setPodcastId}
             setAudioUrl={setAudioUrl}
+            targetWords={targetWords}
+            setTargetWords={setTargetWords}
           />
         )}
         {currentStep === 3 && (
@@ -1837,11 +1839,15 @@ function Step3ConvertToAudio({
   transcript,
   setPodcastId,
   setAudioUrl,
+  targetWords,
+  setTargetWords,
 }: {
   paperData: PaperData | null;
   transcript: string;
   setPodcastId: (id: string) => void;
   setAudioUrl: (url: string) => void;
+  targetWords: number;
+  setTargetWords: (value: number) => void;
 }) {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [hostVoice, setHostVoice] = useState("rachel");
