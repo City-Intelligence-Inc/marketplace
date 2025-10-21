@@ -1,22 +1,12 @@
 "use client";
 
-/**
- * COMPLETE ADMIN DASHBOARD
- * This is the full working version - rename to page.tsx to use
- *
- * Workflow:
- * 1. Add Paper -> Shows editable preview (title, authors, abstract)
- * 2. Generate Transcript -> Loads personas/levels, generates, allows editing
- * 3. Convert to Audio -> Loads voices with preview, generates audio
- * 4. Send -> Select users and send podcast
- */
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut } from "lucide-react";
 
 const ADMIN_PASSWORD = "podcast025";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
@@ -74,60 +64,51 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("=== ADMIN PAGE MOUNTED ===");
-    console.log("API URL:", API_URL);
-    console.log("Checking authentication status...");
-
     const authStatus = sessionStorage.getItem("adminAuth");
-    console.log("Auth status from session:", authStatus);
-
     if (authStatus === "true") {
-      console.log("✓ User is authenticated");
       setIsAuthenticated(true);
-    } else {
-      console.log("✗ User is not authenticated");
     }
     setIsLoading(false);
-    console.log("=== ADMIN PAGE READY ===");
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt...");
     if (password === ADMIN_PASSWORD) {
-      console.log("✓ Password correct, granting access");
       setIsAuthenticated(true);
       sessionStorage.setItem("adminAuth", "true");
-      toast.success("Access granted");
+      toast.success("Welcome back!");
     } else {
-      console.log("✗ Incorrect password");
       toast.error("Incorrect password");
       setPassword("");
     }
   };
 
   const handleLogout = () => {
-    console.log("Logging out...");
     setIsAuthenticated(false);
     sessionStorage.removeItem("adminAuth");
-    toast.success("Logged out");
+    toast.success("Logged out successfully");
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="animate-pulse text-slate-600">Loading...</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
-            <CardDescription>Enter the password to continue</CardDescription>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-red-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-0">
+          <CardHeader className="space-y-3 pb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto">
+              <BarChart3 className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-3xl text-center">Admin Portal</CardTitle>
+            <CardDescription className="text-center text-base">
+              Enter your credentials to access the dashboard
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -136,10 +117,14 @@ export default function AdminPage() {
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="h-12 text-base"
                 autoFocus
               />
-              <Button type="submit" className="w-full bg-gradient-to-r from-orange-600 to-red-600">
-                Login
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-base font-medium"
+              >
+                Access Dashboard
               </Button>
             </form>
           </CardContent>
@@ -149,16 +134,19 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-20 md:pt-32 pb-20 md:pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-black mb-2">
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600">Manage podcasts and users</p>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Admin Dashboard</h1>
+            <p className="text-slate-600">Manage your podcast creation workflow</p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
             Logout
           </Button>
         </div>
@@ -170,42 +158,139 @@ export default function AdminPage() {
 }
 
 function AdminDashboard() {
-  // Global state shared across all steps
+  const [currentStep, setCurrentStep] = useState(0);
   const [paperData, setPaperData] = useState<PaperData | null>(null);
   const [transcript, setTranscript] = useState("");
   const [podcastId, setPodcastId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
+  const steps = [
+    { title: "Upload Paper", icon: Upload, description: "Add research paper or text" },
+    { title: "Generate Script", icon: FileText, description: "Create podcast transcript" },
+    { title: "Create Audio", icon: Mic, description: "Convert to speech" },
+    { title: "Distribute", icon: Send, description: "Send to subscribers" },
+  ];
+
+  const canGoNext = () => {
+    if (currentStep === 0) return paperData !== null;
+    if (currentStep === 1) return transcript !== "";
+    if (currentStep === 2) return podcastId !== null && audioUrl !== null;
+    return false;
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <StatsSection />
 
-      <Step1AddPaper
-        paperData={paperData}
-        setPaperData={setPaperData}
-        setTranscript={setTranscript}
-      />
+      {/* Progress Stepper */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div className="flex items-center justify-between">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isCompleted = index < currentStep;
+            const isCurrent = index === currentStep;
+            const isLast = index === steps.length - 1;
 
-      <Step2GenerateTranscript
-        paperData={paperData}
-        transcript={transcript}
-        setTranscript={setTranscript}
-      />
+            return (
+              <div key={index} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`
+                      w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300
+                      ${isCompleted ? "bg-green-500 text-white" : ""}
+                      ${isCurrent ? "bg-gradient-to-br from-orange-500 to-red-500 text-white ring-4 ring-orange-100" : ""}
+                      ${!isCompleted && !isCurrent ? "bg-slate-100 text-slate-400" : ""}
+                    `}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8" />
+                    ) : (
+                      <Icon className="w-6 h-6 md:w-8 md:h-8" />
+                    )}
+                  </div>
+                  <div className="mt-3 text-center hidden md:block">
+                    <div className={`font-semibold ${isCurrent ? "text-slate-900" : "text-slate-600"}`}>
+                      {step.title}
+                    </div>
+                    <div className="text-sm text-slate-500 mt-1">{step.description}</div>
+                  </div>
+                  <div className="mt-2 text-center md:hidden">
+                    <div className={`text-xs font-medium ${isCurrent ? "text-slate-900" : "text-slate-600"}`}>
+                      {step.title}
+                    </div>
+                  </div>
+                </div>
+                {!isLast && (
+                  <div className="hidden md:block flex-1 h-1 mx-4 -mt-16">
+                    <div className={`h-full ${isCompleted ? "bg-green-500" : "bg-slate-200"} transition-all duration-300`} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-      <Step3ConvertToAudio
-        paperData={paperData}
-        transcript={transcript}
-        setPodcastId={setPodcastId}
-        setAudioUrl={setAudioUrl}
-      />
+      {/* Step Content */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        {currentStep === 0 && (
+          <Step1AddPaper
+            paperData={paperData}
+            setPaperData={setPaperData}
+            setTranscript={setTranscript}
+          />
+        )}
+        {currentStep === 1 && (
+          <Step2GenerateTranscript
+            paperData={paperData}
+            transcript={transcript}
+            setTranscript={setTranscript}
+          />
+        )}
+        {currentStep === 2 && (
+          <Step3ConvertToAudio
+            paperData={paperData}
+            transcript={transcript}
+            setPodcastId={setPodcastId}
+            setAudioUrl={setAudioUrl}
+          />
+        )}
+        {currentStep === 3 && (
+          <Step4SendToUsers
+            podcastId={podcastId}
+            audioUrl={audioUrl}
+            selectedUsers={selectedUsers}
+            setSelectedUsers={setSelectedUsers}
+          />
+        )}
+      </div>
 
-      <Step4SendToUsers
-        podcastId={podcastId}
-        audioUrl={audioUrl}
-        selectedUsers={selectedUsers}
-        setSelectedUsers={setSelectedUsers}
-      />
+      {/* Navigation */}
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+          disabled={currentStep === 0}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Previous
+        </Button>
+
+        <div className="text-sm text-slate-600">
+          Step {currentStep + 1} of {steps.length}
+        </div>
+
+        <Button
+          onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+          disabled={currentStep === steps.length - 1 || !canGoNext()}
+          className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+        >
+          Next
+          <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -215,17 +300,13 @@ function StatsSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("📊 Fetching admin stats...");
     async function fetchStats() {
       try {
         const response = await fetch(`${API_URL}/api/admin/stats`);
-        console.log("Stats response status:", response.status);
         const data = await response.json();
-        console.log("✓ Stats loaded:", data);
         setStats(data);
       } catch (error) {
-        console.error("✗ Failed to load stats:", error);
-        toast.error("Failed to load stats");
+        console.error("Failed to load stats:", error);
       } finally {
         setIsLoading(false);
       }
@@ -236,23 +317,23 @@ function StatsSection() {
   if (isLoading) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader>
-          <CardDescription>Total Subscribers</CardDescription>
-          <CardTitle className="text-3xl">{stats?.total_subscribers || 0}</CardTitle>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+        <CardHeader className="pb-3">
+          <CardDescription className="text-blue-700 font-medium">Total Subscribers</CardDescription>
+          <CardTitle className="text-4xl text-blue-900">{stats?.total_subscribers || 0}</CardTitle>
         </CardHeader>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardDescription>Total Podcasts</CardDescription>
-          <CardTitle className="text-3xl">{stats?.total_podcasts || 0}</CardTitle>
+      <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100">
+        <CardHeader className="pb-3">
+          <CardDescription className="text-purple-700 font-medium">Total Podcasts</CardDescription>
+          <CardTitle className="text-4xl text-purple-900">{stats?.total_podcasts || 0}</CardTitle>
         </CardHeader>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardDescription>Last Sent</CardDescription>
-          <CardTitle className="text-lg">
+      <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100">
+        <CardHeader className="pb-3">
+          <CardDescription className="text-green-700 font-medium">Last Sent</CardDescription>
+          <CardTitle className="text-xl text-green-900">
             {stats?.last_podcast_date
               ? new Date(stats.last_podcast_date).toLocaleDateString()
               : "Never"}
@@ -263,7 +344,6 @@ function StatsSection() {
   );
 }
 
-// STEP 1: Add Paper
 function Step1AddPaper({
   paperData,
   setPaperData,
@@ -275,23 +355,16 @@ function Step1AddPaper({
 }) {
   const [activeTab, setActiveTab] = useState<"upload" | "text">("upload");
   const [isLoading, setIsLoading] = useState(false);
-
-  // For upload
   const [paperUrl, setPaperUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-
-  // For text
   const [textTitle, setTextTitle] = useState("");
   const [customText, setCustomText] = useState("");
-
-  // Editable fields
   const [editTitle, setEditTitle] = useState("");
   const [editAuthors, setEditAuthors] = useState("");
   const [editAbstract, setEditAbstract] = useState("");
 
   useEffect(() => {
     if (paperData) {
-      console.log("📄 Paper data loaded:", paperData);
       setEditTitle(paperData.title);
       setEditAuthors(Array.isArray(paperData.authors) ? paperData.authors.join(", ") : paperData.authors);
       setEditAbstract(paperData.abstract);
@@ -300,53 +373,26 @@ function Step1AddPaper({
 
   const handleUploadPDF = async () => {
     if (!paperUrl || !pdfFile) {
-      toast.error("Please provide paper URL and PDF file");
+      toast.error("Please provide both URL and PDF file");
       return;
     }
 
     setIsLoading(true);
-    toast.info("Uploading PDF and extracting text...");
+    toast.info("Extracting text from PDF...");
 
     try {
       const formData = new FormData();
       formData.append("file", pdfFile);
       formData.append("paper_url", paperUrl);
 
-      console.log("Uploading PDF:", pdfFile.name, "URL:", paperUrl);
-
       const response = await fetch(`${API_URL}/api/admin/upload-pdf`, {
         method: "POST",
         body: formData,
       });
 
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload error:", errorText);
-        let errorMsg = "Failed to upload PDF";
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMsg = errorData.detail || errorMsg;
-        } catch {
-          errorMsg = errorText || errorMsg;
-        }
-        throw new Error(errorMsg);
-      }
+      if (!response.ok) throw new Error("Failed to upload PDF");
 
       const data = await response.json();
-      console.log("📄 Received paper data:", data);
-
-      if (data.ocr_details) {
-        console.log("✅ OCR Details found:");
-        console.log(`   - Total Pages: ${data.ocr_details.total_pages}`);
-        console.log(`   - Total Chars: ${data.ocr_details.total_chars}`);
-        console.log(`   - Pages array length: ${data.ocr_details.pages?.length}`);
-      } else {
-        console.warn("⚠️  NO OCR DETAILS IN RESPONSE!");
-      }
-
-      // Ensure authors is an array
       if (typeof data.authors === 'string') {
         data.authors = [data.authors];
       }
@@ -354,11 +400,10 @@ function Step1AddPaper({
       setPaperData(data);
       setPaperUrl("");
       setPdfFile(null);
-      toast.success("PDF uploaded and text extracted!");
+      toast.success("PDF uploaded successfully!");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to upload PDF";
-      toast.error(errorMessage);
-      console.error("Upload PDF error:", error);
+      toast.error("Failed to upload PDF");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -366,12 +411,12 @@ function Step1AddPaper({
 
   const handleGenerateFromText = async () => {
     if (!customText || customText.length < 100) {
-      toast.error("Please provide at least 100 characters of text");
+      toast.error("Please provide at least 100 characters");
       return;
     }
 
     setIsLoading(true);
-    toast.info("Generating from text...");
+    toast.info("Processing text...");
 
     try {
       const formData = new FormData();
@@ -386,8 +431,6 @@ function Step1AddPaper({
       if (!response.ok) throw new Error("Failed to generate from text");
 
       const data = await response.json();
-
-      // Create paper data structure
       const newPaperData: PaperData = {
         paper_id: data.paper_id,
         title: data.title,
@@ -397,12 +440,12 @@ function Step1AddPaper({
       };
 
       setPaperData(newPaperData);
-      setTranscript(data.transcript); // Auto-set transcript for text input
+      setTranscript(data.transcript);
       setCustomText("");
       setTextTitle("");
-      toast.success("Transcript generated from text!");
+      toast.success("Text processed successfully!");
     } catch (error) {
-      toast.error("Failed to generate from text");
+      toast.error("Failed to process text");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -411,222 +454,215 @@ function Step1AddPaper({
 
   const saveEdits = () => {
     if (paperData) {
-      console.log("💾 Saving paper edits...");
-      console.log("Title:", editTitle);
-      console.log("Authors:", editAuthors);
       const updatedData: PaperData = {
         ...paperData,
         title: editTitle,
         authors: editAuthors.split(",").map(a => a.trim()),
         abstract: editAbstract,
       };
-      console.log("✓ Updated paper data:", updatedData);
       setPaperData(updatedData);
-      toast.success("Paper metadata updated");
+      toast.success("Changes saved!");
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>1. Add Paper</CardTitle>
-        <CardDescription>Upload PDF or paste text</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Tabs */}
-        <div className="flex gap-2 border-b">
-          <Button
-            variant="ghost"
-            className={activeTab === "upload" ? "border-b-2 border-orange-600 rounded-none" : "rounded-none"}
-            onClick={() => setActiveTab("upload")}
-          >
-            Upload PDF
-          </Button>
-          <Button
-            variant="ghost"
-            className={activeTab === "text" ? "border-b-2 border-orange-600 rounded-none" : "rounded-none"}
-            onClick={() => setActiveTab("text")}
-          >
-            From Text
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Upload Paper</h2>
+        <p className="text-slate-600">Upload a PDF or paste text to get started</p>
+      </div>
 
-        {/* Upload Tab */}
-        {activeTab === "upload" && (
-          <div className="space-y-4">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> After uploading, you can edit the extracted title, authors, and abstract below to fix any parsing errors.
-              </p>
-            </div>
+      <div className="flex gap-2 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab("upload")}
+          className={`px-6 py-3 font-medium transition-all ${
+            activeTab === "upload"
+              ? "text-orange-600 border-b-2 border-orange-600"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          Upload PDF
+        </button>
+        <button
+          onClick={() => setActiveTab("text")}
+          className={`px-6 py-3 font-medium transition-all ${
+            activeTab === "text"
+              ? "text-orange-600 border-b-2 border-orange-600"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          From Text
+        </button>
+      </div>
+
+      {activeTab === "upload" && (
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              Upload a PDF and provide the source URL. You can edit the extracted metadata after upload.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Paper URL</label>
             <Input
               type="url"
-              placeholder="Paper URL (e.g., https://example.com/paper.pdf)"
+              placeholder="https://example.com/paper.pdf"
               value={paperUrl}
               onChange={(e) => setPaperUrl(e.target.value)}
               disabled={isLoading}
+              className="h-12"
             />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select PDF File:</label>
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                disabled={isLoading}
-              />
-              {pdfFile && (
-                <p className="text-xs text-green-600">
-                  Selected: {pdfFile.name}
-                </p>
-              )}
-            </div>
-            <Button
-              onClick={handleUploadPDF}
-              disabled={isLoading || !paperUrl || !pdfFile}
-              className="w-full bg-gradient-to-r from-orange-600 to-red-600"
-            >
-              {isLoading ? "Uploading & Extracting..." : "Upload PDF"}
-            </Button>
           </div>
-        )}
 
-        {/* Text Tab */}
-        {activeTab === "text" && (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">Paste any text to generate a podcast transcript</p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">PDF File</label>
+            <Input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+              disabled={isLoading}
+              className="h-12"
+            />
+            {pdfFile && (
+              <p className="text-sm text-green-600 font-medium">
+                Selected: {pdfFile.name}
+              </p>
+            )}
+          </div>
+
+          <Button
+            onClick={handleUploadPDF}
+            disabled={isLoading || !paperUrl || !pdfFile}
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+          >
+            {isLoading ? "Processing..." : "Upload PDF"}
+          </Button>
+        </div>
+      )}
+
+      {activeTab === "text" && (
+        <div className="space-y-4">
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-800">
+              Paste any text content to create a podcast. Minimum 100 characters required.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Title</label>
             <Input
               type="text"
-              placeholder="Podcast Title"
+              placeholder="Enter title"
               value={textTitle}
               onChange={(e) => setTextTitle(e.target.value)}
               disabled={isLoading}
+              className="h-12"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Content</label>
             <Textarea
-              placeholder="Paste your text here... (minimum 100 characters)"
-              rows={10}
+              placeholder="Paste your text here..."
+              rows={12}
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               disabled={isLoading}
+              className="resize-none"
             />
-            <Button
-              onClick={handleGenerateFromText}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-orange-600 to-red-600"
-            >
-              {isLoading ? "Generating..." : "Generate from Text"}
-            </Button>
+            <p className="text-sm text-slate-500">
+              {customText.length} characters (minimum 100)
+            </p>
           </div>
-        )}
 
-        {/* Paper Preview (Editable) */}
-        {paperData && (
-          <div className="mt-6 p-4 bg-green-50 border-2 border-green-300 rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-green-800 text-lg">✓ Paper Loaded Successfully</h3>
-              <span className="text-xs text-green-700 font-mono bg-green-100 px-2 py-1 rounded">
-                ID: {paperData.paper_id}
-              </span>
+          <Button
+            onClick={handleGenerateFromText}
+            disabled={isLoading || customText.length < 100}
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+          >
+            {isLoading ? "Processing..." : "Generate from Text"}
+          </Button>
+        </div>
+      )}
+
+      {paperData && (
+        <div className="mt-8 p-6 bg-green-50 border-2 border-green-300 rounded-xl space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <h3 className="text-lg font-semibold text-green-900">Paper Loaded Successfully</h3>
             </div>
+            <span className="text-xs font-mono bg-green-100 text-green-700 px-3 py-1 rounded-full">
+              {paperData.paper_id}
+            </span>
+          </div>
 
-            {/* OCR Details - Page by Page */}
-            {paperData.ocr_details && (
-              <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg space-y-3">
-                <h4 className="font-semibold text-blue-800">📄 OCR Extraction Results</h4>
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div className="p-2 bg-white rounded border border-blue-200">
-                    <div className="text-xs text-gray-500">Total Pages</div>
-                    <div className="text-lg font-bold text-blue-700">{paperData.ocr_details.total_pages}</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-blue-200">
-                    <div className="text-xs text-gray-500">Total Characters</div>
-                    <div className="text-lg font-bold text-blue-700">{paperData.ocr_details.total_chars.toLocaleString()}</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-blue-200">
-                    <div className="text-xs text-gray-500">Avg Chars/Page</div>
-                    <div className="text-lg font-bold text-blue-700">
-                      {Math.round(paperData.ocr_details.total_chars / paperData.ocr_details.total_pages)}
-                    </div>
-                  </div>
+          {paperData.ocr_details && (
+            <div className="p-4 bg-white rounded-lg border border-green-200 space-y-3">
+              <h4 className="font-semibold text-slate-900">OCR Extraction Results</h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-900">{paperData.ocr_details.total_pages}</div>
+                  <div className="text-sm text-slate-600 mt-1">Pages</div>
                 </div>
-
-                {/* Page-by-Page Breakdown */}
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-sm font-semibold text-blue-700 hover:text-blue-900">
-                    📋 View Page-by-Page Breakdown ({paperData.ocr_details.pages.length} pages)
-                  </summary>
-                  <div className="mt-3 max-h-96 overflow-y-auto space-y-2">
-                    {paperData.ocr_details.pages.map((page) => (
-                      <details key={page.page_number} className="p-3 bg-white rounded border border-blue-200">
-                        <summary className="cursor-pointer font-mono text-sm text-gray-700 hover:text-blue-700">
-                          Page {page.page_number}: {page.char_count} chars, {page.line_count} lines
-                        </summary>
-                        <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
-                          {page.text}
-                        </pre>
-                      </details>
-                    ))}
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-900">{paperData.ocr_details.total_chars.toLocaleString()}</div>
+                  <div className="text-sm text-slate-600 mt-1">Characters</div>
+                </div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg">
+                  <div className="text-2xl font-bold text-slate-900">
+                    {Math.round(paperData.ocr_details.total_chars / paperData.ocr_details.total_pages)}
                   </div>
-                </details>
+                  <div className="text-sm text-slate-600 mt-1">Avg/Page</div>
+                </div>
               </div>
-            )}
-
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded">
-              <p className="text-sm text-amber-800">
-                <strong>Fix Parsing Errors:</strong> Review and edit the fields below. Common issues include incorrect author names or formatting.
-              </p>
             </div>
+          )}
 
+          <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Title:</label>
+              <label className="text-sm font-semibold text-slate-700">Title</label>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="bg-white border-2"
-                placeholder="Enter paper title"
+                className="h-12 bg-white"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">
-                Authors: <span className="text-xs font-normal text-gray-500">(comma-separated)</span>
-              </label>
+              <label className="text-sm font-semibold text-slate-700">Authors (comma-separated)</label>
               <Input
                 value={editAuthors}
                 onChange={(e) => setEditAuthors(e.target.value)}
-                className="bg-white border-2"
-                placeholder="e.g., John Doe, Jane Smith, Bob Johnson"
+                className="h-12 bg-white"
+                placeholder="John Doe, Jane Smith"
               />
-              <p className="text-xs text-gray-500">
-                Tip: Separate multiple authors with commas
-              </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Abstract:</label>
+              <label className="text-sm font-semibold text-slate-700">Abstract</label>
               <Textarea
                 value={editAbstract}
                 onChange={(e) => setEditAbstract(e.target.value)}
-                rows={5}
-                className="bg-white border-2"
-                placeholder="Enter paper abstract"
+                rows={6}
+                className="bg-white resize-none"
               />
             </div>
 
             <Button
               onClick={saveEdits}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              size="lg"
+              className="w-full h-12 bg-green-600 hover:bg-green-700"
             >
-              Save Changes & Continue
+              Save Changes
             </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
 
-// STEP 2: Generate Transcript
 function Step2GenerateTranscript({
   paperData,
   transcript,
@@ -646,17 +682,13 @@ function Step2GenerateTranscript({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    console.log("🎭 Loading personas...");
     async function loadPersonas() {
       try {
         const response = await fetch(`${API_URL}/api/admin/personas`);
-        console.log("Personas response status:", response.status);
         const data = await response.json();
-        console.log("✓ Personas loaded:", data.personas?.length || 0, "personas");
-        console.log("Personas data:", data.personas);
         setPersonas(data.personas || []);
       } catch (error) {
-        console.error("✗ Failed to load personas:", error);
+        console.error("Failed to load personas:", error);
       }
     }
     loadPersonas();
@@ -669,23 +701,7 @@ function Step2GenerateTranscript({
     }
 
     setIsLoading(true);
-    toast.info("Generating transcript (this may take a few minutes)...");
-
-    console.log("=== 🤖 GENERATING TRANSCRIPT WITH LLM ===");
-    console.log("📝 CONTEXT BEING SENT TO LLM:");
-    console.log({
-      paper_id: paperData.paper_id,
-      paper_title: paperData.title,
-      paper_authors: paperData.authors,
-      use_full_text: useFullText,
-      technical_level: technicalLevel,
-      host_persona: hostPersona,
-      expert_persona: expertPersona,
-      custom_topics: customTopics || "(none)",
-      paper_abstract: paperData.abstract.substring(0, 200) + "...",
-      full_text_included: useFullText ? "YES - full paper content" : "NO - abstract only"
-    });
-    console.log("=".repeat(50));
+    toast.info("Generating transcript... This may take a few minutes");
 
     try {
       const formData = new FormData();
@@ -698,27 +714,17 @@ function Step2GenerateTranscript({
         formData.append("custom_topics", customTopics);
       }
 
-      console.log("📡 Sending request to:", `${API_URL}/api/admin/generate-transcript`);
-
       const response = await fetch(`${API_URL}/api/admin/generate-transcript`, {
         method: "POST",
         body: formData,
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) throw new Error("Failed to generate transcript");
 
       const data = await response.json();
-      console.log("✓ Transcript generated successfully");
-      console.log("Transcript length:", data.transcript?.length || 0, "characters");
-      console.log("Transcript preview:", data.transcript?.substring(0, 300) + "...");
-      console.log("=== END LLM GENERATION ===");
-
       setTranscript(data.transcript);
-      toast.success("Transcript generated!");
+      toast.success("Transcript generated successfully!");
     } catch (error) {
-      console.error("✗ TRANSCRIPT GENERATION FAILED:", error);
       toast.error("Failed to generate transcript");
       console.error(error);
     } finally {
@@ -730,132 +736,139 @@ function Step2GenerateTranscript({
   const expertPersonas = personas.filter(p => p.role === "Expert");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>2. Generate Transcript</CardTitle>
-        <CardDescription>
-          {paperData ? `Paper: ${paperData.title.substring(0, 60)}...` : "Add a paper first"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Persona Selection */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
-          <h3 className="font-semibold">Podcast Personas</h3>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Host Persona</label>
-            <select
-              value={hostPersona}
-              onChange={(e) => setHostPersona(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              disabled={!paperData || isLoading}
-            >
-              {hostPersonas.map(p => (
-                <option key={p.key} value={p.key}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Expert Persona</label>
-            <select
-              value={expertPersona}
-              onChange={(e) => setExpertPersona(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              disabled={!paperData || isLoading}
-            >
-              {expertPersonas.map(p => (
-                <option key={p.key} value={p.key}>{p.name}</option>
-              ))}
-            </select>
-          </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Generate Script</h2>
+        <p className="text-slate-600">
+          {paperData ? `Creating script for: ${paperData.title.substring(0, 80)}...` : "Add a paper first"}
+        </p>
+      </div>
+
+      {!paperData && (
+        <div className="p-6 bg-amber-50 border border-amber-200 rounded-lg text-center">
+          <p className="text-amber-800">Please upload a paper in Step 1 first</p>
         </div>
+      )}
 
-        {/* Technical Level */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Technical Level</label>
-          <select
-            value={technicalLevel}
-            onChange={(e) => setTechnicalLevel(e.target.value)}
-            className="w-full p-2 border rounded-md"
-            disabled={!paperData || isLoading}
-          >
-            <option value="baby">👶 Explain to a Child</option>
-            <option value="highschool">🎒 High School Level</option>
-            <option value="undergrad">🎓 Undergraduate Level</option>
-            <option value="graduate">👨‍🎓 Graduate/Professional</option>
-            <option value="expert">🔬 Expert Researcher</option>
-            <option value="nobel">🏆 Nobel Laureate Level</option>
-          </select>
-        </div>
-
-        {/* Custom Topics */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Custom Topics (Optional)</label>
-          <Textarea
-            placeholder="Enter specific areas to cover..."
-            rows={4}
-            value={customTopics}
-            onChange={(e) => setCustomTopics(e.target.value)}
-            disabled={!paperData || isLoading}
-          />
-        </div>
-
-        {/* Use Full Text */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="useFullText"
-            checked={useFullText}
-            onChange={(e) => setUseFullText(e.target.checked)}
-            className="w-4 h-4"
-            disabled={!paperData || isLoading}
-          />
-          <label htmlFor="useFullText" className="text-sm">
-            Use full PDF text (7-10 min script)
-          </label>
-        </div>
-
-        <Button
-          onClick={handleGenerateTranscript}
-          disabled={!paperData || isLoading}
-          className="w-full bg-gradient-to-r from-orange-600 to-red-600"
-        >
-          {isLoading ? "Generating..." : "Generate Transcript"}
-        </Button>
-
-        {/* Transcript Display/Edit */}
-        {transcript && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-blue-800">Generated Transcript</h3>
-              <Button
-                onClick={() => setIsEditing(!isEditing)}
-                variant="outline"
-                size="sm"
+      {paperData && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Host Persona</label>
+              <select
+                value={hostPersona}
+                onChange={(e) => setHostPersona(e.target.value)}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isLoading}
               >
-                {isEditing ? "Save" : "Edit"}
-              </Button>
+                {hostPersonas.map(p => (
+                  <option key={p.key} value={p.key}>{p.name}</option>
+                ))}
+              </select>
             </div>
 
-            {isEditing ? (
-              <Textarea
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                rows={20}
-                className="bg-white font-mono text-sm"
-              />
-            ) : (
-              <div className="max-h-96 overflow-y-auto bg-white p-4 rounded border whitespace-pre-wrap text-sm">
-                {transcript}
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Expert Persona</label>
+              <select
+                value={expertPersona}
+                onChange={(e) => setExpertPersona(e.target.value)}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isLoading}
+              >
+                {expertPersonas.map(p => (
+                  <option key={p.key} value={p.key}>{p.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Technical Level</label>
+            <select
+              value={technicalLevel}
+              onChange={(e) => setTechnicalLevel(e.target.value)}
+              className="w-full h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              disabled={isLoading}
+            >
+              <option value="baby">👶 Explain to a Child</option>
+              <option value="highschool">🎒 High School Level</option>
+              <option value="undergrad">🎓 Undergraduate Level</option>
+              <option value="graduate">👨‍🎓 Graduate/Professional</option>
+              <option value="expert">🔬 Expert Researcher</option>
+              <option value="nobel">🏆 Nobel Laureate Level</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Custom Topics (Optional)</label>
+            <Textarea
+              placeholder="Specific areas to cover..."
+              rows={4}
+              value={customTopics}
+              onChange={(e) => setCustomTopics(e.target.value)}
+              disabled={isLoading}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+            <input
+              type="checkbox"
+              id="useFullText"
+              checked={useFullText}
+              onChange={(e) => setUseFullText(e.target.checked)}
+              className="w-5 h-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+              disabled={isLoading}
+            />
+            <label htmlFor="useFullText" className="text-sm font-medium text-slate-700">
+              Use full PDF text (generates 7-10 minute script)
+            </label>
+          </div>
+
+          <Button
+            onClick={handleGenerateTranscript}
+            disabled={isLoading}
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+          >
+            {isLoading ? "Generating Transcript..." : "Generate Transcript"}
+          </Button>
+
+          {transcript && (
+            <div className="p-6 bg-blue-50 border-2 border-blue-300 rounded-xl space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-blue-900">Transcript Generated</h3>
+                </div>
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isEditing ? "Save" : "Edit"}
+                </Button>
+              </div>
+
+              {isEditing ? (
+                <Textarea
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  rows={20}
+                  className="bg-white font-mono text-sm resize-none"
+                />
+              ) : (
+                <div className="max-h-96 overflow-y-auto bg-white p-4 rounded-lg border border-blue-200 whitespace-pre-wrap text-sm">
+                  {transcript}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-// STEP 3: Convert to Audio
 function Step3ConvertToAudio({
   paperData,
   transcript,
@@ -875,17 +888,13 @@ function Step3ConvertToAudio({
   const [currentPodcastId, setCurrentPodcastId] = useState("");
 
   useEffect(() => {
-    console.log("🎤 Loading voices...");
     async function loadVoices() {
       try {
         const response = await fetch(`${API_URL}/api/admin/individual-voices`);
-        console.log("Voices response status:", response.status);
         const data = await response.json();
-        console.log("✓ Voices loaded:", data.voices?.length || 0, "voices");
-        console.log("Voices data:", data.voices);
         setVoices(data.voices || []);
       } catch (error) {
-        console.error("✗ Failed to load voices:", error);
+        console.error("Failed to load voices:", error);
       }
     }
     loadVoices();
@@ -895,7 +904,7 @@ function Step3ConvertToAudio({
     try {
       const response = await fetch(`${API_URL}/api/admin/voice-preview/${voiceKey}?role=${role}`);
       if (!response.ok) {
-        toast.error("Failed to load voice preview");
+        toast.error("Failed to load preview");
         return;
       }
 
@@ -903,10 +912,9 @@ function Step3ConvertToAudio({
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audio.play();
-
       audio.onended = () => URL.revokeObjectURL(audioUrl);
     } catch (error) {
-      toast.error("Error playing voice preview");
+      toast.error("Error playing preview");
       console.error(error);
     }
   };
@@ -918,7 +926,7 @@ function Step3ConvertToAudio({
     }
 
     setIsLoading(true);
-    toast.info("Converting to audio (this will take several minutes)...");
+    toast.info("Converting to audio... This will take several minutes");
 
     try {
       const formData = new FormData();
@@ -952,90 +960,98 @@ function Step3ConvertToAudio({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>3. Convert to Audio</CardTitle>
-        <CardDescription>Select voices and generate podcast audio</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
-          <h3 className="font-semibold">Custom Voice Selection</h3>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Create Audio</h2>
+        <p className="text-slate-600">Select voices and generate your podcast audio</p>
+      </div>
 
-          {/* Host Voice */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Host Voice</label>
-            <div className="flex gap-2">
-              <select
-                value={hostVoice}
-                onChange={(e) => setHostVoice(e.target.value)}
-                className="flex-1 p-2 border rounded-md"
-                disabled={!transcript || isLoading}
-              >
-                {voices.map(v => (
-                  <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
-                ))}
-              </select>
-              <Button
-                variant="outline"
-                onClick={() => handlePreviewVoice(hostVoice, "host")}
-                disabled={!transcript || isLoading}
-              >
-                ▶️ Preview
-              </Button>
-            </div>
-          </div>
-
-          {/* Expert Voice */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Expert Voice</label>
-            <div className="flex gap-2">
-              <select
-                value={expertVoice}
-                onChange={(e) => setExpertVoice(e.target.value)}
-                className="flex-1 p-2 border rounded-md"
-                disabled={!transcript || isLoading}
-              >
-                {voices.map(v => (
-                  <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
-                ))}
-              </select>
-              <Button
-                variant="outline"
-                onClick={() => handlePreviewVoice(expertVoice, "expert")}
-                disabled={!transcript || isLoading}
-              >
-                ▶️ Preview
-              </Button>
-            </div>
-          </div>
+      {!transcript && (
+        <div className="p-6 bg-amber-50 border border-amber-200 rounded-lg text-center">
+          <p className="text-amber-800">Please generate a transcript in Step 2 first</p>
         </div>
+      )}
 
-        <Button
-          onClick={handleConvertToAudio}
-          disabled={!transcript || isLoading}
-          className="w-full bg-gradient-to-r from-orange-600 to-red-600"
-        >
-          {isLoading ? "Converting..." : "Convert to Audio"}
-        </Button>
+      {transcript && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Host Voice</label>
+              <div className="flex gap-2">
+                <select
+                  value={hostVoice}
+                  onChange={(e) => setHostVoice(e.target.value)}
+                  className="flex-1 h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  {voices.map(v => (
+                    <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePreviewVoice(hostVoice, "host")}
+                  disabled={isLoading}
+                  className="px-4"
+                >
+                  ▶️
+                </Button>
+              </div>
+            </div>
 
-        {/* Audio Player */}
-        {generatedAudioUrl && (
-          <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-4">
-            <h3 className="font-semibold text-purple-800">Podcast Generated!</h3>
-            <audio controls className="w-full">
-              <source src={generatedAudioUrl} type="audio/mpeg" />
-            </audio>
-            <p className="text-xs text-purple-700">
-              Podcast ID: <span className="font-mono">{currentPodcastId}</span>
-            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Expert Voice</label>
+              <div className="flex gap-2">
+                <select
+                  value={expertVoice}
+                  onChange={(e) => setExpertVoice(e.target.value)}
+                  className="flex-1 h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  {voices.map(v => (
+                    <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePreviewVoice(expertVoice, "expert")}
+                  disabled={isLoading}
+                  className="px-4"
+                >
+                  ▶️
+                </Button>
+              </div>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <Button
+            onClick={handleConvertToAudio}
+            disabled={isLoading}
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+          >
+            {isLoading ? "Converting to Audio..." : "Convert to Audio"}
+          </Button>
+
+          {generatedAudioUrl && (
+            <div className="p-6 bg-purple-50 border-2 border-purple-300 rounded-xl space-y-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6 text-purple-600" />
+                <h3 className="text-lg font-semibold text-purple-900">Podcast Generated!</h3>
+              </div>
+              <audio controls className="w-full">
+                <source src={generatedAudioUrl} type="audio/mpeg" />
+              </audio>
+              <p className="text-sm text-purple-700">
+                Podcast ID: <span className="font-mono bg-purple-100 px-2 py-1 rounded">{currentPodcastId}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-// STEP 4: Send to Users
 function Step4SendToUsers({
   podcastId,
   audioUrl,
@@ -1052,17 +1068,13 @@ function Step4SendToUsers({
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
-    console.log("👥 Loading users...");
     async function fetchUsers() {
       try {
         const response = await fetch(`${API_URL}/api/admin/users`);
-        console.log("Users response status:", response.status);
         const data = await response.json();
-        console.log("✓ Users loaded:", data.users?.length || 0, "users");
-        console.log("Users data:", data.users);
         setUsers(data.users || []);
       } catch (error) {
-        console.error("✗ Failed to load users:", error);
+        console.error("Failed to load users:", error);
         toast.error("Failed to load users");
       } finally {
         setIsLoading(false);
@@ -1111,7 +1123,7 @@ function Step4SendToUsers({
 
       const data = await response.json();
       toast.success(`Sent to ${data.sent} user(s)!`);
-      setSelectedUsers(new Set()); // Clear selection
+      setSelectedUsers(new Set());
     } catch (error) {
       toast.error("Failed to send podcast");
       console.error(error);
@@ -1148,84 +1160,88 @@ function Step4SendToUsers({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>4. Send to Subscribers</CardTitle>
-            <CardDescription>
-              {podcastId ? `Ready to send! ${selectedUsers.size} user(s) selected` : "Generate a podcast first"}
-            </CardDescription>
-          </div>
-          {users.length > 0 && (
-            <Button variant="outline" onClick={toggleAll} size="sm">
-              {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
-            </Button>
-          )}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Distribute</h2>
+          <p className="text-slate-600">
+            {podcastId ? `${selectedUsers.size} user(s) selected` : "Generate a podcast first"}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {audioUrl && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+        {users.length > 0 && (
+          <Button variant="outline" onClick={toggleAll} size="sm">
+            {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
+          </Button>
+        )}
+      </div>
+
+      {!podcastId && (
+        <div className="p-6 bg-amber-50 border border-amber-200 rounded-lg text-center">
+          <p className="text-amber-800">Please generate audio in Step 3 first</p>
+        </div>
+      )}
+
+      {podcastId && audioUrl && (
+        <>
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <audio controls className="w-full">
               <source src={audioUrl} type="audio/mpeg" />
             </audio>
           </div>
-        )}
 
-        {isLoading ? (
-          <p className="text-gray-600">Loading users...</p>
-        ) : users.length === 0 ? (
-          <p className="text-gray-600">No users found</p>
-        ) : (
-          <div className="max-h-96 overflow-y-auto border rounded-lg">
-            <div className="space-y-2 p-4">
-              {users.map((user) => (
-                <div
-                  key={user.email}
-                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                  onClick={() => toggleUser(user.email)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.has(user.email)}
-                    onChange={() => toggleUser(user.email)}
-                    className="w-4 h-4"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{user.email}</p>
-                    {user.name && <p className="text-xs text-gray-500">{user.name}</p>}
-                  </div>
-                  <div className="text-xs">
-                    {user.subscribed ? (
-                      <span className="text-green-600">✓ Subscribed</span>
-                    ) : (
-                      <span className="text-gray-400">Unsubscribed</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {isLoading ? (
+            <div className="text-center py-12 text-slate-600">Loading users...</div>
+          ) : users.length === 0 ? (
+            <div className="text-center py-12 text-slate-600">No users found</div>
+          ) : (
+            <div className="border border-slate-200 rounded-lg max-h-96 overflow-y-auto">
+              <div className="divide-y divide-slate-200">
+                {users.map((user) => (
+                  <label
+                    key={user.email}
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.has(user.email)}
+                      onChange={() => toggleUser(user.email)}
+                      className="w-5 h-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900">{user.email}</p>
+                      {user.name && <p className="text-sm text-slate-500">{user.name}</p>}
+                    </div>
+                    <div className="text-sm">
+                      {user.subscribed ? (
+                        <span className="text-green-600 font-medium">✓ Subscribed</span>
+                      ) : (
+                        <span className="text-slate-400">Unsubscribed</span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex gap-2 pt-4">
-          <Button
-            onClick={handleSendToSelected}
-            disabled={!podcastId || selectedUsers.size === 0 || isSending}
-            className="flex-1 bg-green-600 hover:bg-green-700"
-          >
-            {isSending ? "Sending..." : `Send to Selected (${selectedUsers.size})`}
-          </Button>
-          <Button
-            onClick={handleSendToAll}
-            disabled={!podcastId || isSending}
-            className="flex-1 bg-gradient-to-r from-orange-600 to-red-600"
-          >
-            Send to ALL
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Button
+              onClick={handleSendToSelected}
+              disabled={selectedUsers.size === 0 || isSending}
+              className="h-12 bg-green-600 hover:bg-green-700"
+            >
+              {isSending ? "Sending..." : `Send to Selected (${selectedUsers.size})`}
+            </Button>
+            <Button
+              onClick={handleSendToAll}
+              disabled={isSending}
+              className="h-12 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+            >
+              Send to ALL Subscribers
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
