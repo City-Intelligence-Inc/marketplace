@@ -1,6 +1,7 @@
 import os
 import requests
 from typing import Dict, List
+from openai import OpenAI
 
 class EmailService:
     """Service for sending emails via Mailgun"""
@@ -12,6 +13,37 @@ class EmailService:
         self.from_email = "arihant@ai.complete.city"
         self.from_name = "City Secretary"
         self.mailgun_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
+        self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    def generate_title_from_transcript(self, transcript: str) -> str:
+        """Generate a catchy title from the transcript using AI"""
+        try:
+            # Truncate transcript to first 1000 chars for title generation
+            snippet = transcript[:1000]
+
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a creative title generator. Create a short, catchy, clickable title (max 8 words) that captures the main topic of this podcast transcript. Make it compelling and specific. Return ONLY the title, nothing else."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Generate a title for this podcast:\n\n{snippet}..."
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=50
+            )
+
+            title = response.choices[0].message.content.strip()
+            # Remove quotes if AI added them
+            title = title.strip('"').strip("'")
+            return title
+        except Exception as e:
+            print(f"Error generating title: {e}")
+            return "Podcast Episode"
 
     def send_welcome_email(self, email: str, name: str = None) -> bool:
         """Send welcome email to new subscriber - Mobile-first design"""
@@ -253,31 +285,69 @@ class EmailService:
             return False
 
     def send_weekly_digest_email(self, email: str, podcasts: List[Dict], name: str = None) -> bool:
-        """Send weekly digest email with all podcasts from the week"""
+        """Send weekly digest email with all podcasts from the week - with FULL AUDIO PLAYER and TRANSCRIPT"""
         recipient_name = name if name else "there"
 
-        # Build podcast list HTML
+        # Build podcast list HTML with audio players and transcripts
         podcast_items = ""
         total_duration = 0
 
         for i, podcast in enumerate(podcasts, 1):
+            # Get podcast data
             duration = podcast.get('duration', '5-10')
-            title = podcast.get('paper_title', 'Research Podcast')[:80]
-            authors = podcast.get('paper_authors', 'Various Authors')[:50]
+            category = podcast.get('category', 'AI')
+            authors = podcast.get('podcast_hosts', podcast.get('paper_authors', 'Host'))[:50]
             audio_url = podcast.get('audio_url', '#')
-            paper_url = podcast.get('paper_url', '#')
+            transcript = podcast.get('transcript', '')
+
+            # Generate AI title from transcript
+            if transcript:
+                title = self.generate_title_from_transcript(transcript)
+            else:
+                title = podcast.get('paper_title', 'Research Podcast')[:80]
+
+            # Format transcript with paragraphs
+            transcript_paragraphs = transcript.split('\n\n') if transcript else []
+            transcript_html = ''.join([
+                f'<p style="margin-bottom: 12px; line-height: 1.7; color: #374151; font-size: 14px;">{p}</p>'
+                for p in transcript_paragraphs[:10] if p.strip()  # Limit to first 10 paragraphs for email
+            ])
 
             podcast_items += f"""
-            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
-              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">{i}. {title}</h3>
-              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">{authors} • {duration} min</p>
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="{audio_url}" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
-                <span style="color: #d1d5db;">•</span>
-                <a href="{paper_url}" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
+            <div style="border: 2px solid #e5e7eb; padding: 24px; margin-bottom: 32px; background: #ffffff; border-radius: 12px;">
+              <!-- Title -->
+              <div style="margin-bottom: 16px;">
+                <span style="display: inline-block; background: #ea580c; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">{category}</span>
+                <h2 style="color: #111827; font-size: 22px; font-weight: 700; margin: 8px 0 8px 0; line-height: 1.3;">{title}</h2>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">{authors} • {duration} min listen</p>
+              </div>
+
+              <!-- BIG AUDIO PLAYER -->
+              <div style="background: linear-gradient(to bottom, #fef3c7 0%, #fef9e7 100%); border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0; border: 2px solid #fbbf24;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 16px;">🎧 Listen to Episode</h3>
+
+                <!-- HTML5 Audio Player -->
+                <audio controls style="width: 100%; max-width: 100%; margin-bottom: 16px;">
+                  <source src="{audio_url}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+
+                <!-- Big Play Button Link -->
+                <a href="{audio_url}" style="display: inline-block; background: #ea580c; color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; margin-top: 8px;">
+                  ▶️ PLAY NOW
+                </a>
+              </div>
+
+              <!-- FULL TRANSCRIPT -->
+              <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px;">📄 Full Transcript</h3>
+                <div style="color: #374151; line-height: 1.7; font-size: 14px;">
+                  {transcript_html}
+                </div>
               </div>
             </div>
             """
+
             # Estimate duration
             if isinstance(duration, str) and '-' in duration:
                 avg = sum(int(x) for x in duration.split('-')) / 2
