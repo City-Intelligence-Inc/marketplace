@@ -8,12 +8,16 @@ class EmailService:
 
     def __init__(self):
         self.mailgun_api_key = os.getenv('MAILGUN_API_KEY')
-        # Hardcoded Mailgun settings
-        self.mailgun_domain = "ai.complete.city"
-        self.from_email = "arihant@ai.complete.city"
-        self.from_name = "City Secretary"
+        # Configurable Mailgun settings via environment variables (with fallback defaults)
+        self.mailgun_domain = os.getenv('MAILGUN_DOMAIN', 'ai.complete.city')
+        self.from_email = os.getenv('FROM_EMAIL', 'arihant@ai.complete.city')
+        self.from_name = os.getenv('FROM_NAME', 'City Secretary')
         self.mailgun_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+        print(f"📧 Email Service Initialized:")
+        print(f"   Domain: {self.mailgun_domain}")
+        print(f"   From: {self.from_name} <{self.from_email}>")
 
     def generate_title_from_transcript(self, transcript: str) -> str:
         """Generate a catchy title from the transcript using AI"""
@@ -300,17 +304,26 @@ class EmailService:
             audio_url = podcast.get('audio_url', '#')
             transcript = podcast.get('transcript', '')
 
-            # Generate AI title from transcript
-            if transcript:
-                title = self.generate_title_from_transcript(transcript)
-            else:
-                title = podcast.get('paper_title', 'Research Podcast')[:80]
+            # Use the saved AI-generated title (already generated when podcast was created)
+            title = podcast.get('paper_title', 'Research Podcast')
 
-            # Format transcript with paragraphs
-            transcript_paragraphs = transcript.split('\n\n') if transcript else []
+            # If title is still generic and we have transcript, generate it now
+            if title.startswith('Custom Podcast') and transcript:
+                title = self.generate_title_from_transcript(transcript)
+
+            # Format transcript with paragraphs, removing HOST:/EXPERT: labels
+            import re
+
+            # Remove HOST:/EXPERT: labels from transcript
+            clean_transcript = re.sub(r'\b(HOST|EXPERT|Host|Expert)\s*:\s*', '', transcript)
+
+            # Split into paragraphs
+            transcript_paragraphs = clean_transcript.split('\n\n') if clean_transcript else []
+
+            # Create HTML with paragraphs
             transcript_html = ''.join([
-                f'<p style="margin-bottom: 12px; line-height: 1.7; color: #374151; font-size: 14px;">{p}</p>'
-                for p in transcript_paragraphs[:10] if p.strip()  # Limit to first 10 paragraphs for email
+                f'<p style="margin-bottom: 12px; line-height: 1.7; color: #374151; font-size: 14px;">{p.strip()}</p>'
+                for p in transcript_paragraphs if p.strip()  # Include all paragraphs
             ])
 
             podcast_items += f"""

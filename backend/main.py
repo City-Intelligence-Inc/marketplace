@@ -1928,21 +1928,59 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
         print(f"   Audio URL: {audio_result['audio_url']}")
         print("-" * 80)
 
-        # Store in DynamoDB with new fields
+        # Generate AI title from transcript
+        print(f"🤖 GENERATING AI TITLE FROM TRANSCRIPT...")
+        from services.email_service import EmailService
+        email_service = EmailService()
+        ai_title = email_service.generate_title_from_transcript(request.transcript)
+        print(f"   ✓ Generated title: {ai_title}")
+        print("-" * 80)
+
+        # Calculate actual audio duration
+        print(f"⏱️  CALCULATING AUDIO DURATION...")
+        duration_minutes = "5-10"  # Default
+        try:
+            # Download audio temporarily to get duration
+            import requests
+            from mutagen.mp3 import MP3
+            import tempfile
+
+            response = requests.get(audio_result['audio_url'], stream=True)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    tmp_file.write(chunk)
+                tmp_path = tmp_file.name
+
+            audio = MP3(tmp_path)
+            duration_seconds = int(audio.info.length)
+            duration_minutes = str(int(duration_seconds / 60))  # Just the minutes
+
+            import os
+            os.unlink(tmp_path)  # Clean up temp file
+
+            print(f"   ✓ Duration: {duration_minutes} minutes ({duration_seconds} seconds)")
+        except Exception as e:
+            print(f"   ⚠️  Could not calculate duration: {e}")
+            print(f"   Using default: {duration_minutes} minutes")
+        print("-" * 80)
+
+        # Store in DynamoDB with AI-generated title and actual duration
         print(f"💾 STORING TO DYNAMODB:")
         podcast_item = {
             'podcast_id': podcast_id,
             'audio_url': audio_result['audio_url'],
             'transcript': request.transcript,
-            'podcast_hosts': request.podcast_hosts,  # NEW
-            'category': request.category,  # NEW
-            'paper_title': f"Custom Podcast - {request.category}",
+            'podcast_hosts': request.podcast_hosts,
+            'category': request.category,
+            'paper_title': ai_title,  # AI-generated title instead of hardcoded
             'paper_authors': request.podcast_hosts,
+            'duration': duration_minutes,  # Actual duration in minutes
             'created_at': int(datetime.now().timestamp()),  # Unix timestamp as number
             'sent_at': None,
         }
         print(f"   Table: podcasts")
         print(f"   Item Keys: {list(podcast_item.keys())}")
+        print(f"   Title: {ai_title}")
 
         podcast_table.put_item(Item=podcast_item)
         print(f"   ✓ Stored successfully")
