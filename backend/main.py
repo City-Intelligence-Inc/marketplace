@@ -2037,7 +2037,121 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
 
         # Generate HTML based on template type
         print(f"🎨 GENERATING HTML FOR TEMPLATE: {request.template_type}")
-        if request.template_type == "podcast":
+
+        if request.template_type == "weekly":
+            # For weekly digest, generate the EXACT HTML that will be sent
+            import re
+
+            # Get podcast data
+            duration = podcast_data.get('duration', '5-10')
+            category = podcast_data.get('category', 'AI')
+            authors = podcast_data.get('podcast_hosts', podcast_data.get('paper_authors', 'Host'))[:50]
+            audio_url = podcast_data.get('audio_url', '#')
+            transcript = podcast_data.get('transcript', '')
+            title = podcast_data.get('paper_title', 'Research Podcast')
+
+            # Remove HOST:/EXPERT: labels from transcript
+            clean_transcript = re.sub(r'\b(HOST|EXPERT|Host|Expert)\s*:\s*', '', transcript)
+
+            # Split into paragraphs
+            transcript_paragraphs = clean_transcript.split('\n\n') if clean_transcript else []
+
+            # Create HTML with paragraphs
+            transcript_html = ''.join([
+                f'<p style="margin-bottom: 12px; line-height: 1.7; color: #374151; font-size: 14px;">{p.strip()}</p>'
+                for p in transcript_paragraphs if p.strip()
+            ])
+
+            # Build the podcast item HTML (same as in send_weekly_digest_email)
+            podcast_item = f"""
+            <div style="border: 2px solid #e5e7eb; padding: 24px; margin-bottom: 32px; background: #ffffff; border-radius: 12px;">
+              <!-- Title -->
+              <div style="margin-bottom: 16px;">
+                <span style="display: inline-block; background: #ea580c; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">{category}</span>
+                <h2 style="color: #111827; font-size: 22px; font-weight: 700; margin: 8px 0 8px 0; line-height: 1.3;">{title}</h2>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">{authors} • {duration} min listen</p>
+              </div>
+
+              <!-- BIG AUDIO PLAYER -->
+              <div style="background: linear-gradient(to bottom, #fef3c7 0%, #fef9e7 100%); border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0; border: 2px solid #fbbf24;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 16px;">🎧 Listen to Episode</h3>
+
+                <!-- HTML5 Audio Player -->
+                <audio controls style="width: 100%; max-width: 100%; margin-bottom: 16px;">
+                  <source src="{audio_url}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+
+                <!-- Big Play Button Link -->
+                <a href="{audio_url}" style="display: inline-block; background: #ea580c; color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; margin-top: 8px;">
+                  ▶️ PLAY NOW
+                </a>
+              </div>
+
+              <!-- FULL TRANSCRIPT -->
+              <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px;">📄 Full Transcript</h3>
+                <div style="color: #374151; line-height: 1.7; font-size: 14px;">
+                  {transcript_html}
+                </div>
+              </div>
+            </div>
+            """
+
+            # Estimate duration
+            if isinstance(duration, str) and '-' in duration:
+                avg = sum(int(x) for x in duration.split('-')) / 2
+                total_duration = int(avg)
+            else:
+                total_duration = 7
+
+            # Build the full email HTML (same as send_weekly_digest_email)
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #ffffff; }}
+                    .container {{ max-width: 600px; margin: 0 auto; }}
+                    .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center; }}
+                    .header h1 {{ color: white; font-size: 24px; font-weight: 700; margin: 0; }}
+                    .header p {{ color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px; }}
+                    .content {{ padding: 24px 20px; }}
+                    .footer {{ text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb; }}
+                    .footer a {{ color: #10b981; text-decoration: none; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>📚 Your Weekly Digest</h1>
+                        <p>1 episode from this week</p>
+                    </div>
+                    <div class="content">
+                        <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hi there,</p>
+                        <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Here's everything from this week in one place:</p>
+
+                        {podcast_item}
+
+                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
+                            <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
+                                <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
+                            </p>
+                        </div>
+
+                        <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's {int(total_duration)} minutes of cutting-edge research. See you next week!</p>
+                    </div>
+                    <div class="footer">
+                        <p>Next digest arrives same time next week.</p>
+                        <p style="margin-top: 12px;"><a href="#">Unsubscribe</a></p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        elif request.template_type == "podcast":
             html = f"""
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 24px 20px; text-align: center;">

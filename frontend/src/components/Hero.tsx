@@ -140,7 +140,7 @@ export function Hero() {
           <p className="text-lg sm:text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed px-4">
             <span className="whitespace-nowrap">Expert-curated research podcasts</span> delivered daily.
             <br className="hidden sm:block" />
-            <span className="block sm:inline mt-1 sm:mt-0">Stay ahead. <span className="whitespace-nowrap">10 minutes a day.</span></span>
+            <span className="block sm:inline mt-1 sm:mt-0">Never miss. <span className="whitespace-nowrap">10 minutes a day.</span></span>
           </p>
 
           {/* Email Subscription Form */}
