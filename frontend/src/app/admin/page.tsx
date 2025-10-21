@@ -164,7 +164,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"workflow" | "templates">("workflow");
+  const [activeTab, setActiveTab] = useState<"workflow" | "custom" | "templates">("workflow");
   const [currentStep, setCurrentStep] = useState(0);
   const [paperData, setPaperData] = useState<PaperData | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -202,7 +202,18 @@ function AdminDashboard() {
             }`}
           >
             <Upload className="w-5 h-5" />
-            Podcast Workflow
+            Quick Workflow
+          </button>
+          <button
+            onClick={() => setActiveTab("custom")}
+            className={`flex items-center gap-2 px-6 py-4 font-medium transition-all ${
+              activeTab === "custom"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Mic className="w-5 h-5" />
+            Custom Workflow
           </button>
           <button
             onClick={() => setActiveTab("templates")}
@@ -235,6 +246,8 @@ function AdminDashboard() {
           selectedUsers={selectedUsers}
           setSelectedUsers={setSelectedUsers}
         />
+      ) : activeTab === "custom" ? (
+        <CustomWorkflowTab />
       ) : (
         <EmailTemplatesTab />
       )}
@@ -433,6 +446,395 @@ function StatsSection() {
           </CardTitle>
         </CardHeader>
       </Card>
+    </div>
+  );
+}
+
+function CustomWorkflowTab() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [transcript, setTranscript] = useState("");
+  const [podcastHosts, setPodcastHosts] = useState("");
+  const [category, setCategory] = useState("AI");
+  const [hostVoice, setHostVoice] = useState("rachel");
+  const [expertVoice, setExpertVoice] = useState("adam");
+  const [audioUrl, setAudioUrl] = useState("");
+  const [podcastId, setPodcastId] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("podcast");
+  const [emailPreviewHtml, setEmailPreviewHtml] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(false);
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [voicesRes, usersRes] = await Promise.all([
+          fetch(`${API_URL}/api/admin/individual-voices`),
+          fetch(`${API_URL}/api/admin/users`)
+        ]);
+        const voicesData = await voicesRes.json();
+        const usersData = await usersRes.json();
+        setVoices(voicesData.voices || []);
+        setUsers(usersData.users || []);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleGenerateAudio = async () => {
+    if (!transcript || !podcastHosts || !category) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setIsLoading(true);
+    toast.info("Generating audio... This may take several minutes");
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/custom-workflow/generate-audio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript,
+          podcast_hosts: podcastHosts,
+          category,
+          host_voice_key: hostVoice,
+          expert_voice_key: expertVoice,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate audio");
+
+      const data = await response.json();
+      setAudioUrl(data.audio_url);
+      setPodcastId(data.podcast_id);
+      toast.success("Audio generated successfully!");
+      setCurrentStep(1);
+    } catch (error) {
+      toast.error("Failed to generate audio");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePreviewEmail = async () => {
+    if (!podcastId) {
+      toast.error("Please generate audio first");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/custom-workflow/preview-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          podcast_id: podcastId,
+          template_type: selectedTemplate,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to preview email");
+
+      const data = await response.json();
+      setEmailPreviewHtml(data.html);
+      toast.success("Email preview loaded!");
+      setCurrentStep(2);
+    } catch (error) {
+      toast.error("Failed to preview email");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendPodcast = async () => {
+    if (selectedUsers.size === 0) {
+      toast.error("Please select at least one recipient");
+      return;
+    }
+
+    if (!confirm(`Send to ${selectedUsers.size} user(s)?`)) return;
+
+    setIsLoading(true);
+    toast.info(`Sending to ${selectedUsers.size} users...`);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/custom-workflow/send-custom-podcast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          podcast_id: podcastId,
+          recipient_emails: Array.from(selectedUsers),
+          template_type: selectedTemplate,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send");
+
+      const data = await response.json();
+      toast.success(`Sent to ${data.sent} user(s)!`);
+      setSelectedUsers(new Set());
+    } catch (error) {
+      toast.error("Failed to send podcast");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleUser = (email: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(email)) {
+      newSelected.delete(email);
+    } else {
+      newSelected.add(email);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.email)));
+    }
+  };
+
+  const categories = ["AI", "Law", "Medicine", "Climate", "Physics", "Biology", "Economics", "Other"];
+  const templates = [
+    { id: "welcome", name: "Welcome" },
+    { id: "podcast", name: "Podcast Delivery" },
+    { id: "weekly", name: "Weekly Digest" },
+    { id: "custom", name: "Custom Message" },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Step Indicator */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-center justify-between">
+          {["Generate Audio", "Preview Email", "Send"].map((step, index) => (
+            <div key={index} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold ${
+                    index <= currentStep
+                      ? "bg-gradient-to-br from-orange-500 to-red-500 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <div className="mt-2 text-sm font-medium text-slate-700">{step}</div>
+              </div>
+              {index < 2 && (
+                <div className={`flex-1 h-1 ${index < currentStep ? "bg-orange-500" : "bg-slate-200"}`} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Step 1: Generate Audio */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">Step 1: Generate Audio</h2>
+
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Transcript</label>
+            <Textarea
+              placeholder="Paste your podcast transcript here..."
+              rows={10}
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Podcast Hosts</label>
+              <Input
+                placeholder="e.g., Sarah Chen & Mike Wong"
+                value={podcastHosts}
+                onChange={(e) => setPodcastHosts(e.target.value)}
+                className="h-12"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Host Voice</label>
+              <select
+                value={hostVoice}
+                onChange={(e) => setHostVoice(e.target.value)}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg"
+              >
+                {voices.map(v => (
+                  <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Expert Voice</label>
+              <select
+                value={expertVoice}
+                onChange={(e) => setExpertVoice(e.target.value)}
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg"
+              >
+                {voices.map(v => (
+                  <option key={v.key} value={v.key}>{v.name} - {v.description}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleGenerateAudio}
+            disabled={isLoading || !transcript}
+            className="w-full h-12 bg-gradient-to-r from-orange-600 to-red-600"
+          >
+            {isLoading ? "Generating Audio..." : "Generate Audio"}
+          </Button>
+
+          {audioUrl && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-green-900">Audio Generated!</h3>
+              </div>
+              <audio controls className="w-full">
+                <source src={audioUrl} type="audio/mpeg" />
+              </audio>
+              <p className="text-sm text-green-700">
+                Podcast ID: <span className="font-mono">{podcastId}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Step 2: Preview Email */}
+      {audioUrl && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Step 2: Preview Email</h2>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Select Email Template</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {templates.map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => setSelectedTemplate(template.id)}
+                    className={`p-4 border-2 rounded-lg text-center transition-all ${
+                      selectedTemplate === template.id
+                        ? "border-orange-500 bg-orange-50 text-orange-700"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    {template.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={handlePreviewEmail}
+              disabled={isLoading}
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700"
+            >
+              {isLoading ? "Loading Preview..." : "Preview Email"}
+            </Button>
+
+            {emailPreviewHtml && (
+              <div className="border-2 border-blue-300 rounded-lg overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                  <h3 className="font-semibold text-blue-900">Email Preview</h3>
+                </div>
+                <div
+                  className="p-4 bg-white max-h-96 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: emailPreviewHtml }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Send */}
+      {emailPreviewHtml && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Step 3: Send to Users</h2>
+            {users.length > 0 && (
+              <Button variant="outline" onClick={toggleAll} size="sm">
+                {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-6">
+            <div className="border border-slate-200 rounded-lg max-h-96 overflow-y-auto">
+              <div className="divide-y divide-slate-200">
+                {users.map((user) => (
+                  <label
+                    key={user.email}
+                    className="flex items-center gap-4 p-4 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.has(user.email)}
+                      onChange={() => toggleUser(user.email)}
+                      className="w-5 h-5 rounded border-slate-300 text-orange-600"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-slate-900">{user.email}</p>
+                      {user.name && <p className="text-sm text-slate-500">{user.name}</p>}
+                    </div>
+                    <div className="text-sm">
+                      {user.subscribed ? (
+                        <span className="text-green-600 font-medium">✓ Subscribed</span>
+                      ) : (
+                        <span className="text-slate-400">Unsubscribed</span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSendPodcast}
+              disabled={isLoading || selectedUsers.size === 0}
+              className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700"
+            >
+              {isLoading ? "Sending..." : `Send to ${selectedUsers.size} User(s)`}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

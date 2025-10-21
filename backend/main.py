@@ -1713,6 +1713,22 @@ class SendTestEmailRequest(BaseModel):
     template_type: str  # welcome, podcast, or custom
     test_email: EmailStr
 
+class CustomWorkflowGenerateAudioRequest(BaseModel):
+    transcript: str
+    podcast_hosts: str
+    category: str
+    host_voice_key: str
+    expert_voice_key: str
+
+class CustomWorkflowPreviewEmailRequest(BaseModel):
+    podcast_id: str
+    template_type: str
+
+class CustomWorkflowSendRequest(BaseModel):
+    podcast_id: str
+    recipient_emails: List[EmailStr]
+    template_type: str
+
 @app.post("/api/admin/send-test-email")
 async def send_test_email(request: SendTestEmailRequest):
     """Send test email with sample data"""
@@ -1790,6 +1806,207 @@ async def send_test_email(request: SendTestEmailRequest):
     except Exception as e:
         print(f"❌ Error sending test email: {e}")
         raise HTTPException(status_code=500, detail=f"Error sending test email: {str(e)}")
+
+@app.post("/api/admin/custom-workflow/generate-audio")
+async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioRequest):
+    """Generate audio for custom workflow with hosts and category"""
+    try:
+        print(f"🎙️ Custom Workflow: Generating audio")
+        print(f"   Hosts: {request.podcast_hosts}")
+        print(f"   Category: {request.category}")
+        print(f"   Host Voice: {request.host_voice_key}")
+        print(f"   Expert Voice: {request.expert_voice_key}")
+
+        # Generate podcast ID
+        podcast_id = f"custom-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        # Generate audio using podcast service
+        audio_result = await podcast_service.generate_podcast_audio(
+            transcript=request.transcript,
+            host_voice_id=podcast_service.get_voice_id(request.host_voice_key),
+            expert_voice_id=podcast_service.get_voice_id(request.expert_voice_key)
+        )
+
+        if not audio_result or 'audio_url' not in audio_result:
+            raise HTTPException(status_code=500, detail="Failed to generate audio")
+
+        # Store in DynamoDB with new fields
+        podcast_table.put_item(
+            Item={
+                'podcast_id': podcast_id,
+                'audio_url': audio_result['audio_url'],
+                'transcript': request.transcript,
+                'podcast_hosts': request.podcast_hosts,  # NEW
+                'category': request.category,  # NEW
+                'paper_title': f"Custom Podcast - {request.category}",
+                'paper_authors': request.podcast_hosts,
+                'created_at': datetime.now().isoformat(),
+                'sent_at': None,
+            }
+        )
+
+        print(f"✅ Audio generated: {podcast_id}")
+        return {
+            "podcast_id": podcast_id,
+            "audio_url": audio_result['audio_url'],
+            "message": "Audio generated successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error generating audio: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generating audio: {str(e)}")
+
+@app.post("/api/admin/custom-workflow/preview-email")
+async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailRequest):
+    """Generate email preview HTML for the selected template"""
+    try:
+        print(f"👁️ Generating email preview")
+        print(f"   Podcast ID: {request.podcast_id}")
+        print(f"   Template: {request.template_type}")
+
+        # Get podcast data
+        podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
+        if 'Item' not in podcast_response:
+            raise HTTPException(status_code=404, detail="Podcast not found")
+
+        podcast_data = podcast_response['Item']
+
+        # Generate HTML based on template type
+        if request.template_type == "podcast":
+            html = f"""
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 24px 20px; text-align: center;">
+                    <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">🎧 Your Daily Research Podcast</h1>
+                </div>
+                <div style="padding: 20px;">
+                    <h2 style="font-size: 22px; font-weight: 700; color: #000; margin-bottom: 12px; line-height: 1.3;">{podcast_data.get('paper_title', 'Podcast Title')}</h2>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 8px;">Hosted by: <strong>{podcast_data.get('podcast_hosts', 'AI Hosts')}</strong></p>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Category: <strong>{podcast_data.get('category', 'General')}</strong></p>
+
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0;">
+                        <audio controls style="width: 100%; margin: 16px 0;">
+                            <source src="{podcast_data.get('audio_url', '#')}" type="audio/mpeg">
+                        </audio>
+                        <a href="{podcast_data.get('audio_url', '#')}" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 12px 0;">▶ Play Now</a>
+                    </div>
+                </div>
+            </div>
+            """
+        elif request.template_type == "welcome":
+            html = f"""
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 32px 20px; text-align: center;">
+                    <h1 style="color: white; font-size: 24px; font-weight: 700; margin: 0;">🎧 Welcome!</h1>
+                </div>
+                <div style="padding: 24px 20px;">
+                    <p style="color: #374151; line-height: 1.6;">Hi there,</p>
+                    <p style="color: #374151; line-height: 1.6; margin: 16px 0;">Welcome! Here's a preview of our {podcast_data.get('category', 'General')} podcast.</p>
+                    <audio controls style="width: 100%; margin: 20px 0;">
+                        <source src="{podcast_data.get('audio_url', '#')}" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+            """
+        else:
+            # Default template
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2>{podcast_data.get('paper_title', 'Podcast')}</h2>
+                <p>Hosted by: {podcast_data.get('podcast_hosts', 'AI Hosts')}</p>
+                <p>Category: {podcast_data.get('category', 'General')}</p>
+                <audio controls style="width: 100%;">
+                    <source src="{podcast_data.get('audio_url', '#')}" type="audio/mpeg">
+                </audio>
+            </div>
+            """
+
+        return {"html": html, "message": "Preview generated"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error generating preview: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating preview: {str(e)}")
+
+@app.post("/api/admin/custom-workflow/send-custom-podcast")
+async def custom_workflow_send_podcast(request: CustomWorkflowSendRequest):
+    """Send custom podcast with selected template to specific users"""
+    try:
+        print(f"📧 Sending custom podcast")
+        print(f"   Podcast ID: {request.podcast_id}")
+        print(f"   Template: {request.template_type}")
+        print(f"   Recipients: {len(request.recipient_emails)}")
+
+        # Get podcast data
+        podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
+        if 'Item' not in podcast_response:
+            raise HTTPException(status_code=404, detail="Podcast not found")
+
+        podcast_data = podcast_response['Item']
+
+        # Get user data
+        subscribers = []
+        for email in request.recipient_emails:
+            try:
+                user_response = email_table.get_item(Key={'email': email.lower()})
+                if 'Item' in user_response:
+                    subscribers.append(user_response['Item'])
+            except Exception as e:
+                print(f"Error fetching user {email}: {e}")
+
+        if not subscribers:
+            return {"message": "No valid subscribers found", "sent": 0, "failed": 0}
+
+        # Send emails using the selected template
+        sent = 0
+        failed = 0
+
+        for subscriber in subscribers:
+            email = subscriber['email']
+            name = subscriber.get('name')
+
+            try:
+                if request.template_type == "welcome":
+                    success = email_service.send_welcome_email(email, name)
+                elif request.template_type == "weekly":
+                    # For weekly, wrap single podcast in list
+                    success = email_service.send_weekly_digest_email(email, [podcast_data], name)
+                else:  # podcast or custom
+                    success = email_service.send_podcast_email(email, podcast_data, name)
+
+                if success:
+                    sent += 1
+                else:
+                    failed += 1
+            except Exception as e:
+                print(f"Error sending to {email}: {e}")
+                failed += 1
+
+        # Update sent_at timestamp
+        podcast_table.update_item(
+            Key={'podcast_id': request.podcast_id},
+            UpdateExpression='SET sent_at = :sent_at',
+            ExpressionAttributeValues={':sent_at': datetime.now().isoformat()}
+        )
+
+        print(f"✅ Sent: {sent}, Failed: {failed}")
+        return {
+            "message": f"Sent to {sent} user(s)",
+            "sent": sent,
+            "failed": failed
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error sending custom podcast: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error sending custom podcast: {str(e)}")
 
 # ===== Static HTML Pages =====
 
