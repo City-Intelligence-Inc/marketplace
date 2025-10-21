@@ -277,7 +277,22 @@ async def get_episodes():
         podcasts = response.get('Items', [])
 
         # Sort by sent_at descending (most recent first)
-        podcasts.sort(key=lambda x: int(x.get('sent_at') or 0), reverse=True)
+        # Handle both timestamp formats (int and string)
+        def get_sort_key(x):
+            sent_at = x.get('sent_at')
+            if not sent_at or sent_at == 'None':
+                return 0
+            # If it's already an int, return it
+            if isinstance(sent_at, int):
+                return sent_at
+            # If it's a string timestamp, try to parse it
+            try:
+                return int(sent_at)
+            except (ValueError, TypeError):
+                # If it's an ISO string, return 0 (will be at the end)
+                return 0
+
+        podcasts.sort(key=get_sort_key, reverse=True)
 
         # Format episodes for public display
         formatted_episodes = []
@@ -285,13 +300,19 @@ async def get_episodes():
             try:
                 sent_at = p.get('sent_at')
                 if sent_at and sent_at != 'None':
+                    # Convert sent_at to int if possible, otherwise use current timestamp
+                    try:
+                        sent_at_int = int(sent_at) if isinstance(sent_at, (int, str)) and str(sent_at).isdigit() else int(datetime.now().timestamp())
+                    except (ValueError, TypeError):
+                        sent_at_int = int(datetime.now().timestamp())
+
                     formatted_episodes.append({
                         "podcast_id": p['podcast_id'],
                         "paper_title": p.get('paper_title', 'Unknown'),
                         "paper_authors": p.get('paper_authors', 'Unknown'),
                         "paper_url": p.get('paper_url', '#'),
                         "audio_url": p.get('audio_url', ''),
-                        "sent_at": int(sent_at)
+                        "sent_at": sent_at_int
                     })
             except Exception as e:
                 print(f"Error formatting episode {p.get('podcast_id')}: {e}")
@@ -304,6 +325,32 @@ async def get_episodes():
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+
+@app.delete("/api/admin/episodes/{podcast_id}")
+async def delete_episode(podcast_id: str):
+    """Delete a podcast episode (admin only)"""
+    try:
+        print(f"🗑️ Deleting podcast: {podcast_id}")
+
+        # Get podcast to check if it exists
+        response = podcast_table.get_item(Key={'podcast_id': podcast_id})
+
+        if 'Item' not in response:
+            raise HTTPException(status_code=404, detail="Podcast not found")
+
+        # Delete from DynamoDB
+        podcast_table.delete_item(Key={'podcast_id': podcast_id})
+
+        print(f"✅ Successfully deleted podcast: {podcast_id}")
+        return {"message": "Podcast deleted successfully", "podcast_id": podcast_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error deleting podcast: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error deleting podcast: {str(e)}")
 
 # ===== Stripe Endpoints =====
 
@@ -2105,6 +2152,12 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
             else:
                 total_duration = 7
 
+            # Build unsubscribe URL (using dummy email for preview)
+            import urllib.parse
+            preview_email = "user@example.com"
+            frontend_url = os.getenv('FRONTEND_URL', 'https://four0k-arr-saas.onrender.com')
+            unsubscribe_url = f"{frontend_url}/unsubscribe?email={urllib.parse.quote(preview_email)}"
+
             # Build the full email HTML (same as send_weekly_digest_email)
             html = f"""
             <!DOCTYPE html>
@@ -2115,12 +2168,12 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
                     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                     body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #ffffff; }}
                     .container {{ max-width: 600px; margin: 0 auto; }}
-                    .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center; }}
+                    .header {{ background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 32px 20px; text-align: center; }}
                     .header h1 {{ color: white; font-size: 24px; font-weight: 700; margin: 0; }}
                     .header p {{ color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px; }}
                     .content {{ padding: 24px 20px; }}
                     .footer {{ text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb; }}
-                    .footer a {{ color: #10b981; text-decoration: none; }}
+                    .footer a {{ color: #3b82f6; text-decoration: none; }}
                 </style>
             </head>
             <body>
@@ -2135,17 +2188,11 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
 
                         {podcast_item}
 
-                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
-                            <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
-                                <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
-                            </p>
-                        </div>
-
                         <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's {int(total_duration)} minutes of cutting-edge research. See you next week!</p>
                     </div>
                     <div class="footer">
                         <p>Next digest arrives same time next week.</p>
-                        <p style="margin-top: 12px;"><a href="#">Unsubscribe</a></p>
+                        <p style="margin-top: 12px;"><a href="{unsubscribe_url}">Unsubscribe</a></p>
                     </div>
                 </div>
             </body>

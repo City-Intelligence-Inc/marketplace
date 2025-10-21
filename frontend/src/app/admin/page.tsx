@@ -458,6 +458,7 @@ function CustomWorkflowTab() {
   const [category, setCategory] = useState("AI");
   const [hostVoice, setHostVoice] = useState("rachel");
   const [expertVoice, setExpertVoice] = useState("adam");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [targetWords, setTargetWords] = useState(0); // 0 = no shortening
   const [audioUrl, setAudioUrl] = useState("");
   const [podcastId, setPodcastId] = useState("");
@@ -2001,7 +2002,7 @@ function Step3ConvertToAudio({
                 <option value={2500}>~14-17 minutes (2500 words)</option>
               </select>
               <p className="text-xs text-slate-500">
-                Choose "No Limit" to use your entire transcript without any shortening
+                Choose &quot;No Limit&quot; to use your entire transcript without any shortening
               </p>
             </div>
           </div>

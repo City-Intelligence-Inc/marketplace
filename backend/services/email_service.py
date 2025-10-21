@@ -14,10 +14,13 @@ class EmailService:
         self.from_name = os.getenv('FROM_NAME', 'City Secretary')
         self.mailgun_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        # Configurable frontend URL for unsubscribe links
+        self.frontend_url = os.getenv('FRONTEND_URL', 'https://four0k-arr-saas.onrender.com')
 
         print(f"📧 Email Service Initialized:")
         print(f"   Domain: {self.mailgun_domain}")
         print(f"   From: {self.from_name} <{self.from_email}>")
+        print(f"   Frontend URL: {self.frontend_url}")
 
     def generate_title_from_transcript(self, transcript: str) -> str:
         """Generate a catchy title from the transcript using AI"""
@@ -368,6 +371,10 @@ class EmailService:
             else:
                 total_duration += 7  # default estimate
 
+        # Build unsubscribe URL
+        import urllib.parse
+        unsubscribe_url = f"{self.frontend_url}/unsubscribe?email={urllib.parse.quote(email)}"
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -377,12 +384,12 @@ class EmailService:
                 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #ffffff; }}
                 .container {{ max-width: 600px; margin: 0 auto; }}
-                .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center; }}
+                .header {{ background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 32px 20px; text-align: center; }}
                 .header h1 {{ color: white; font-size: 24px; font-weight: 700; margin: 0; }}
                 .header p {{ color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px; }}
                 .content {{ padding: 24px 20px; }}
                 .footer {{ text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb; }}
-                .footer a {{ color: #10b981; text-decoration: none; }}
+                .footer a {{ color: #3b82f6; text-decoration: none; }}
             </style>
         </head>
         <body>
@@ -397,17 +404,11 @@ class EmailService:
 
                     {podcast_items}
 
-                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
-                        <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
-                            <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
-                        </p>
-                    </div>
-
                     <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's {int(total_duration)} minutes of cutting-edge research. See you next week!</p>
                 </div>
                 <div class="footer">
                     <p>Next digest arrives same time next week.</p>
-                    <p style="margin-top: 12px;"><a href="{{{{unsubscribe_url}}}}">Unsubscribe</a></p>
+                    <p style="margin-top: 12px;"><a href="{unsubscribe_url}">Unsubscribe</a></p>
                 </div>
             </div>
         </body>
