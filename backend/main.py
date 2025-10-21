@@ -1828,12 +1828,21 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
         print(f"🆔 Generated Podcast ID: {podcast_id}")
         print("-" * 80)
 
-        # Get voice IDs
-        host_voice_id = podcast_service.get_voice_id(request.host_voice_key)
-        expert_voice_id = podcast_service.get_voice_id(request.expert_voice_key)
+        # Get voice IDs from all_voices dictionary
+        host_voice_data = podcast_service.all_voices.get(request.host_voice_key)
+        expert_voice_data = podcast_service.all_voices.get(request.expert_voice_key)
+
+        if not host_voice_data:
+            raise HTTPException(status_code=400, detail=f"Invalid host voice key: {request.host_voice_key}")
+        if not expert_voice_data:
+            raise HTTPException(status_code=400, detail=f"Invalid expert voice key: {request.expert_voice_key}")
+
+        host_voice_id = host_voice_data['id']
+        expert_voice_id = expert_voice_data['id']
+
         print(f"🎤 VOICE MAPPING:")
-        print(f"   Host: {request.host_voice_key} → {host_voice_id}")
-        print(f"   Expert: {request.expert_voice_key} → {expert_voice_id}")
+        print(f"   Host: {request.host_voice_key} ({host_voice_data['name']}) → {host_voice_id}")
+        print(f"   Expert: {request.expert_voice_key} ({expert_voice_data['name']}) → {expert_voice_id}")
         print("-" * 80)
 
         # Generate audio using podcast service with individual voices
