@@ -813,15 +813,67 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             print(f"✗ Gemini generation failed: {e}")
             raise
 
+    def clean_transcript(self, script: str) -> str:
+        """Clean transcript by removing junk headers, footers, and system messages"""
+        import re
+
+        # Remove common junk patterns
+        lines = script.split('\n')
+        cleaned_lines = []
+
+        for line in lines:
+            line_stripped = line.strip()
+
+            # Skip lines that are:
+            # - Just separators (dashes, equals, etc.)
+            # - System messages (contain phrases like "Respond as helpfully", "do not reproduce")
+            # - Very short non-sentences (less than 20 chars and no punctuation)
+            # - URLs or file paths
+            # - Metadata headers
+
+            if not line_stripped:
+                cleaned_lines.append('')  # Preserve paragraph breaks
+                continue
+
+            # Skip separator lines
+            if re.match(r'^[\s\-_=*#]+$', line_stripped):
+                continue
+
+            # Skip system instruction lines
+            system_patterns = [
+                r'respond as helpfully',
+                r'do not reproduce',
+                r'copyrighted material',
+                r'however.*if you were given',
+                r'making minor changes',
+                r'summarize or quote'
+            ]
+            if any(re.search(pattern, line_stripped.lower()) for pattern in system_patterns):
+                continue
+
+            # Skip very short junk (less than 15 chars with no real content)
+            if len(line_stripped) < 15 and not re.search(r'[.!?]', line_stripped):
+                continue
+
+            cleaned_lines.append(line)
+
+        cleaned_script = '\n'.join(cleaned_lines).strip()
+        print(f"🧹 CLEANED TRANSCRIPT: {len(script)} → {len(cleaned_script)} chars")
+
+        return cleaned_script
+
     def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
         """Parse script into (speaker, text) tuples, removing speaker labels
 
         Supports multiple formats:
         1. "Host:" and "Expert:" labels (preferred)
         2. Plain text with paragraph breaks (alternates speakers)
-        3. Plain text as single block (uses only host voice)
+        3. Plain text as single block (uses expert voice only for monologue)
         """
         import re
+
+        # First, clean the transcript
+        script = self.clean_transcript(script)
 
         # Split by speaker labels using regex
         # This will catch "Host:" or "Expert:" at the beginning of a line
@@ -873,33 +925,39 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             paragraphs = [p.strip() for p in paragraphs if p.strip()]
 
             if len(paragraphs) > 1:
-                # Multiple paragraphs - alternate between host and expert
-                print(f"   Found {len(paragraphs)} paragraphs. Alternating speakers.")
-                for i, paragraph in enumerate(paragraphs):
-                    speaker = 'host' if i % 2 == 0 else 'expert'
-                    segments.append((speaker, paragraph))
+                # Multiple paragraphs - use expert voice only (monologue style)
+                print(f"   Found {len(paragraphs)} paragraphs. Using expert voice (monologue).")
+                for paragraph in paragraphs:
+                    segments.append(('expert', paragraph))
             else:
-                # Single block of text - split into sentences and alternate
-                print("   Single block text. Splitting by sentences and alternating speakers.")
-                # Split by sentence endings
-                sentences = re.split(r'([.!?]+\s+)', script.strip())
+                # Single block of text - split into chunks for better pacing
+                print("   Single block text. Splitting into chunks for expert voice (monologue).")
 
-                # Reconstruct sentences with their punctuation
-                reconstructed = []
-                for i in range(0, len(sentences) - 1, 2):
-                    if i + 1 < len(sentences):
-                        sentence = sentences[i] + sentences[i + 1]
-                        reconstructed.append(sentence.strip())
-                if len(sentences) % 2 == 1:  # Handle last sentence if odd number
-                    reconstructed.append(sentences[-1].strip())
+                # Split into manageable chunks (around 500-800 characters each)
+                text = script.strip()
+                words = text.split()
+                chunks = []
+                current_chunk = []
+                current_length = 0
 
-                # Group sentences into chunks (every 2-3 sentences alternates speaker)
-                chunk_size = 3
-                for i in range(0, len(reconstructed), chunk_size):
-                    chunk = ' '.join(reconstructed[i:i + chunk_size])
+                for word in words:
+                    current_chunk.append(word)
+                    current_length += len(word) + 1
+
+                    # Create chunk when reaching ~600 chars or end of sentence
+                    if current_length > 600 and word.endswith(('.', '!', '?')):
+                        chunks.append(' '.join(current_chunk))
+                        current_chunk = []
+                        current_length = 0
+
+                # Add remaining words
+                if current_chunk:
+                    chunks.append(' '.join(current_chunk))
+
+                # Add all chunks as expert voice
+                for chunk in chunks:
                     if chunk.strip():
-                        speaker = 'host' if (i // chunk_size) % 2 == 0 else 'expert'
-                        segments.append((speaker, chunk))
+                        segments.append(('expert', chunk))
 
         # Debug logging
         print(f"\n=== PARSED {len(segments)} SEGMENTS ===")
