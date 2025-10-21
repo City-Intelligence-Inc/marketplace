@@ -1037,10 +1037,29 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             text = ' '.join(current_text).strip()
             if text:
                 segments.append((current_speaker, text))
+                print(f"   ✓ Added final segment: {current_speaker.upper()} ({len(text)} chars)")
+
+        # CRITICAL CLEANUP: Remove ANY stray HOST:/EXPERT: labels from the actual text
+        print(f"\n🔧 FINAL CLEANUP PASS (removing any stray labels from text):")
+        cleaned_segments = []
+        for speaker, text in segments:
+            # Remove any HOST: or EXPERT: that might be embedded in the text
+            original_text = text
+            text = re.sub(r'\b(HOST|EXPERT|Host|Expert)\s*:\s*', '', text, flags=re.IGNORECASE)
+            text = text.strip()
+
+            if text != original_text:
+                print(f"   ⚠️  Found and removed label from {speaker.upper()} text")
+                print(f"      BEFORE: {original_text[:100]}...")
+                print(f"      AFTER:  {text[:100]}...")
+
+            cleaned_segments.append((speaker, text))
+
+        segments = cleaned_segments
 
         # FALLBACK: If no segments found (no Host:/Expert: labels), handle plain text
         if not segments:
-            print("⚠️  No Host:/Expert: labels found. Using fallback parsing...")
+            print("\n⚠️  No Host:/Expert: labels found. Using fallback parsing...")
 
             # Try splitting by double line breaks (paragraph breaks)
             paragraphs = re.split(r'\n\s*\n', script.strip())
@@ -1145,9 +1164,13 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                 speaker_label = f"Host ({host_name})" if speaker == 'host' else f"Expert ({expert_name})"
                 voice_usage_count[speaker] += 1
 
-                print(f"\nSegment {i+1}/{len(segments)} - {speaker_label}")
+                print(f"\n{'='*60}")
+                print(f"Segment {i+1}/{len(segments)} - {speaker_label}")
                 print(f"  Voice ID: {voice_id}")
-                print(f"  Text: {text[:80]}...")
+                print(f"\n  📝 EXACT TEXT BEING SENT TO ELEVENLABS TTS:")
+                print(f"  {'-'*60}")
+                print(f"  {text}")
+                print(f"  {'-'*60}")
 
                 try:
                     # DYNAMIC voice settings based on what's being said
