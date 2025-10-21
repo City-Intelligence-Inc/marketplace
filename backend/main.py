@@ -1709,6 +1709,57 @@ async def send_podcast_to_users(request: SendPodcastToUsersRequest):
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error sending podcast to users: {str(e)}")
 
+class SendTestEmailRequest(BaseModel):
+    template_type: str  # welcome, podcast, or custom
+    test_email: EmailStr
+
+@app.post("/api/admin/send-test-email")
+async def send_test_email(request: SendTestEmailRequest):
+    """Send test email with sample data"""
+    try:
+        print(f"📧 Sending test {request.template_type} email to {request.test_email}")
+
+        if request.template_type == "welcome":
+            success = email_service.send_welcome_email(request.test_email, "Test User")
+
+        elif request.template_type == "podcast":
+            # Create sample podcast data
+            sample_podcast = {
+                "podcast_id": "test-podcast-123",
+                "paper_title": "Sample Research Paper: Advances in Machine Learning",
+                "paper_authors": "Dr. Jane Smith, Dr. John Doe",
+                "paper_url": "https://example.com/paper.pdf",
+                "audio_url": "https://example.com/sample-audio.mp3",
+                "sent_at": datetime.now().isoformat()
+            }
+            success = email_service.send_podcast_email(request.test_email, sample_podcast, "Test User")
+
+        elif request.template_type == "custom":
+            success = email_service.send_custom_email(
+                to_email=request.test_email,
+                subject="Test Custom Email",
+                message="This is a test custom email message.\n\nYou can customize this content for any purpose.",
+                from_name="City Secretary"
+            )
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown template type: {request.template_type}")
+
+        if success:
+            print(f"✅ Test {request.template_type} email sent successfully to {request.test_email}")
+            return {
+                "message": f"Test {request.template_type} email sent successfully",
+                "recipient": request.test_email,
+                "template_type": request.template_type
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to send test email")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error sending test email: {e}")
+        raise HTTPException(status_code=500, detail=f"Error sending test email: {str(e)}")
+
 # ===== Static HTML Pages =====
 
 @app.get("/pricing.html")

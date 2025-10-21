@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
 
 const ADMIN_PASSWORD = "podcast025";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
@@ -158,6 +158,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState<"workflow" | "templates">("workflow");
   const [currentStep, setCurrentStep] = useState(0);
   const [paperData, setPaperData] = useState<PaperData | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -182,6 +183,92 @@ function AdminDashboard() {
   return (
     <div className="space-y-8">
       <StatsSection />
+
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab("workflow")}
+            className={`flex items-center gap-2 px-6 py-4 font-medium transition-all ${
+              activeTab === "workflow"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Upload className="w-5 h-5" />
+            Podcast Workflow
+          </button>
+          <button
+            onClick={() => setActiveTab("templates")}
+            className={`flex items-center gap-2 px-6 py-4 font-medium transition-all ${
+              activeTab === "templates"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Mail className="w-5 h-5" />
+            Email Templates
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "workflow" ? (
+        <WorkflowTab
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          steps={steps}
+          canGoNext={canGoNext}
+          paperData={paperData}
+          setPaperData={setPaperData}
+          transcript={transcript}
+          setTranscript={setTranscript}
+          podcastId={podcastId}
+          setPodcastId={setPodcastId}
+          audioUrl={audioUrl}
+          setAudioUrl={setAudioUrl}
+          selectedUsers={selectedUsers}
+          setSelectedUsers={setSelectedUsers}
+        />
+      ) : (
+        <EmailTemplatesTab />
+      )}
+    </div>
+  );
+}
+
+function WorkflowTab({
+  currentStep,
+  setCurrentStep,
+  steps,
+  canGoNext,
+  paperData,
+  setPaperData,
+  transcript,
+  setTranscript,
+  podcastId,
+  setPodcastId,
+  audioUrl,
+  setAudioUrl,
+  selectedUsers,
+  setSelectedUsers,
+}: {
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  steps: any[];
+  canGoNext: () => boolean;
+  paperData: PaperData | null;
+  setPaperData: (data: PaperData | null) => void;
+  transcript: string;
+  setTranscript: (transcript: string) => void;
+  podcastId: string | null;
+  setPodcastId: (id: string | null) => void;
+  audioUrl: string | null;
+  setAudioUrl: (url: string | null) => void;
+  selectedUsers: Set<string>;
+  setSelectedUsers: (users: Set<string>) => void;
+}) {
+  return (
+    <div className="space-y-8">
 
       {/* Progress Stepper */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
@@ -340,6 +427,206 @@ function StatsSection() {
           </CardTitle>
         </CardHeader>
       </Card>
+    </div>
+  );
+}
+
+function EmailTemplatesTab() {
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  const templates = [
+    {
+      id: "welcome",
+      name: "Welcome Email",
+      description: "Sent to new subscribers when they sign up",
+      subject: "🎧 Welcome! Your daily podcasts start soon",
+      preview: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 32px 20px; text-align: center;">
+            <h1 style="color: white; font-size: 24px; font-weight: 700; margin: 0;">🎧 Welcome!</h1>
+          </div>
+          <div style="padding: 24px 20px;">
+            <p style="color: #374151; line-height: 1.6;">Hi there,</p>
+            <p style="color: #374151; line-height: 1.6; margin: 16px 0;">You're in! Daily research podcasts start hitting your inbox soon.</p>
+            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <div style="margin: 12px 0; font-size: 15px; color: #374151;">📅 Daily delivery, every morning</div>
+              <div style="margin: 12px 0; font-size: 15px; color: #374151;">⏱️ 5-10 min episodes</div>
+              <div style="margin: 12px 0; font-size: 15px; color: #374151;">🎧 Listen anywhere</div>
+              <div style="margin: 12px 0; font-size: 15px; color: #374151;">🔬 30+ topics to choose from</div>
+            </div>
+            <p style="color: #374151; line-height: 1.6;">Your first podcast arrives tomorrow. Check your inbox!</p>
+          </div>
+        </div>
+      `,
+    },
+    {
+      id: "podcast",
+      name: "Podcast Delivery",
+      description: "Sent when delivering a new podcast episode",
+      subject: "🎧 [Paper Title]",
+      preview: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 24px 20px; text-align: center;">
+            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">🎧 Your Daily Research Podcast</h1>
+          </div>
+          <div style="padding: 20px;">
+            <h2 style="font-size: 22px; font-weight: 700; color: #000; margin-bottom: 12px;">Sample Research Paper Title</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">5-10 min listen • Sample Authors</p>
+            <div style="background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center;">
+              <audio controls style="width: 100%; margin: 16px 0;">
+                <source src="#" type="audio/mpeg">
+              </audio>
+              <a href="#" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">▶ Play Now</a>
+              <br>
+              <a href="#" style="display: inline-block; color: #ea580c; text-decoration: none; font-weight: 600; margin-top: 12px;">📄 Read Full Paper →</a>
+            </div>
+          </div>
+        </div>
+      `,
+    },
+    {
+      id: "custom",
+      name: "Custom Message",
+      description: "General purpose custom email template",
+      subject: "Custom Subject",
+      preview: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0;">Custom Message</h1>
+          </div>
+          <div style="background: #f9f9f9; padding: 30px;">
+            <p style="color: #333; line-height: 1.6;">Your custom message content goes here...</p>
+          </div>
+        </div>
+      `,
+    },
+  ];
+
+  const handleSendTest = async (templateId: string) => {
+    if (!testEmail) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSending(true);
+    toast.info(`Sending test ${templateId} email...`);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/send-test-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_type: templateId,
+          test_email: testEmail,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send test email");
+
+      toast.success(`Test email sent to ${testEmail}!`);
+    } catch (error) {
+      toast.error("Failed to send test email");
+      console.error(error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Email Templates</h2>
+          <p className="text-slate-600">Preview and test your email templates</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Template List */}
+          <div className="space-y-3">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => setSelectedTemplate(template.id)}
+                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                  selectedTemplate === template.id
+                    ? "border-orange-500 bg-orange-50"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <Mail className={`w-5 h-5 mt-1 ${selectedTemplate === template.id ? "text-orange-600" : "text-slate-400"}`} />
+                  <div className="flex-1">
+                    <div className="font-semibold text-slate-900">{template.name}</div>
+                    <div className="text-sm text-slate-600 mt-1">{template.description}</div>
+                    <div className="text-xs text-slate-500 mt-2 font-mono">Subject: {template.subject}</div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Preview & Test */}
+          <div className="lg:col-span-2 space-y-4">
+            {selectedTemplate ? (
+              <>
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Eye className="w-5 h-5 text-slate-600" />
+                    <h3 className="font-semibold text-slate-900">Email Preview</h3>
+                  </div>
+                  <div
+                    className="bg-white p-4 rounded border border-slate-200 overflow-auto max-h-96"
+                    dangerouslySetInnerHTML={{
+                      __html: templates.find((t) => t.id === selectedTemplate)?.preview || "",
+                    }}
+                  />
+                </div>
+
+                <div className="border border-slate-200 rounded-lg p-4 bg-blue-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TestTube className="w-5 h-5 text-blue-600" />
+                    <h3 className="font-semibold text-slate-900">Send Test Email</h3>
+                  </div>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Send a test version of this template to your email
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="flex-1 h-12 bg-white"
+                    />
+                    <Button
+                      onClick={() => handleSendTest(selectedTemplate)}
+                      disabled={isSending}
+                      className="h-12 px-6 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                    >
+                      {isSending ? "Sending..." : "Send Test"}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-200 rounded-lg p-12">
+                <div className="text-center">
+                  <Mail className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                  <p>Select a template to preview and test</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
