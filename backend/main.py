@@ -1855,8 +1855,8 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
         audio_result = podcast_service.generate_audio(
             script=request.transcript,
             podcast_id=podcast_id,
-            host_voice_id=host_voice_id,
-            expert_voice_id=expert_voice_id
+            host_voice_key=request.host_voice_key,
+            expert_voice_key=request.expert_voice_key
         )
 
         audio_generation_end = datetime.now()

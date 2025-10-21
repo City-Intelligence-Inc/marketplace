@@ -867,7 +867,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
 
     def generate_audio(self, script: str, podcast_id: str, voice_preset: str = 'default',
                       host_voice_key: str = None, expert_voice_key: str = None) -> str:
-        """Generate multi-voice audio from script using ElevenLabs and upload to S3
+        """Generate multi-voice audio from script using ElevenLabs API directly with continuity
 
         Args:
             script: The podcast script
@@ -876,6 +876,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             host_voice_key: Custom host voice key (e.g., 'rachel', 'adam')
             expert_voice_key: Custom expert voice key
         """
+        import requests
         temp_file = f"/tmp/{podcast_id}.mp3"
 
         try:
@@ -909,7 +910,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if not segments:
                 raise ValueError("No speech segments found in script")
 
-            # Generate audio for each segment
+            # Generate audio for each segment using raw API with continuity
             all_audio_bytes = b''
             voice_usage_count = {'host': 0, 'expert': 0}
 
@@ -934,17 +935,46 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
                           f"(stability={dynamic_settings['stability']:.2f}, "
                           f"style={dynamic_settings['style']:.2f})")
 
-                    audio_generator = self.elevenlabs_client.text_to_speech.convert(
-                        text=text,
-                        voice_id=voice_id,
-                        model_id="eleven_turbo_v2_5",
-                        output_format="mp3_44100_128",
-                        voice_settings=dynamic_settings
-                    )
+                    # Build request payload with continuity parameters
+                    payload = {
+                        "text": text,
+                        "model_id": "eleven_turbo_v2_5",
+                        "voice_settings": {
+                            "stability": dynamic_settings['stability'],
+                            "similarity_boost": dynamic_settings['similarity_boost'],
+                            "style": dynamic_settings.get('style', 0.0),
+                            "use_speaker_boost": dynamic_settings.get('use_speaker_boost', True)
+                        }
+                    }
+
+                    # Add previous_text for continuity (context from previous segment)
+                    if i > 0:
+                        prev_speaker, prev_text = segments[i-1]
+                        payload["previous_text"] = prev_text[-200:]  # Last 200 chars for context
+                        print(f"   + Previous context: {len(payload['previous_text'])} chars")
+
+                    # Add next_text for continuity (context for next segment)
+                    if i < len(segments) - 1:
+                        next_speaker, next_text = segments[i+1]
+                        payload["next_text"] = next_text[:200]  # First 200 chars for context
+                        print(f"   + Next context: {len(payload['next_text'])} chars")
+
+                    # Call ElevenLabs API directly
+                    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+                    headers = {
+                        "xi-api-key": os.getenv('ELEVENLABS_API_KEY'),
+                        "Content-Type": "application/json"
+                    }
+                    params = {
+                        "output_format": "mp3_44100_128"
+                    }
+
+                    response = requests.post(url, json=payload, headers=headers, params=params, stream=True)
+                    response.raise_for_status()
 
                     # Collect audio chunks for this segment
                     segment_bytes = b''
-                    for chunk in audio_generator:
+                    for chunk in response.iter_content(chunk_size=4096):
                         if chunk:
                             segment_bytes += chunk
 
@@ -985,7 +1015,7 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
-            return audio_url
+            return {'audio_url': audio_url}
 
         except Exception as e:
             print(f"Error in generate_audio: {str(e)}")
