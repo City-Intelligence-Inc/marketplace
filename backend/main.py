@@ -1811,41 +1811,82 @@ async def send_test_email(request: SendTestEmailRequest):
 async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioRequest):
     """Generate audio for custom workflow with hosts and category"""
     try:
-        print(f"🎙️ Custom Workflow: Generating audio")
+        print("=" * 80)
+        print("🎙️ CUSTOM WORKFLOW: GENERATE AUDIO REQUEST")
+        print("=" * 80)
+        print(f"📊 INPUT PARAMETERS:")
         print(f"   Hosts: {request.podcast_hosts}")
         print(f"   Category: {request.category}")
         print(f"   Host Voice: {request.host_voice_key}")
         print(f"   Expert Voice: {request.expert_voice_key}")
+        print(f"   Transcript Length: {len(request.transcript)} characters")
+        print(f"   Transcript Preview: {request.transcript[:200]}...")
+        print("-" * 80)
 
         # Generate podcast ID
         podcast_id = f"custom-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        print(f"🆔 Generated Podcast ID: {podcast_id}")
+        print("-" * 80)
 
-        # Generate audio using podcast service
-        audio_result = await podcast_service.generate_podcast_audio(
-            transcript=request.transcript,
-            host_voice_id=podcast_service.get_voice_id(request.host_voice_key),
-            expert_voice_id=podcast_service.get_voice_id(request.expert_voice_key)
+        # Get voice IDs
+        host_voice_id = podcast_service.get_voice_id(request.host_voice_key)
+        expert_voice_id = podcast_service.get_voice_id(request.expert_voice_key)
+        print(f"🎤 VOICE MAPPING:")
+        print(f"   Host: {request.host_voice_key} → {host_voice_id}")
+        print(f"   Expert: {request.expert_voice_key} → {expert_voice_id}")
+        print("-" * 80)
+
+        # Generate audio using podcast service with individual voices
+        from services.podcast_service import analyze_text_emotion
+
+        print(f"🔊 STARTING AUDIO GENERATION...")
+        print(f"   This may take several minutes depending on transcript length")
+        audio_generation_start = datetime.now()
+
+        audio_result = podcast_service.generate_audio(
+            script=request.transcript,
+            podcast_id=podcast_id,
+            host_voice_id=host_voice_id,
+            expert_voice_id=expert_voice_id
         )
+
+        audio_generation_end = datetime.now()
+        audio_duration = (audio_generation_end - audio_generation_start).total_seconds()
+        print(f"⏱️  Audio Generation Time: {audio_duration:.2f} seconds")
+        print("-" * 80)
 
         if not audio_result or 'audio_url' not in audio_result:
+            print("❌ Audio generation returned empty result")
             raise HTTPException(status_code=500, detail="Failed to generate audio")
 
-        # Store in DynamoDB with new fields
-        podcast_table.put_item(
-            Item={
-                'podcast_id': podcast_id,
-                'audio_url': audio_result['audio_url'],
-                'transcript': request.transcript,
-                'podcast_hosts': request.podcast_hosts,  # NEW
-                'category': request.category,  # NEW
-                'paper_title': f"Custom Podcast - {request.category}",
-                'paper_authors': request.podcast_hosts,
-                'created_at': datetime.now().isoformat(),
-                'sent_at': None,
-            }
-        )
+        print(f"✅ AUDIO GENERATED SUCCESSFULLY:")
+        print(f"   Audio URL: {audio_result['audio_url']}")
+        print("-" * 80)
 
-        print(f"✅ Audio generated: {podcast_id}")
+        # Store in DynamoDB with new fields
+        print(f"💾 STORING TO DYNAMODB:")
+        podcast_item = {
+            'podcast_id': podcast_id,
+            'audio_url': audio_result['audio_url'],
+            'transcript': request.transcript,
+            'podcast_hosts': request.podcast_hosts,  # NEW
+            'category': request.category,  # NEW
+            'paper_title': f"Custom Podcast - {request.category}",
+            'paper_authors': request.podcast_hosts,
+            'created_at': datetime.now().isoformat(),
+            'sent_at': None,
+        }
+        print(f"   Table: podcasts")
+        print(f"   Item Keys: {list(podcast_item.keys())}")
+
+        podcast_table.put_item(Item=podcast_item)
+        print(f"   ✓ Stored successfully")
+        print("=" * 80)
+        print(f"✅ CUSTOM WORKFLOW AUDIO GENERATION COMPLETE")
+        print(f"   Podcast ID: {podcast_id}")
+        print(f"   Total Time: {audio_duration:.2f}s")
+        print("=" * 80)
+
         return {
             "podcast_id": podcast_id,
             "audio_url": audio_result['audio_url'],
@@ -1864,18 +1905,35 @@ async def custom_workflow_generate_audio(request: CustomWorkflowGenerateAudioReq
 async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailRequest):
     """Generate email preview HTML for the selected template"""
     try:
-        print(f"👁️ Generating email preview")
+        print("=" * 80)
+        print("👁️ CUSTOM WORKFLOW: PREVIEW EMAIL REQUEST")
+        print("=" * 80)
+        print(f"📊 INPUT PARAMETERS:")
         print(f"   Podcast ID: {request.podcast_id}")
-        print(f"   Template: {request.template_type}")
+        print(f"   Template Type: {request.template_type}")
+        print("-" * 80)
 
         # Get podcast data
+        print(f"🔍 FETCHING PODCAST FROM DYNAMODB:")
+        print(f"   Table: podcasts")
+        print(f"   Key: podcast_id={request.podcast_id}")
+
         podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
+
         if 'Item' not in podcast_response:
+            print(f"❌ Podcast not found in DynamoDB")
             raise HTTPException(status_code=404, detail="Podcast not found")
 
         podcast_data = podcast_response['Item']
+        print(f"✅ PODCAST DATA RETRIEVED:")
+        print(f"   Title: {podcast_data.get('paper_title', 'N/A')}")
+        print(f"   Hosts: {podcast_data.get('podcast_hosts', 'N/A')}")
+        print(f"   Category: {podcast_data.get('category', 'N/A')}")
+        print(f"   Audio URL: {podcast_data.get('audio_url', 'N/A')[:50]}...")
+        print("-" * 80)
 
         # Generate HTML based on template type
+        print(f"🎨 GENERATING HTML FOR TEMPLATE: {request.template_type}")
         if request.template_type == "podcast":
             html = f"""
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -1924,6 +1982,13 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
             </div>
             """
 
+        print(f"✅ EMAIL PREVIEW GENERATED:")
+        print(f"   HTML Length: {len(html)} characters")
+        print(f"   Template: {request.template_type}")
+        print("=" * 80)
+        print(f"✅ PREVIEW EMAIL COMPLETE")
+        print("=" * 80)
+
         return {"html": html, "message": "Preview generated"}
 
     except HTTPException:
@@ -1936,64 +2001,111 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
 async def custom_workflow_send_podcast(request: CustomWorkflowSendRequest):
     """Send custom podcast with selected template to specific users"""
     try:
-        print(f"📧 Sending custom podcast")
+        print("=" * 80)
+        print("📧 CUSTOM WORKFLOW: SEND PODCAST REQUEST")
+        print("=" * 80)
+        print(f"📊 INPUT PARAMETERS:")
         print(f"   Podcast ID: {request.podcast_id}")
-        print(f"   Template: {request.template_type}")
-        print(f"   Recipients: {len(request.recipient_emails)}")
+        print(f"   Template Type: {request.template_type}")
+        print(f"   Total Recipients: {len(request.recipient_emails)}")
+        print(f"   Recipient List: {', '.join(request.recipient_emails)}")
+        print("-" * 80)
 
         # Get podcast data
+        print(f"🔍 FETCHING PODCAST FROM DYNAMODB:")
         podcast_response = podcast_table.get_item(Key={'podcast_id': request.podcast_id})
         if 'Item' not in podcast_response:
+            print(f"❌ Podcast not found")
             raise HTTPException(status_code=404, detail="Podcast not found")
 
         podcast_data = podcast_response['Item']
+        print(f"✅ Podcast data retrieved")
+        print("-" * 80)
 
         # Get user data
+        print(f"👥 FETCHING USER DATA:")
         subscribers = []
+        not_found = []
+
         for email in request.recipient_emails:
             try:
                 user_response = email_table.get_item(Key={'email': email.lower()})
                 if 'Item' in user_response:
                     subscribers.append(user_response['Item'])
+                    print(f"   ✓ Found: {email.lower()}")
+                else:
+                    not_found.append(email.lower())
+                    print(f"   ✗ Not found: {email.lower()}")
             except Exception as e:
-                print(f"Error fetching user {email}: {e}")
+                not_found.append(email.lower())
+                print(f"   ✗ Error fetching {email}: {e}")
+
+        print("-" * 80)
+        print(f"📊 USER LOOKUP RESULTS:")
+        print(f"   Valid subscribers: {len(subscribers)}")
+        print(f"   Not found: {len(not_found)}")
 
         if not subscribers:
+            print(f"❌ No valid subscribers found")
+            print("=" * 80)
             return {"message": "No valid subscribers found", "sent": 0, "failed": 0}
 
+        print("-" * 80)
+
         # Send emails using the selected template
+        print(f"📤 SENDING EMAILS (Template: {request.template_type}):")
         sent = 0
         failed = 0
+        send_start = datetime.now()
 
-        for subscriber in subscribers:
+        for i, subscriber in enumerate(subscribers, 1):
             email = subscriber['email']
             name = subscriber.get('name')
+
+            print(f"   [{i}/{len(subscribers)}] Sending to {email}...")
 
             try:
                 if request.template_type == "welcome":
                     success = email_service.send_welcome_email(email, name)
                 elif request.template_type == "weekly":
-                    # For weekly, wrap single podcast in list
                     success = email_service.send_weekly_digest_email(email, [podcast_data], name)
                 else:  # podcast or custom
                     success = email_service.send_podcast_email(email, podcast_data, name)
 
                 if success:
                     sent += 1
+                    print(f"      ✓ Success")
                 else:
                     failed += 1
+                    print(f"      ✗ Failed")
             except Exception as e:
-                print(f"Error sending to {email}: {e}")
                 failed += 1
+                print(f"      ✗ Error: {e}")
+
+        send_end = datetime.now()
+        send_duration = (send_end - send_start).total_seconds()
+        print("-" * 80)
+        print(f"📊 SENDING COMPLETE:")
+        print(f"   Sent: {sent}")
+        print(f"   Failed: {failed}")
+        print(f"   Success Rate: {(sent/len(subscribers)*100):.1f}%")
+        print(f"   Duration: {send_duration:.2f}s")
+        print("-" * 80)
 
         # Update sent_at timestamp
+        print(f"💾 UPDATING PODCAST METADATA:")
         podcast_table.update_item(
             Key={'podcast_id': request.podcast_id},
             UpdateExpression='SET sent_at = :sent_at',
             ExpressionAttributeValues={':sent_at': datetime.now().isoformat()}
         )
+        print(f"   ✓ Updated sent_at timestamp")
+        print("=" * 80)
+        print(f"✅ SEND CUSTOM PODCAST COMPLETE")
+        print(f"   Total Recipients: {len(subscribers)}")
+        print(f"   Sent: {sent} | Failed: {failed}")
+        print("=" * 80)
 
-        print(f"✅ Sent: {sent}, Failed: {failed}")
         return {
             "message": f"Sent to {sent} user(s)",
             "sent": sent,

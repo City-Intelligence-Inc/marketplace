@@ -493,29 +493,67 @@ function CustomWorkflowTab() {
     setIsLoading(true);
     toast.info("Generating audio... This may take several minutes");
 
+    console.log("=".repeat(80));
+    console.log("🎙️ CUSTOM WORKFLOW: GENERATE AUDIO");
+    console.log("=".repeat(80));
+
+    const requestBody = {
+      transcript,
+      podcast_hosts: podcastHosts,
+      category,
+      host_voice_key: hostVoice,
+      expert_voice_key: expertVoice,
+    };
+
+    console.log("📤 REQUEST:");
+    console.log("   URL:", `${API_URL}/api/admin/custom-workflow/generate-audio`);
+    console.log("   Method: POST");
+    console.log("   Body:", JSON.stringify(requestBody, null, 2));
+    console.log("   Transcript length:", transcript.length, "characters");
+    console.log("   Hosts:", podcastHosts);
+    console.log("   Category:", category);
+    console.log("   Voices:", hostVoice, "→", expertVoice);
+
     try {
+      const startTime = Date.now();
+      console.log("⏱️  Request sent at:", new Date().toISOString());
+
       const response = await fetch(`${API_URL}/api/admin/custom-workflow/generate-audio`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript,
-          podcast_hosts: podcastHosts,
-          category,
-          host_voice_key: hostVoice,
-          expert_voice_key: expertVoice,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error("Failed to generate audio");
+      const endTime = Date.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      console.log("📥 RESPONSE:");
+      console.log("   Status:", response.status, response.statusText);
+      console.log("   Duration:", duration, "seconds");
+      console.log("   Headers:", Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ ERROR RESPONSE:", JSON.stringify(errorData, null, 2));
+        throw new Error(errorData.detail || "Failed to generate audio");
+      }
 
       const data = await response.json();
+      console.log("✅ SUCCESS RESPONSE:", JSON.stringify(data, null, 2));
+      console.log("   Podcast ID:", data.podcast_id);
+      console.log("   Audio URL:", data.audio_url);
+      console.log("=".repeat(80));
+
       setAudioUrl(data.audio_url);
       setPodcastId(data.podcast_id);
       toast.success("Audio generated successfully!");
       setCurrentStep(1);
     } catch (error) {
+      console.error("❌ GENERATION FAILED:");
+      console.error("   Error:", error);
+      console.error("   Stack:", error instanceof Error ? error.stack : "N/A");
+      console.log("=".repeat(80));
       toast.error("Failed to generate audio");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -529,25 +567,60 @@ function CustomWorkflowTab() {
 
     setIsLoading(true);
 
+    console.log("=".repeat(80));
+    console.log("👁️ CUSTOM WORKFLOW: PREVIEW EMAIL");
+    console.log("=".repeat(80));
+
+    const requestBody = {
+      podcast_id: podcastId,
+      template_type: selectedTemplate,
+    };
+
+    console.log("📤 REQUEST:");
+    console.log("   URL:", `${API_URL}/api/admin/custom-workflow/preview-email`);
+    console.log("   Method: POST");
+    console.log("   Body:", JSON.stringify(requestBody, null, 2));
+    console.log("   Podcast ID:", podcastId);
+    console.log("   Template:", selectedTemplate);
+
     try {
+      const startTime = Date.now();
+      console.log("⏱️  Request sent at:", new Date().toISOString());
+
       const response = await fetch(`${API_URL}/api/admin/custom-workflow/preview-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          podcast_id: podcastId,
-          template_type: selectedTemplate,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error("Failed to preview email");
+      const endTime = Date.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      console.log("📥 RESPONSE:");
+      console.log("   Status:", response.status, response.statusText);
+      console.log("   Duration:", duration, "seconds");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ ERROR RESPONSE:", JSON.stringify(errorData, null, 2));
+        throw new Error(errorData.detail || "Failed to preview email");
+      }
 
       const data = await response.json();
+      console.log("✅ SUCCESS RESPONSE:");
+      console.log("   HTML length:", data.html.length, "characters");
+      console.log("   Preview first 200 chars:", data.html.substring(0, 200));
+      console.log("=".repeat(80));
+
       setEmailPreviewHtml(data.html);
       toast.success("Email preview loaded!");
       setCurrentStep(2);
     } catch (error) {
+      console.error("❌ PREVIEW FAILED:");
+      console.error("   Error:", error);
+      console.error("   Stack:", error instanceof Error ? error.stack : "N/A");
+      console.log("=".repeat(80));
       toast.error("Failed to preview email");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -564,25 +637,62 @@ function CustomWorkflowTab() {
     setIsLoading(true);
     toast.info(`Sending to ${selectedUsers.size} users...`);
 
+    console.log("=".repeat(80));
+    console.log("📧 CUSTOM WORKFLOW: SEND PODCAST");
+    console.log("=".repeat(80));
+
+    const recipientEmails = Array.from(selectedUsers);
+    const requestBody = {
+      podcast_id: podcastId,
+      recipient_emails: recipientEmails,
+      template_type: selectedTemplate,
+    };
+
+    console.log("📤 REQUEST:");
+    console.log("   URL:", `${API_URL}/api/admin/custom-workflow/send-custom-podcast`);
+    console.log("   Method: POST");
+    console.log("   Podcast ID:", podcastId);
+    console.log("   Template:", selectedTemplate);
+    console.log("   Recipients:", selectedUsers.size);
+    console.log("   Emails:", recipientEmails);
+
     try {
+      const startTime = Date.now();
+      console.log("⏱️  Request sent at:", new Date().toISOString());
+
       const response = await fetch(`${API_URL}/api/admin/custom-workflow/send-custom-podcast`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          podcast_id: podcastId,
-          recipient_emails: Array.from(selectedUsers),
-          template_type: selectedTemplate,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error("Failed to send");
+      const endTime = Date.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+      console.log("📥 RESPONSE:");
+      console.log("   Status:", response.status, response.statusText);
+      console.log("   Duration:", duration, "seconds");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ ERROR RESPONSE:", JSON.stringify(errorData, null, 2));
+        throw new Error(errorData.detail || "Failed to send");
+      }
 
       const data = await response.json();
+      console.log("✅ SUCCESS RESPONSE:", JSON.stringify(data, null, 2));
+      console.log("   Sent:", data.sent);
+      console.log("   Failed:", data.failed);
+      console.log("=".repeat(80));
+
       toast.success(`Sent to ${data.sent} user(s)!`);
       setSelectedUsers(new Set());
     } catch (error) {
+      console.error("❌ SEND FAILED:");
+      console.error("   Error:", error);
+      console.error("   Stack:", error instanceof Error ? error.stack : "N/A");
+      console.log("=".repeat(80));
       toast.error("Failed to send podcast");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
