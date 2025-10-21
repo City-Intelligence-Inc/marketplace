@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CheckCircle2, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
 
 const ADMIN_PASSWORD = "podcast025";
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://four0k-arr-saas.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://marketplace-wtvs.onrender.com";
 
 // Types
 interface PaperData {
