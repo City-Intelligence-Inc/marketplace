@@ -463,6 +463,7 @@ function CustomWorkflowTab() {
   const [podcastId, setPodcastId] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("podcast");
   const [emailPreviewHtml, setEmailPreviewHtml] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [voices, setVoices] = useState<Voice[]>([]);
@@ -701,6 +702,59 @@ function CustomWorkflowTab() {
     }
   };
 
+  const handleSendToCustomEmail = async () => {
+    if (!customEmail || !customEmail.includes('@')) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (!confirm(`Send podcast to ${customEmail}?`)) return;
+
+    setIsLoading(true);
+    toast.info(`Sending to ${customEmail}...`);
+
+    console.log("=".repeat(80));
+    console.log("📧 CUSTOM WORKFLOW: SEND TO CUSTOM EMAIL");
+    console.log("=".repeat(80));
+
+    const requestBody = {
+      podcast_id: podcastId,
+      recipient_emails: [customEmail],
+      template_type: selectedTemplate,
+    };
+
+    console.log("📤 REQUEST:");
+    console.log("   URL:", `${API_URL}/api/admin/custom-workflow/send-custom-podcast`);
+    console.log("   Email:", customEmail);
+    console.log("   Template:", selectedTemplate);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/custom-workflow/send-custom-podcast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to send");
+      }
+
+      const data = await response.json();
+      console.log("✅ SUCCESS:", data);
+      console.log("=".repeat(80));
+
+      toast.success(`Email sent to ${customEmail}!`);
+      setCustomEmail(""); // Clear the input
+    } catch (error) {
+      console.error("❌ SEND FAILED:", error);
+      console.log("=".repeat(80));
+      toast.error("Failed to send email");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const toggleUser = (email: string) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(email)) {
@@ -906,11 +960,39 @@ function CustomWorkflowTab() {
         </div>
       )}
 
-      {/* Step 3: Send */}
+      {/* Step 3A: Send to Custom Email */}
+      {emailPreviewHtml && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Step 3A: Send to Custom Email</h2>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Email Address</label>
+              <input
+                type="email"
+                value={customEmail}
+                onChange={(e) => setCustomEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="w-full h-12 px-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+
+            <Button
+              onClick={handleSendToCustomEmail}
+              disabled={isLoading || !customEmail || !customEmail.includes('@')}
+              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700"
+            >
+              {isLoading ? "Sending..." : "Send to This Email"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3B: Send to All Users */}
       {emailPreviewHtml && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Step 3: Send to Users</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Step 3B: Send to All Users</h2>
             {users.length > 0 && (
               <Button variant="outline" onClick={toggleAll} size="sm">
                 {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
