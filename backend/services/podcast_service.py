@@ -890,11 +890,8 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             if re.search(r'(total|runtime|duration).*:\s*\d+\s*(seconds?|minutes?|mins?)', line_stripped, re.IGNORECASE):
                 continue
 
-            # Skip speaker labels at start of line (Host:, Expert:, **HOST:**)
-            if re.match(r'^(\*\*)?HOST(\*\*)?:', line_stripped, re.IGNORECASE):
-                continue
-            if re.match(r'^(\*\*)?EXPERT(\*\*)?:', line_stripped, re.IGNORECASE):
-                continue
+            # DON'T skip speaker lines - we need them for parsing!
+            # Just keep them as-is, the parser will handle them
 
             # Skip system instruction lines
             system_patterns = [
