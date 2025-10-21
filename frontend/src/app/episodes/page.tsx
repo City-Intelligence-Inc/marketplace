@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://four0k-arr-saas.onrender.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://marketplace-wtvs.onrender.com";
 
 export default function Episodes() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);

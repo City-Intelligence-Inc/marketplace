@@ -15,7 +15,7 @@ class EmailService:
         self.mailgun_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
         self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         # Configurable frontend URL for unsubscribe links
-        self.frontend_url = os.getenv('FRONTEND_URL', 'https://four0k-arr-saas.onrender.com')
+        self.frontend_url = os.getenv('FRONTEND_URL', 'https://marketplace-wtvs.onrender.com')
 
         print(f"📧 Email Service Initialized:")
         print(f"   Domain: {self.mailgun_domain}")

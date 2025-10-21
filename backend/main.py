@@ -2193,7 +2193,7 @@ async def custom_workflow_preview_email(request: CustomWorkflowPreviewEmailReque
             # Build unsubscribe URL (using dummy email for preview)
             import urllib.parse
             preview_email = "user@example.com"
-            frontend_url = os.getenv('FRONTEND_URL', 'https://four0k-arr-saas.onrender.com')
+            frontend_url = os.getenv('FRONTEND_URL', 'https://marketplace-wtvs.onrender.com')
             unsubscribe_url = f"{frontend_url}/unsubscribe?email={urllib.parse.quote(preview_email)}"
 
             # Build the full email HTML (same as send_weekly_digest_email)
