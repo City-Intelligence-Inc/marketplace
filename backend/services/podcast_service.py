@@ -814,7 +814,13 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             raise
 
     def parse_script_by_speaker(self, script: str) -> List[Tuple[str, str]]:
-        """Parse script into (speaker, text) tuples, removing speaker labels"""
+        """Parse script into (speaker, text) tuples, removing speaker labels
+
+        Supports multiple formats:
+        1. "Host:" and "Expert:" labels (preferred)
+        2. Plain text with paragraph breaks (alternates speakers)
+        3. Plain text as single block (uses only host voice)
+        """
         import re
 
         # Split by speaker labels using regex
@@ -857,6 +863,43 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             text = ' '.join(current_text).strip()
             if text:
                 segments.append((current_speaker, text))
+
+        # FALLBACK: If no segments found (no Host:/Expert: labels), handle plain text
+        if not segments:
+            print("⚠️  No Host:/Expert: labels found. Using fallback parsing...")
+
+            # Try splitting by double line breaks (paragraph breaks)
+            paragraphs = re.split(r'\n\s*\n', script.strip())
+            paragraphs = [p.strip() for p in paragraphs if p.strip()]
+
+            if len(paragraphs) > 1:
+                # Multiple paragraphs - alternate between host and expert
+                print(f"   Found {len(paragraphs)} paragraphs. Alternating speakers.")
+                for i, paragraph in enumerate(paragraphs):
+                    speaker = 'host' if i % 2 == 0 else 'expert'
+                    segments.append((speaker, paragraph))
+            else:
+                # Single block of text - split into sentences and alternate
+                print("   Single block text. Splitting by sentences and alternating speakers.")
+                # Split by sentence endings
+                sentences = re.split(r'([.!?]+\s+)', script.strip())
+
+                # Reconstruct sentences with their punctuation
+                reconstructed = []
+                for i in range(0, len(sentences) - 1, 2):
+                    if i + 1 < len(sentences):
+                        sentence = sentences[i] + sentences[i + 1]
+                        reconstructed.append(sentence.strip())
+                if len(sentences) % 2 == 1:  # Handle last sentence if odd number
+                    reconstructed.append(sentences[-1].strip())
+
+                # Group sentences into chunks (every 2-3 sentences alternates speaker)
+                chunk_size = 3
+                for i in range(0, len(reconstructed), chunk_size):
+                    chunk = ' '.join(reconstructed[i:i + chunk_size])
+                    if chunk.strip():
+                        speaker = 'host' if (i // chunk_size) % 2 == 0 else 'expert'
+                        segments.append((speaker, chunk))
 
         # Debug logging
         print(f"\n=== PARSED {len(segments)} SEGMENTS ===")
