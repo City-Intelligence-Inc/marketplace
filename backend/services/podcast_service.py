@@ -915,6 +915,9 @@ Now generate the complete {word_count} podcast script following ALL the rules ab
             # Remove italic: *text* -> text (but not if it's part of longer asterisk sequence)
             line_stripped = re.sub(r'(?<!\*)\*(?!\*)([^*]+)\*(?!\*)', r'\1', line_stripped)
 
+            # DON'T remove HOST:/EXPERT: here - the parser needs them!
+            # They'll be removed during parsing
+
             cleaned_lines.append(line_stripped)
 
         # Join and collapse multiple blank lines into single paragraph breaks
