@@ -366,6 +366,54 @@ async def get_email_config():
         "frontend_url": os.getenv('FRONTEND_URL', 'https://marketplace-wtvs.onrender.com')
     }
 
+class UpdateEmailRequest(BaseModel):
+    old_email: str
+    new_email: str
+    admin_password: str
+
+@app.post("/api/admin/update-email")
+async def update_user_email(request: UpdateEmailRequest):
+    """Update a user's email address (admin only)"""
+    try:
+        # Verify admin password
+        ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'podcast025')
+        if request.admin_password != ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid admin password")
+
+        old_email = request.old_email.lower()
+        new_email = request.new_email.lower()
+
+        print(f"📧 Updating email: {old_email} → {new_email}")
+
+        # Get old user data
+        old_response = email_table.get_item(Key={'email': old_email})
+        if 'Item' not in old_response:
+            raise HTTPException(status_code=404, detail="Old email not found")
+
+        user_data = old_response['Item']
+        print(f"   Found user: {user_data.get('name', 'N/A')}")
+
+        # Create new entry with updated email
+        user_data['email'] = new_email
+        email_table.put_item(Item=user_data)
+        print(f"   ✓ Created new entry: {new_email}")
+
+        # Delete old entry
+        email_table.delete_item(Key={'email': old_email})
+        print(f"   ✓ Deleted old entry: {old_email}")
+
+        return {
+            "message": "Email updated successfully",
+            "old_email": old_email,
+            "new_email": new_email
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error updating email: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/api/admin/episodes/{podcast_id}")
 async def delete_episode(podcast_id: str, request: DeleteEpisodeRequest):
     """Delete a podcast episode (admin only - requires password)"""
