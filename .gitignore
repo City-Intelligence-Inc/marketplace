@@ -38,3 +38,5 @@ Thumbs.db
 *.log
 *.pkg
 frontend-broken/
+backend/.env.local
+*.pdf

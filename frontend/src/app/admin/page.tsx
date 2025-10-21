@@ -508,6 +508,69 @@ function EmailTemplatesTab() {
         </div>
       `,
     },
+    {
+      id: "weekly",
+      name: "Weekly Digest",
+      description: "Weekly summary of all podcasts sent that week",
+      subject: "🎧 Your Weekly Research Digest - [Number] Episodes",
+      preview: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center;">
+            <h1 style="color: white; font-size: 24px; font-weight: 700; margin: 0;">📚 Your Weekly Digest</h1>
+            <p style="color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px;">5 episodes from this week</p>
+          </div>
+          <div style="padding: 24px 20px;">
+            <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hi there,</p>
+            <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Here's everything from this week in one place:</p>
+
+            <!-- Episode 1 -->
+            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
+              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">1. Advances in Quantum Computing</h3>
+              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Sarah Chen, Dr. Michael Wong • 8 min</p>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
+                <span style="color: #d1d5db;">•</span>
+                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
+              </div>
+            </div>
+
+            <!-- Episode 2 -->
+            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
+              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">2. Machine Learning in Healthcare</h3>
+              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Jane Smith • 6 min</p>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
+                <span style="color: #d1d5db;">•</span>
+                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
+              </div>
+            </div>
+
+            <!-- Episode 3 -->
+            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
+              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">3. Climate Change Modeling</h3>
+              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Robert Lee, Dr. Emma Davis • 7 min</p>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
+                <span style="color: #d1d5db;">•</span>
+                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
+              </div>
+            </div>
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
+              <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
+                <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
+              </p>
+            </div>
+
+            <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's 27 minutes of cutting-edge research. See you next week!</p>
+          </div>
+          <div style="text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb;">
+            <p>Next digest arrives same time next week.</p>
+            <p style="margin-top: 12px;"><a href="#" style="color: #10b981; text-decoration: none;">Unsubscribe</a></p>
+          </div>
+        </div>
+      `,
+    },
   ];
 
   const handleSendTest = async (templateId: string) => {

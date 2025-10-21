@@ -251,3 +251,104 @@ class EmailService:
         except Exception as e:
             print(f"Error sending custom email to {to_email}: {e}")
             return False
+
+    def send_weekly_digest_email(self, email: str, podcasts: List[Dict], name: str = None) -> bool:
+        """Send weekly digest email with all podcasts from the week"""
+        recipient_name = name if name else "there"
+
+        # Build podcast list HTML
+        podcast_items = ""
+        total_duration = 0
+
+        for i, podcast in enumerate(podcasts, 1):
+            duration = podcast.get('duration', '5-10')
+            title = podcast.get('paper_title', 'Research Podcast')[:80]
+            authors = podcast.get('paper_authors', 'Various Authors')[:50]
+            audio_url = podcast.get('audio_url', '#')
+            paper_url = podcast.get('paper_url', '#')
+
+            podcast_items += f"""
+            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
+              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">{i}. {title}</h3>
+              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">{authors} • {duration} min</p>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="{audio_url}" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
+                <span style="color: #d1d5db;">•</span>
+                <a href="{paper_url}" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
+              </div>
+            </div>
+            """
+            # Estimate duration
+            if isinstance(duration, str) and '-' in duration:
+                avg = sum(int(x) for x in duration.split('-')) / 2
+                total_duration += int(avg)
+            else:
+                total_duration += 7  # default estimate
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #ffffff; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center; }}
+                .header h1 {{ color: white; font-size: 24px; font-weight: 700; margin: 0; }}
+                .header p {{ color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px; }}
+                .content {{ padding: 24px 20px; }}
+                .footer {{ text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb; }}
+                .footer a {{ color: #10b981; text-decoration: none; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>📚 Your Weekly Digest</h1>
+                    <p>{len(podcasts)} episodes from this week</p>
+                </div>
+                <div class="content">
+                    <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hi {recipient_name},</p>
+                    <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Here's everything from this week in one place:</p>
+
+                    {podcast_items}
+
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
+                        <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
+                            <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
+                        </p>
+                    </div>
+
+                    <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's {int(total_duration)} minutes of cutting-edge research. See you next week!</p>
+                </div>
+                <div class="footer">
+                    <p>Next digest arrives same time next week.</p>
+                    <p style="margin-top: 12px;"><a href="{{{{unsubscribe_url}}}}">Unsubscribe</a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        try:
+            print(f"📧 Sending weekly digest to {email}")
+            response = requests.post(
+                self.mailgun_url,
+                auth=("api", self.mailgun_api_key),
+                data={
+                    "from": f"{self.from_name} <{self.from_email}>",
+                    "to": email,
+                    "subject": f"🎧 Your Weekly Research Digest - {len(podcasts)} Episodes",
+                    "html": html_content
+                }
+            )
+            success = response.status_code == 200
+            if success:
+                print(f"   ✅ Weekly digest sent to {email}")
+            else:
+                print(f"   ❌ Weekly digest failed: {response.status_code}")
+            return success
+        except Exception as e:
+            print(f"Error sending weekly digest to {email}: {e}")
+            return False

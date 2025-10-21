@@ -1741,6 +1741,37 @@ async def send_test_email(request: SendTestEmailRequest):
                 message="This is a test custom email message.\n\nYou can customize this content for any purpose.",
                 from_name="City Secretary"
             )
+
+        elif request.template_type == "weekly":
+            # Create sample weekly digest data
+            sample_podcasts = [
+                {
+                    "podcast_id": "test-1",
+                    "paper_title": "Advances in Quantum Computing",
+                    "paper_authors": "Dr. Sarah Chen, Dr. Michael Wong",
+                    "paper_url": "https://example.com/paper1.pdf",
+                    "audio_url": "https://example.com/audio1.mp3",
+                    "duration": "8"
+                },
+                {
+                    "podcast_id": "test-2",
+                    "paper_title": "Machine Learning in Healthcare",
+                    "paper_authors": "Dr. Jane Smith",
+                    "paper_url": "https://example.com/paper2.pdf",
+                    "audio_url": "https://example.com/audio2.mp3",
+                    "duration": "6"
+                },
+                {
+                    "podcast_id": "test-3",
+                    "paper_title": "Climate Change Modeling with AI",
+                    "paper_authors": "Dr. Robert Lee, Dr. Emma Davis",
+                    "paper_url": "https://example.com/paper3.pdf",
+                    "audio_url": "https://example.com/audio3.mp3",
+                    "duration": "7"
+                },
+            ]
+            success = email_service.send_weekly_digest_email(request.test_email, sample_podcasts, "Test User")
+
         else:
             raise HTTPException(status_code=400, detail=f"Unknown template type: {request.template_type}")
 
