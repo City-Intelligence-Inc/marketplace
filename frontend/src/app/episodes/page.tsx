@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getEpisodes, Episode } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Trash2, Play, ExternalLink, MoreVertical } from "lucide-react";
+import Link from "next/link";
+import { Trash2, Play, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://marketplace-wtvs.onrender.com";
@@ -270,18 +270,18 @@ export default function Episodes() {
         {!isLoading && !error && episodes.length > 0 && (
           <div className="mt-12 pt-8 border-t border-gray-800">
             <div className="flex flex-wrap gap-3">
-              <a
+              <Link
                 href="/"
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-full text-sm font-medium transition-colors"
               >
                 Back to Home
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/admin"
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-full text-sm font-medium transition-colors"
               >
                 Admin Panel
-              </a>
+              </Link>
             </div>
           </div>
         )}
