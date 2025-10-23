@@ -2538,6 +2538,221 @@ async def custom_workflow_send_podcast(request: CustomWorkflowSendRequest):
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error sending custom podcast: {str(e)}")
 
+# ===== Database Management CRUD Endpoints =====
+
+@app.get("/api/admin/database/podcasts")
+async def get_all_podcasts(limit: int = 100):
+    """Get all podcasts from database"""
+    try:
+        response = podcast_table.scan(Limit=limit)
+        items = response.get('Items', [])
+
+        # Sort by created_at descending
+        items.sort(key=lambda x: x.get('created_at', 0), reverse=True)
+
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        print(f"Error fetching podcasts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/database/podcasts/{podcast_id}")
+async def get_podcast(podcast_id: str):
+    """Get a single podcast by ID"""
+    try:
+        response = podcast_table.get_item(Key={'podcast_id': podcast_id})
+        item = response.get('Item')
+        if not item:
+            raise HTTPException(status_code=404, detail="Podcast not found")
+        return {"item": item}
+    except Exception as e:
+        print(f"Error fetching podcast: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class UpdatePodcastRequest(BaseModel):
+    podcast_id: str
+    updates: dict
+
+@app.put("/api/admin/database/podcasts")
+async def update_podcast(request: UpdatePodcastRequest):
+    """Update a podcast"""
+    try:
+        # Build update expression dynamically
+        update_expr_parts = []
+        expr_attr_values = {}
+
+        for key, value in request.updates.items():
+            if key != 'podcast_id':  # Don't update the primary key
+                update_expr_parts.append(f"{key} = :{key}")
+                expr_attr_values[f":{key}"] = value
+
+        if not update_expr_parts:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        update_expression = "SET " + ", ".join(update_expr_parts)
+
+        podcast_table.update_item(
+            Key={'podcast_id': request.podcast_id},
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expr_attr_values
+        )
+
+        return {"success": True, "message": "Podcast updated successfully"}
+    except Exception as e:
+        print(f"Error updating podcast: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/database/podcasts/{podcast_id}")
+async def delete_podcast(podcast_id: str):
+    """Delete a podcast"""
+    try:
+        podcast_table.delete_item(Key={'podcast_id': podcast_id})
+        return {"success": True, "message": "Podcast deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting podcast: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Email/Users CRUD
+@app.get("/api/admin/database/emails")
+async def get_all_emails(limit: int = 100):
+    """Get all email signups"""
+    try:
+        response = email_table.scan(Limit=limit)
+        items = response.get('Items', [])
+
+        # Sort by signup_timestamp descending
+        items.sort(key=lambda x: x.get('signup_timestamp', 0), reverse=True)
+
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        print(f"Error fetching emails: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class UpdateEmailRequest(BaseModel):
+    email: str
+    updates: dict
+
+@app.put("/api/admin/database/emails")
+async def update_email(request: UpdateEmailRequest):
+    """Update an email record"""
+    try:
+        update_expr_parts = []
+        expr_attr_values = {}
+
+        for key, value in request.updates.items():
+            if key != 'email':
+                update_expr_parts.append(f"{key} = :{key}")
+                expr_attr_values[f":{key}"] = value
+
+        if not update_expr_parts:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        update_expression = "SET " + ", ".join(update_expr_parts)
+
+        email_table.update_item(
+            Key={'email': request.email},
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expr_attr_values
+        )
+
+        return {"success": True, "message": "Email record updated successfully"}
+    except Exception as e:
+        print(f"Error updating email: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/database/emails/{email}")
+async def delete_email(email: str):
+    """Delete an email record"""
+    try:
+        email_table.delete_item(Key={'email': email})
+        return {"success": True, "message": "Email deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting email: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Papers CRUD
+@app.get("/api/admin/database/papers")
+async def get_all_papers(limit: int = 100):
+    """Get all papers"""
+    try:
+        response = paper_table.scan(Limit=limit)
+        items = response.get('Items', [])
+
+        # Sort by created_at descending
+        items.sort(key=lambda x: x.get('created_at', 0), reverse=True)
+
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        print(f"Error fetching papers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class UpdatePaperRequest(BaseModel):
+    paper_id: str
+    updates: dict
+
+@app.put("/api/admin/database/papers")
+async def update_paper(request: UpdatePaperRequest):
+    """Update a paper"""
+    try:
+        update_expr_parts = []
+        expr_attr_values = {}
+
+        for key, value in request.updates.items():
+            if key != 'paper_id':
+                update_expr_parts.append(f"{key} = :{key}")
+                expr_attr_values[f":{key}"] = value
+
+        if not update_expr_parts:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        update_expression = "SET " + ", ".join(update_expr_parts)
+
+        paper_table.update_item(
+            Key={'paper_id': request.paper_id},
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expr_attr_values
+        )
+
+        return {"success": True, "message": "Paper updated successfully"}
+    except Exception as e:
+        print(f"Error updating paper: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/database/papers/{paper_id}")
+async def delete_paper(paper_id: str):
+    """Delete a paper"""
+    try:
+        paper_table.delete_item(Key={'paper_id': paper_id})
+        return {"success": True, "message": "Paper deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting paper: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Paper Requests CRUD
+@app.get("/api/admin/database/paper-requests")
+async def get_all_paper_requests(limit: int = 100):
+    """Get all paper requests"""
+    try:
+        response = paper_requests_table.scan(Limit=limit)
+        items = response.get('Items', [])
+
+        # Sort by request_timestamp descending
+        items.sort(key=lambda x: x.get('request_timestamp', 0), reverse=True)
+
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        print(f"Error fetching paper requests: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/database/paper-requests/{request_id}")
+async def delete_paper_request(request_id: str):
+    """Delete a paper request"""
+    try:
+        paper_requests_table.delete_item(Key={'request_id': request_id})
+        return {"success": True, "message": "Paper request deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting paper request: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ===== Static HTML Pages =====
 
 @app.get("/pricing.html")

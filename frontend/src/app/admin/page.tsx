@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CheckCircle2, ArrowRight, ArrowLeft, Upload, FileText, Mic, Send, BarChart3, LogOut, Mail, Eye, TestTube } from "lucide-react";
 import { AudioEditor } from "@/components/AudioEditor";
+import { DatabaseManager } from "@/components/DatabaseManager";
 
 const ADMIN_PASSWORD = "podcast025";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://marketplace-wtvs.onrender.com";
@@ -165,7 +166,7 @@ export default function AdminPage() {
 }
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"workflow" | "custom" | "templates">("workflow");
+  const [activeTab, setActiveTab] = useState<"workflow" | "custom" | "templates" | "database">("workflow");
   const [currentStep, setCurrentStep] = useState(0);
   const [paperData, setPaperData] = useState<PaperData | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -228,6 +229,17 @@ function AdminDashboard() {
             <Mail className="w-5 h-5" />
             Email Templates
           </button>
+          <button
+            onClick={() => setActiveTab("database")}
+            className={`flex items-center gap-2 px-6 py-4 font-medium transition-all ${
+              activeTab === "database"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <BarChart3 className="w-5 h-5" />
+            Database
+          </button>
         </div>
       </div>
 
@@ -252,8 +264,10 @@ function AdminDashboard() {
         />
       ) : activeTab === "custom" ? (
         <CustomWorkflowTab />
-      ) : (
+      ) : activeTab === "templates" ? (
         <EmailTemplatesTab />
+      ) : (
+        <DatabaseManager />
       )}
     </div>
   );
