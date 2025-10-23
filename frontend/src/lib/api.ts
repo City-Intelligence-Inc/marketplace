@@ -50,3 +50,25 @@ export async function getEpisodes(): Promise<{ success: boolean; episodes: Episo
     return { success: false, episodes: [], error: "Network error. Please check your connection and try again." };
   }
 }
+
+export interface Category {
+  name: string;
+  count: number;
+}
+
+export async function getCategories(): Promise<{ success: boolean; categories: Category[]; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/categories`);
+
+    if (!response.ok) {
+      return { success: false, categories: [], error: "Failed to fetch categories" };
+    }
+
+    const data = await response.json();
+
+    return { success: true, categories: data.categories || [] };
+  } catch (error) {
+    console.error("Categories fetch error:", error);
+    return { success: false, categories: [], error: "Network error. Please check your connection and try again." };
+  }
+}

@@ -341,6 +341,41 @@ async def get_episodes():
         print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 
+@app.get("/api/categories")
+async def get_categories():
+    """Get unique categories from all published podcasts with episode counts"""
+    try:
+        # Scan for all podcasts that have been sent
+        response = podcast_table.scan(
+            FilterExpression='attribute_exists(sent_at)'
+        )
+
+        podcasts = response.get('Items', [])
+
+        # Count episodes per category
+        category_counts = {}
+        for p in podcasts:
+            category = p.get('category', 'General')
+            if category:
+                category_counts[category] = category_counts.get(category, 0) + 1
+
+        # Format categories with counts
+        categories = [
+            {
+                "name": category,
+                "count": count
+            }
+            for category, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        return {"categories": categories}
+
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error fetching categories: {str(e)}")
+
 class DeleteEpisodeRequest(BaseModel):
     admin_password: str
 
