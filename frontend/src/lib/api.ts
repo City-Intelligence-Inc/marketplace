@@ -32,6 +32,8 @@ export interface Episode {
   paper_url: string;
   audio_url: string;
   sent_at: number;
+  category?: string;
+  duration?: number;
 }
 
 export async function getEpisodes(): Promise<{ success: boolean; episodes: Episode[]; error?: string }> {

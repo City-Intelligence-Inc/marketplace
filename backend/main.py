@@ -337,7 +337,9 @@ async def get_episodes():
                     "paper_authors": p.get('paper_authors', 'Unknown'),
                     "paper_url": p.get('paper_url', '#'),
                     "audio_url": p.get('audio_url', ''),
-                    "sent_at": timestamp
+                    "sent_at": timestamp,
+                    "category": p.get('category', 'General'),
+                    "duration": p.get('duration', 10)
                 })
             except Exception as e:
                 print(f"Error formatting episode {p.get('podcast_id')}: {e}")

@@ -199,8 +199,15 @@ export default function Episodes() {
 
                   {/* Duration Badge (if available) */}
                   <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs font-semibold px-1.5 py-0.5 rounded">
-                    10:00
+                    {episode.duration ? `${episode.duration}:00` : '10:00'}
                   </div>
+
+                  {/* Category Badge */}
+                  {episode.category && episode.category !== 'General' && (
+                    <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs font-semibold px-2 py-1 rounded">
+                      {episode.category}
+                    </div>
+                  )}
                 </div>
 
                 {/* Episode Info - YouTube Style */}
@@ -221,6 +228,15 @@ export default function Episodes() {
                     <p className="text-gray-400 text-xs mb-0.5">
                       Research Club
                     </p>
+
+                    {/* Category Badge */}
+                    {episode.category && episode.category !== 'General' && (
+                      <div className="mb-1">
+                        <span className="inline-block bg-gray-800 text-gray-300 text-xs px-2 py-0.5 rounded">
+                          {episode.category}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Authors & Date */}
                     <div className="text-gray-400 text-xs">
