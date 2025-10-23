@@ -282,30 +282,31 @@ async def unsubscribe(email: EmailStr):
 
 @app.get("/api/episodes")
 async def get_episodes():
-    """Get all published podcast episodes for public display"""
+    """Get all podcast episodes for public display"""
     try:
-        # Scan for all podcasts that have been sent
-        response = podcast_table.scan(
-            FilterExpression='attribute_exists(sent_at)'
-        )
+        # Scan for ALL podcasts (not just sent ones)
+        response = podcast_table.scan()
 
         podcasts = response.get('Items', [])
 
-        # Sort by sent_at descending (most recent first)
-        # Handle both timestamp formats (int and string)
+        # Sort by created_at descending (most recent first)
         def get_sort_key(x):
+            # Try sent_at first, then created_at, then 0
             sent_at = x.get('sent_at')
-            if not sent_at or sent_at == 'None':
-                return 0
-            # If it's already an int, return it
-            if isinstance(sent_at, int):
-                return sent_at
-            # If it's a string timestamp, try to parse it
-            try:
-                return int(sent_at)
-            except (ValueError, TypeError):
-                # If it's an ISO string, return 0 (will be at the end)
-                return 0
+            if sent_at and sent_at != 'None' and sent_at != None:
+                try:
+                    return int(sent_at) if isinstance(sent_at, (int, str)) and str(sent_at).isdigit() else 0
+                except:
+                    pass
+
+            created_at = x.get('created_at')
+            if created_at:
+                try:
+                    return int(created_at) if isinstance(created_at, int) else 0
+                except:
+                    pass
+
+            return 0
 
         podcasts.sort(key=get_sort_key, reverse=True)
 
@@ -313,22 +314,31 @@ async def get_episodes():
         formatted_episodes = []
         for p in podcasts:
             try:
+                # Use sent_at if available, otherwise created_at, otherwise current time
                 sent_at = p.get('sent_at')
-                if sent_at and sent_at != 'None':
-                    # Convert sent_at to int if possible, otherwise use current timestamp
-                    try:
-                        sent_at_int = int(sent_at) if isinstance(sent_at, (int, str)) and str(sent_at).isdigit() else int(datetime.now().timestamp())
-                    except (ValueError, TypeError):
-                        sent_at_int = int(datetime.now().timestamp())
+                created_at = p.get('created_at')
 
-                    formatted_episodes.append({
-                        "podcast_id": p['podcast_id'],
-                        "paper_title": p.get('paper_title', 'Unknown'),
-                        "paper_authors": p.get('paper_authors', 'Unknown'),
-                        "paper_url": p.get('paper_url', '#'),
-                        "audio_url": p.get('audio_url', ''),
-                        "sent_at": sent_at_int
-                    })
+                if sent_at and sent_at != 'None' and sent_at != None:
+                    try:
+                        timestamp = int(sent_at) if isinstance(sent_at, (int, str)) and str(sent_at).isdigit() else int(datetime.now().timestamp())
+                    except:
+                        timestamp = int(datetime.now().timestamp())
+                elif created_at:
+                    try:
+                        timestamp = int(created_at) if isinstance(created_at, int) else int(datetime.now().timestamp())
+                    except:
+                        timestamp = int(datetime.now().timestamp())
+                else:
+                    timestamp = int(datetime.now().timestamp())
+
+                formatted_episodes.append({
+                    "podcast_id": p['podcast_id'],
+                    "paper_title": p.get('paper_title', 'Unknown'),
+                    "paper_authors": p.get('paper_authors', 'Unknown'),
+                    "paper_url": p.get('paper_url', '#'),
+                    "audio_url": p.get('audio_url', ''),
+                    "sent_at": timestamp
+                })
             except Exception as e:
                 print(f"Error formatting episode {p.get('podcast_id')}: {e}")
                 continue
@@ -343,12 +353,10 @@ async def get_episodes():
 
 @app.get("/api/categories")
 async def get_categories():
-    """Get unique categories from all published podcasts with episode counts"""
+    """Get unique categories from all podcasts with episode counts"""
     try:
-        # Scan for all podcasts that have been sent
-        response = podcast_table.scan(
-            FilterExpression='attribute_exists(sent_at)'
-        )
+        # Scan for ALL podcasts
+        response = podcast_table.scan()
 
         podcasts = response.get('Items', [])
 
