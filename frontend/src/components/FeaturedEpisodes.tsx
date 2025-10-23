@@ -60,7 +60,7 @@ export function FeaturedEpisodes() {
         </div>
 
         <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-8 max-w-4xl mx-auto">
-          {episodes.map((episode, index) => (
+          {episodes.map((episode) => (
             <div
               key={episode.podcast_id}
               className="bg-gray-50 rounded-2xl p-8 border-2 border-gray-100 hover:border-orange-500 transition-all duration-300 hover:shadow-xl"

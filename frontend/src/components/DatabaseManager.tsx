@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Database, Edit, Trash2, Save, X, Plus } from "lucide-react";
+import { Database, Edit, Trash2, Save, X } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://marketplace-wtvs.onrender.com";
 
 type TableName = "podcasts" | "emails" | "papers" | "paper-requests";
 
 interface TableData {
-  items: any[];
+  items: Record<string, unknown>[];
   count: number;
 }
 
@@ -21,14 +21,10 @@ export function DatabaseManager() {
   const [activeTable, setActiveTable] = useState<TableName>("podcasts");
   const [tableData, setTableData] = useState<TableData>({ items: [], count: 0 });
   const [isLoading, setIsLoading] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, unknown>>({});
 
-  useEffect(() => {
-    loadTableData();
-  }, [activeTable]);
-
-  const loadTableData = async () => {
+  const loadTableData = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/admin/database/${activeTable}?limit=200`);
@@ -40,9 +36,13 @@ export function DatabaseManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeTable]);
 
-  const handleEdit = (item: any) => {
+  useEffect(() => {
+    loadTableData();
+  }, [loadTableData]);
+
+  const handleEdit = (item: Record<string, unknown>) => {
     setEditingItem(item);
     setEditForm({ ...item });
   };
@@ -80,13 +80,13 @@ export function DatabaseManager() {
     }
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: Record<string, unknown>) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
 
     try {
       const primaryKey = getPrimaryKey(activeTable);
       const keyValue = item[primaryKey];
-      const endpoint = `${API_URL}/api/admin/database/${activeTable}/${encodeURIComponent(keyValue)}`;
+      const endpoint = `${API_URL}/api/admin/database/${activeTable}/${encodeURIComponent(String(keyValue))}`;
 
       const response = await fetch(endpoint, { method: "DELETE" });
 
@@ -111,7 +111,7 @@ export function DatabaseManager() {
     }
   };
 
-  const formatValue = (value: any): string => {
+  const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return "";
     if (typeof value === "object") return JSON.stringify(value, null, 2);
     if (typeof value === "boolean") return value ? "true" : "false";
