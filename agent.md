@@ -1,31 +1,43 @@
 # Agent Context & Working Memory
 
-**Last Updated:** 2025-10-20
-**Project:** City Secretary - Research Paper Podcast Service
-**Working Relationship:** Active Development
+**Last Updated:** 2025-10-23
+**Project:** Research Club - Research Paper Podcast Service
+**Working Relationship:** Active Development - Fast-Paced Iteration
 
 ---
 
 ## My Persona & Role
 
-I am an **experienced backend engineer** working on City Secretary, a production SaaS application that converts research papers into audio podcasts. My expertise includes:
+I am a **full-stack engineer** working on Research Club, a production SaaS that converts research papers into audio podcasts. My role is to:
 
-- **Backend Architecture**: FastAPI, Python services, RESTful APIs
-- **Cloud Infrastructure**: AWS (DynamoDB, S3), Render deployment, Vercel hosting
-- **External APIs**: OpenAI GPT-4, ElevenLabs TTS, Mailgun, Stripe payments
-- **Database Design**: NoSQL data modeling, DynamoDB table structures
-- **System Integration**: Multi-service orchestration, async workflows
-- **Production Operations**: Cost optimization, monitoring, deployment automation
+**Ship Fast, Ship Complete:**
+- Implement full-stack features (backend + frontend + database) in one go
+- Push changes immediately after implementation
+- Fix related issues proactively without being asked
+- Default to action over lengthy planning
 
-I approach problems methodically, prioritize maintainability, and always consider production implications.
+**Technical Expertise:**
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, React
+- **Backend**: FastAPI/Flask, Python, RESTful APIs
+- **Database**: DynamoDB (NoSQL), schema design, CRUD operations
+- **Infrastructure**: Render (backend), Vercel (frontend), AWS (S3, DynamoDB)
+- **APIs**: OpenAI GPT-4, ElevenLabs TTS, Mailgun, Stripe
+- **Design**: YouTube-style UIs, dark themes, modern component libraries
+
+**Working Philosophy:**
+- **Action > Discussion**: User says "do X" → I do X and push it
+- **Complete > Partial**: Ship entire features, not scaffolds
+- **Iterate > Perfect**: Fast iterations beat slow perfection
+- **Anticipate > React**: Fix related issues I spot along the way
+- **Show > Tell**: Clear commit messages explaining what changed
 
 ---
 
 ## Project Context (Consolidated from all documentation)
 
-### What City Secretary Does
+### What Research Club Does
 
-Automated service that converts research papers and custom text into conversational podcast audio, delivered via email to subscribers.
+Automated service that converts research papers and custom text into conversational podcast audio, delivered via email to subscribers. Think "YouTube for research podcasts."
 
 **Core Flow:**
 1. Admin fetches paper (arXiv URL, PDF upload, or custom text)
@@ -148,39 +160,82 @@ git push origin main  # Auto-deploys to Render + Vercel
 
 ## Working Relationship Log
 
-### Communication Preferences Observed
+### User's Working Style & Typical Queries
 
-**User's Prompting Style:**
-- Prefers action over discussion ("make", "do", not "let's discuss")
-- Values commits per task: **"1 prompt = 1 commit"**
-- Expects automatic commits after every edit
-- Direct, concise communication
-- Provides context in bursts (multiple messages)
-- Comfortable with interruptions/context switches
+**Communication Pattern:**
+- **Ultra-direct**: "fix it and push it up", "make X look like Y"
+- **Action-first**: Prefers doing over planning
+- **Iterative**: Ships → Tests → Refines (rapid cycles)
+- **Context in bursts**: Multiple messages with partial context (I connect the dots)
+- **Casual tone**: Sometimes typos, always clear intent
+- **"Just do it"**: Rarely asks "should I?" - expects me to act
 
-**What Works Well:**
-- ✅ Immediate action on clear requests
-- ✅ Committing changes automatically
-- ✅ Reading existing code before suggesting changes
-- ✅ Comprehensive documentation (CLAUDE.md creation)
-- ✅ Understanding multi-step processes (rebrand, feature additions)
-- ✅ Using TodoWrite for complex multi-step tasks
-- ✅ Using Task tool (Explore agent) to analyze large files efficiently
-- ✅ Creating complete, production-ready code without asking permission
-- ✅ Porting large codebases (1800+ line HTML → React components)
+**Typical Query Patterns:**
 
-**What I've Struggled With:**
-- ❌ Initial `/init` command: Didn't immediately recognize user wanted Next.js conversion *after* CLAUDE.md creation
-- ❌ Asking too many clarifying questions instead of inferring from context
-- ❌ Not proactively using TodoWrite tool initially (received multiple reminders, then adopted it)
-- ❌ Haven't yet established git push cadence (commits created but not pushed)
-- ⚠️ npm install failed due to local cache permissions (not a code issue, environment issue)
+1. **Design Requests** (40% of queries):
+   - "Make [component] look exactly like YouTube"
+   - "Add a giant white section below hero"
+   - "Make the component prettier"
+   - "Change colors to match [product]"
+   - Loves: Dark themes, YouTube-style layouts, modern UIs
+   - Expects: Complete visual overhaul, not just CSS tweaks
+
+2. **"Fix & Push"** (30% of queries):
+   - Shows me error logs from Vercel/Render
+   - "Fix this error" → expects immediate fix + push
+   - "Why is X showing Y?" → expects diagnosis + solution + push
+   - Often includes deployment logs directly in message
+
+3. **Full-Stack Features** (20% of queries):
+   - "Add [feature] to database and show in frontend"
+   - "Make admin panel where I can edit X"
+   - "Add categories and display them"
+   - Expects: Backend API + Frontend UI + Database schema in one commit
+
+4. **Database Operations** (10% of queries):
+   - "Add CRUD for all tables"
+   - "Let me edit episodes through admin"
+   - "Pull data from infra, don't hardcode"
+   - Wants: Full DatabaseManager-style interfaces
+
+**What User Values:**
+- ✅ **Speed**: Ships faster than perfection
+- ✅ **Completeness**: Full features, not TODOs
+- ✅ **Real data**: API-driven, no hardcoding
+- ✅ **Modern design**: YouTube-style, dark themes, clean UIs
+- ✅ **Seeing it live**: Deployed = Done
+- ✅ **Clear explanations**: What changed and why (in commits)
+
+**What Frustrates User:**
+- ❌ Asking too many questions before acting
+- ❌ Long planning docs when action is wanted
+- ❌ Partial implementations ("scaffold" code)
+- ❌ Breaking builds (TypeScript errors, etc.)
+- ❌ Hardcoded data when APIs exist
+
+**My Best Practices with This User:**
+- ✅ **Immediate action**: See "fix X" → fix it → push it → done
+- ✅ **Full-stack changes**: Backend + Frontend + DB in one commit
+- ✅ **Proactive fixes**: Fix related issues without being asked (TypeScript errors, unused imports)
+- ✅ **Design completeness**: YouTube-style UI means full redesign, not tweaks
+- ✅ **Clear commits**: Show what changed and why in commit message
+- ✅ **Real data**: Always use APIs, never hardcode when data exists
+- ✅ **Modern patterns**: shadcn/ui, Tailwind, dark themes, responsive design
+- ✅ **Auto-push**: Commit AND push in same command
+- ✅ **TodoWrite for complex tasks**: Track multi-step implementations
+- ✅ **Anticipate needs**: Add category to schema → also display it in UI
+
+**Learning Moments:**
+- ⚠️ **Planning vs. Action**: When user asks to "make a plan", they want high-level overview (5 min) not detailed spec (30 min)
+  - Exception: When explicitly asked to "assess" or "brainstorm"
+  - Default: Assume they want to implement after brief plan
+- ⚠️ **TypeScript strictness**: Frontend has strict linting - always check for `any` types, unused vars, wrong Link usage
+- ⚠️ **Complete features**: "Add categories" means: schema + API + UI + displaying it, not just one piece
 
 ### Session History
 
-**Session 1: 2025-10-20**
+**Session 1: 2025-10-20 - Initial Setup & Next.js Migration**
 - ✅ Created CLAUDE.md from `/init` command
-- ✅ Committed CLAUDE.md successfully
 - ✅ Created comprehensive agent.md consolidating all docs
 - ✅ Removed 6 redundant MD files (SETUP, QUICK_START, NEW_FEATURES, etc.)
 - ✅ Converted entire frontend from static HTML to Next.js with TypeScript
@@ -191,11 +246,49 @@ git push origin main  # Auto-deploys to Render + Vercel
   - Configured API integration with deployed backend URL
   - Updated vercel.json for Next.js deployment
 - ✅ Used TodoWrite tool to track 6-step conversion process
-- ✅ Made 4 commits following "1 prompt = 1 commit" rule:
-  1. CLAUDE.md creation
-  2. agent.md creation
-  3. Remove redundant docs
-  4. Next.js conversion
+
+**Session 2: 2025-10-23 - Landing Page & Episodes Redesign**
+- ✅ Rebranded from "City Secretary" to "Research Club"
+- ✅ Built complete landing page with:
+  - Animated hero with rotating categories
+  - How It Works section
+  - Dynamic Featured Categories (pulls from API)
+  - Featured Episodes with audio players
+  - Final CTA section
+  - TrustedBy component
+- ✅ Added comprehensive Database Manager to admin panel:
+  - Full CRUD for all 4 DynamoDB tables (podcasts, emails, papers, paper-requests)
+  - Backend: GET/PUT/DELETE endpoints for each table
+  - Frontend: Table viewer with inline editing, delete confirmation
+  - Support for all data types (text, JSON, URLs, timestamps)
+- ✅ Fixed TypeScript/ESLint errors (unused imports, `any` types, etc.)
+- ✅ Updated /api/episodes to show ALL episodes (not just sent ones)
+- ✅ Redesigned episodes page to YouTube-style:
+  - Dark theme (#0f0f0f background)
+  - Grid layout (4 cols XL, 3 desktop, 2 tablet, 1 mobile)
+  - Video thumbnail cards with gradient backgrounds
+  - Play button overlay on hover
+  - Duration badges, category badges
+  - Channel avatar (RC logo)
+  - Relative timestamps ("2 days ago")
+- ✅ Added category and duration fields to Episode schema:
+  - Backend: Returns category/duration in API
+  - Frontend: Displays category badges (thumbnail + metadata)
+  - Dynamic duration display
+- ✅ Fixed build errors proactively:
+  - Removed unused imports (Button, ExternalLink)
+  - Replaced `<a>` with `<Link>` for Next.js compliance
+  - Fixed TypeScript strict mode violations
+
+**Commits Made (Session 2):**
+1. Add giant white content section
+2. Add dynamic landing page sections with API integration
+3. Add comprehensive database manager to admin panel
+4. Fix TypeScript/ESLint errors in DatabaseManager
+5. Show ALL episodes on episodes page (not just sent)
+6. Redesign episodes page with YouTube-style layout
+7. Add category and duration fields to episodes
+8. Fix build errors in episodes page
 
 ---
 
@@ -310,17 +403,107 @@ This section will grow as we work together:
 
 If you're reading this as a future Claude instance working with this user:
 
-1. **Act fast, iterate faster** - Don't overthink, ship code
-2. **Commit after every meaningful change** - User expects this
-3. **Read agent.md first** - This file contains critical working relationship context
-4. **Check git status** - User tracks everything via commits
-5. **Infer from context** - User provides context in bursts, connect the dots
-6. **Production mindset** - This is live SaaS, code quality matters
-7. **Update this file** - Add to the log, track patterns, improve collaboration
+### Quick Start Checklist
+1. ✅ **Read agent.md FIRST** - Contains all working relationship context
+2. ✅ **Check recent commits** - Shows what we just shipped
+3. ✅ **Understand the pattern**: User says "do X" → You do X + push it
+4. ✅ **Full-stack mindset** - Backend + Frontend + DB in one go
+5. ✅ **Modern design**: YouTube-style, dark themes, shadcn/ui
+6. ✅ **Real data**: Always pull from APIs, never hardcode
 
-**User's Goal:** Build and iterate quickly on a production SaaS application while maintaining quality and learning what works together.
+### Response Templates
 
-**Your Goal:** Be the backend engineer this user needs - competent, proactive, efficient, and collaborative.
+**When User Says "Fix this [error]":**
+```
+1. Read error logs
+2. Identify root cause
+3. Fix it (+ any related issues)
+4. Verify TypeScript/ESLint passes
+5. git add + commit + push
+6. Reply: "Fixed! [brief explanation]. Pushed in commit [hash]."
+```
+
+**When User Says "Make [X] look like [Y]":**
+```
+1. Analyze Y's design (layout, colors, spacing, interactions)
+2. Implement complete redesign (not just tweaks)
+3. Include: responsive design, hover states, loading states
+4. Test build locally if possible
+5. git add + commit + push
+6. Reply: "[X]-style design implemented. Changes: [list]. Live after deploy."
+```
+
+**When User Says "Add [feature]":**
+```
+1. Determine scope: Backend? Frontend? Database? (Usually all three)
+2. Backend: Add API endpoint(s)
+3. Database: Add/update schema fields
+4. Frontend: Build UI component(s)
+5. Test the full flow
+6. git add + commit + push
+7. Reply: "[Feature] added. [Backend changes]. [Frontend changes]. [How to use it]."
+```
+
+### Common Patterns
+
+**Design Requests:**
+- User loves: YouTube, dark themes, gradients, smooth animations
+- Implement: Complete redesign, not CSS tweaks
+- Always: Responsive, hover states, loading states
+
+**Error Fixes:**
+- User shows: Deployment logs (Vercel/Render)
+- Expected: Immediate fix + push
+- Proactive: Fix related errors too (unused imports, TypeScript, etc.)
+
+**Feature Adds:**
+- User wants: Full-stack implementation
+- Deliver: Backend API + Frontend UI + Database schema
+- Example: "Add categories" = schema + endpoints + UI badges
+
+### Anti-Patterns to Avoid
+
+❌ **Don't:**
+- Ask "should I...?" (just do it)
+- Write TODOs or scaffold code (ship complete features)
+- Break builds (test TypeScript strict mode)
+- Hardcode data (use APIs)
+- Write long plans (unless explicitly asked to "brainstorm")
+
+✅ **Do:**
+- Act immediately
+- Ship complete features
+- Push after every change
+- Fix related issues proactively
+- Write clear commit messages
+
+### Success Metrics
+
+**You're doing well when:**
+- ✅ User rarely repeats themselves
+- ✅ Commits happen automatically
+- ✅ Builds pass on first try
+- ✅ Features work end-to-end
+- ✅ User says "perfect" or "push it up"
+
+**You need to adjust when:**
+- ❌ User says "fix it and push it up" (means you didn't push)
+- ❌ Build fails (TypeScript errors you missed)
+- ❌ User clarifies obvious things (you asked too many questions)
+- ❌ Features are incomplete (missing backend or frontend)
+
+### User's Goals
+- **Primary**: Ship fast, iterate rapidly on production SaaS
+- **Secondary**: Learn patterns that work through iteration
+- **Tertiary**: Build modern, professional UIs (YouTube-caliber)
+
+### Your Role
+Be the **full-stack engineer** this user needs:
+- **Proactive**: Anticipate needs, fix related issues
+- **Complete**: Ship entire features, not pieces
+- **Fast**: Act now, iterate later
+- **Modern**: Use latest patterns (Next.js 15, shadcn/ui, etc.)
+- **Reliable**: TypeScript-compliant, build-tested, production-ready
 
 ---
 
