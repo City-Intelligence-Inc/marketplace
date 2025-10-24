@@ -1122,265 +1122,557 @@ function CustomWorkflowTab() {
   );
 }
 
+interface EmailTemplate {
+  template_id: string;
+  name: string;
+  subject: string;
+  html_content: string;
+  created_at: number;
+  updated_at: number;
+}
+
 function EmailTemplatesTab() {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [testEmail, setTestEmail] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const templates = [
-    {
-      id: "welcome",
-      name: "Welcome Email",
-      description: "Sent to new subscribers when they sign up",
-      subject: "🎧 Welcome! Your daily podcasts start soon",
-      preview: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 32px 20px; text-align: center;">
-            <h1 style="color: white; font-size: 24px; font-weight: 700; margin: 0;">🎧 Welcome!</h1>
-          </div>
-          <div style="padding: 24px 20px;">
-            <p style="color: #374151; line-height: 1.6;">Hi there,</p>
-            <p style="color: #374151; line-height: 1.6; margin: 16px 0;">You're in! Daily research podcasts start hitting your inbox soon.</p>
-            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <div style="margin: 12px 0; font-size: 15px; color: #374151;">📅 Daily delivery, every morning</div>
-              <div style="margin: 12px 0; font-size: 15px; color: #374151;">⏱️ 5-10 min episodes</div>
-              <div style="margin: 12px 0; font-size: 15px; color: #374151;">🎧 Listen anywhere</div>
-              <div style="margin: 12px 0; font-size: 15px; color: #374151;">🔬 30+ topics to choose from</div>
-            </div>
-            <p style="color: #374151; line-height: 1.6;">Your first podcast arrives tomorrow. Check your inbox!</p>
-          </div>
-        </div>
-      `,
-    },
-    {
-      id: "podcast",
-      name: "Podcast Delivery",
-      description: "Sent when delivering a new podcast episode",
-      subject: "🎧 [Paper Title]",
-      preview: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); padding: 24px 20px; text-align: center;">
-            <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">🎧 Your Daily Research Podcast</h1>
-          </div>
-          <div style="padding: 20px;">
-            <h2 style="font-size: 22px; font-weight: 700; color: #000; margin-bottom: 12px;">Sample Research Paper Title</h2>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">5-10 min listen • Sample Authors</p>
-            <div style="background: #f9fafb; border-radius: 12px; padding: 24px; text-align: center;">
-              <audio controls style="width: 100%; margin: 16px 0;">
-                <source src="#" type="audio/mpeg">
-              </audio>
-              <a href="#" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">▶ Play Now</a>
-              <br>
-              <a href="#" style="display: inline-block; color: #ea580c; text-decoration: none; font-weight: 600; margin-top: 12px;">📄 Read Full Paper →</a>
-            </div>
-          </div>
-        </div>
-      `,
-    },
-    {
-      id: "custom",
-      name: "Custom Message",
-      description: "General purpose custom email template",
-      subject: "Custom Subject",
-      preview: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0;">Custom Message</h1>
-          </div>
-          <div style="background: #f9f9f9; padding: 30px;">
-            <p style="color: #333; line-height: 1.6;">Your custom message content goes here...</p>
-          </div>
-        </div>
-      `,
-    },
-    {
-      id: "weekly",
-      name: "Weekly Digest",
-      description: "Weekly summary of all podcasts sent that week",
-      subject: "🎧 Your Weekly Research Digest - [Number] Episodes",
-      preview: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 20px; text-align: center;">
-            <h1 style="color: white; font-size: 24px; font-weight: 700; margin: 0;">📚 Your Weekly Digest</h1>
-            <p style="color: rgba(255,255,255,0.9); margin-top: 8px; font-size: 14px;">5 episodes from this week</p>
-          </div>
-          <div style="padding: 24px 20px;">
-            <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hi there,</p>
-            <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Here's everything from this week in one place:</p>
+  // Form states
+  const [editName, setEditName] = useState("");
+  const [editSubject, setEditSubject] = useState("");
+  const [editHtmlContent, setEditHtmlContent] = useState("");
 
-            <!-- Episode 1 -->
-            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
-              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">1. Advances in Quantum Computing</h3>
-              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Sarah Chen, Dr. Michael Wong • 8 min</p>
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
-                <span style="color: #d1d5db;">•</span>
-                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
-              </div>
-            </div>
+  // Preview and send states
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewSubject, setPreviewSubject] = useState("");
+  const [recipientEmails, setRecipientEmails] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
-            <!-- Episode 2 -->
-            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
-              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">2. Machine Learning in Healthcare</h3>
-              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Jane Smith • 6 min</p>
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
-                <span style="color: #d1d5db;">•</span>
-                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
-              </div>
-            </div>
+  // Load templates on mount
+  useEffect(() => {
+    loadTemplates();
+    loadUsers();
+  }, []);
 
-            <!-- Episode 3 -->
-            <div style="border-left: 4px solid #10b981; padding: 16px; margin-bottom: 20px; background: #f9fafb; border-radius: 0 8px 8px 0;">
-              <h3 style="color: #000; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">3. Climate Change Modeling</h3>
-              <p style="color: #666; font-size: 14px; margin: 0 0 12px 0;">Dr. Robert Lee, Dr. Emma Davis • 7 min</p>
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="#" style="color: #10b981; text-decoration: none; font-weight: 600; font-size: 14px;">▶ Listen</a>
-                <span style="color: #d1d5db;">•</span>
-                <a href="#" style="color: #6b7280; text-decoration: none; font-size: 14px;">Read Paper</a>
-              </div>
-            </div>
-
-            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 24px;">
-              <p style="color: #92400e; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>💡 Catch up anytime:</strong> All episodes are available in your archive. Just hit reply if you missed something!
-              </p>
-            </div>
-
-            <p style="color: #374151; line-height: 1.6; margin-top: 24px;">That's 27 minutes of cutting-edge research. See you next week!</p>
-          </div>
-          <div style="text-align: center; padding: 24px 20px; color: #666; font-size: 13px; border-top: 1px solid #e5e7eb;">
-            <p>Next digest arrives same time next week.</p>
-            <p style="margin-top: 12px;"><a href="#" style="color: #10b981; text-decoration: none;">Unsubscribe</a></p>
-          </div>
-        </div>
-      `,
-    },
-  ];
-
-  const handleSendTest = async (templateId: string) => {
-    if (!testEmail) {
-      toast.error("Please enter an email address");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(testEmail)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    setIsSending(true);
-    toast.info(`Sending test ${templateId} email...`);
-
+  const loadTemplates = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/admin/send-test-email`, {
+      const response = await fetch(`${API_URL}/api/admin/email-templates`);
+      const data = await response.json();
+      setTemplates(data.items || []);
+    } catch (error) {
+      console.error("Error loading templates:", error);
+      toast.error("Failed to load templates");
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/users`);
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+  };
+
+  const handleCreateTemplate = async () => {
+    if (!editName || !editSubject || !editHtmlContent) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/email-templates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          template_type: templateId,
-          test_email: testEmail,
+          name: editName,
+          subject: editSubject,
+          html_content: editHtmlContent,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to send test email");
+      if (!response.ok) throw new Error("Failed to create template");
 
-      toast.success(`Test email sent to ${testEmail}!`);
+      const data = await response.json();
+      toast.success("Template created successfully!");
+      setShowCreateModal(false);
+      setEditName("");
+      setEditSubject("");
+      setEditHtmlContent("");
+      loadTemplates();
     } catch (error) {
-      toast.error("Failed to send test email");
-      console.error(error);
+      console.error("Error creating template:", error);
+      toast.error("Failed to create template");
     } finally {
-      setIsSending(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!selectedTemplate) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/email-templates`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: selectedTemplate.template_id,
+          updates: {
+            name: editName,
+            subject: editSubject,
+            html_content: editHtmlContent,
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update template");
+
+      toast.success("Template updated successfully!");
+      setIsEditing(false);
+      loadTemplates();
+    } catch (error) {
+      console.error("Error updating template:", error);
+      toast.error("Failed to update template");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/email-templates/${templateId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete template");
+
+      toast.success("Template deleted successfully!");
+      setSelectedTemplate(null);
+      loadTemplates();
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast.error("Failed to delete template");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePreviewTemplate = async () => {
+    if (!selectedTemplate) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/email-templates/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: selectedTemplate.template_id,
+          test_variables: {
+            name: "Test User",
+            email: "test@example.com",
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to preview template");
+
+      const data = await response.json();
+      setPreviewHtml(data.html_content);
+      setPreviewSubject(data.subject);
+      setShowPreview(true);
+    } catch (error) {
+      console.error("Error previewing template:", error);
+      toast.error("Failed to preview template");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendTemplate = async () => {
+    if (!selectedTemplate) return;
+
+    const emails = Array.from(selectedUsers);
+    if (emails.length === 0) {
+      toast.error("Please select at least one recipient");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/email-templates/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: selectedTemplate.template_id,
+          recipient_emails: emails,
+          variables: {},
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send emails");
+
+      const data = await response.json();
+      toast.success(`Sent to ${data.sent} recipient(s)!`);
+      setSelectedUsers(new Set());
+    } catch (error) {
+      console.error("Error sending emails:", error);
+      toast.error("Failed to send emails");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const selectTemplate = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setEditName(template.name);
+    setEditSubject(template.subject);
+    setEditHtmlContent(template.html_content);
+    setIsEditing(false);
+    setShowPreview(false);
+  };
+
+  const toggleUserSelection = (email: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(email)) {
+      newSelected.delete(email);
+    } else {
+      newSelected.add(email);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.email)));
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Email Templates</h2>
-          <p className="text-slate-600">Preview and test your email templates</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Custom Email Templates</h2>
+            <p className="text-slate-600">Create and manage HTML email templates</p>
+          </div>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+          >
+            + New Template
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Template List */}
           <div className="space-y-3">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => setSelectedTemplate(template.id)}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedTemplate === template.id
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <Mail className={`w-5 h-5 mt-1 ${selectedTemplate === template.id ? "text-orange-600" : "text-slate-400"}`} />
-                  <div className="flex-1">
-                    <div className="font-semibold text-slate-900">{template.name}</div>
-                    <div className="text-sm text-slate-600 mt-1">{template.description}</div>
-                    <div className="text-xs text-slate-500 mt-2 font-mono">Subject: {template.subject}</div>
+            {templates.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <Mail className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                <p>No templates yet</p>
+                <p className="text-sm">Create your first template</p>
+              </div>
+            ) : (
+              templates.map((template) => (
+                <button
+                  key={template.template_id}
+                  onClick={() => selectTemplate(template)}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    selectedTemplate?.template_id === template.template_id
+                      ? "border-orange-500 bg-orange-50"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Mail className={`w-5 h-5 mt-1 ${selectedTemplate?.template_id === template.template_id ? "text-orange-600" : "text-slate-400"}`} />
+                    <div className="flex-1">
+                      <div className="font-semibold text-slate-900">{template.name}</div>
+                      <div className="text-xs text-slate-500 mt-1 font-mono truncate">
+                        Subject: {template.subject}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        Updated {new Date(template.updated_at * 1000).toLocaleDateString()}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            )}
           </div>
 
-          {/* Preview & Test */}
+          {/* Template Editor/Preview */}
           <div className="lg:col-span-2 space-y-4">
             {selectedTemplate ? (
               <>
-                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Eye className="w-5 h-5 text-slate-600" />
-                    <h3 className="font-semibold text-slate-900">Email Preview</h3>
-                  </div>
-                  <div
-                    className="bg-white p-4 rounded border border-slate-200 overflow-auto max-h-96"
-                    dangerouslySetInnerHTML={{
-                      __html: templates.find((t) => t.id === selectedTemplate)?.preview || "",
-                    }}
-                  />
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {!isEditing ? (
+                    <>
+                      <Button
+                        onClick={() => setIsEditing(true)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        ✏️ Edit Template
+                      </Button>
+                      <Button
+                        onClick={handlePreviewTemplate}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        👁️ Preview
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteTemplate(selectedTemplate.template_id)}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        🗑️ Delete
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={handleUpdateTemplate}
+                        disabled={isLoading}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-green-700"
+                      >
+                        {isLoading ? "Saving..." : "💾 Save Changes"}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setIsEditing(false);
+                          selectTemplate(selectedTemplate);
+                        }}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        ❌ Cancel
+                      </Button>
+                    </>
+                  )}
                 </div>
 
-                <div className="border border-slate-200 rounded-lg p-4 bg-blue-50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <TestTube className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-semibold text-slate-900">Send Test Email</h3>
+                {/* Editor Form */}
+                {isEditing && (
+                  <div className="space-y-4 border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Template Name
+                      </label>
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="e.g., Welcome Email"
+                        className="bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Subject Line
+                        <span className="text-xs text-slate-500 ml-2">
+                          (Use {"{name}"} or {"{email}"} for variables)
+                        </span>
+                      </label>
+                      <Input
+                        value={editSubject}
+                        onChange={(e) => setEditSubject(e.target.value)}
+                        placeholder="e.g., Welcome {name}!"
+                        className="bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        HTML Content
+                        <span className="text-xs text-slate-500 ml-2">
+                          (Full HTML with inline styles)
+                        </span>
+                      </label>
+                      <Textarea
+                        value={editHtmlContent}
+                        onChange={(e) => setEditHtmlContent(e.target.value)}
+                        placeholder="<html>...</html>"
+                        className="font-mono text-sm bg-white min-h-[400px]"
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm text-slate-600 mb-3">
-                    Send a test version of this template to your email
-                  </p>
-                  <div className="flex gap-2">
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={testEmail}
-                      onChange={(e) => setTestEmail(e.target.value)}
-                      className="flex-1 h-12 bg-white"
+                )}
+
+                {/* Preview */}
+                {showPreview && !isEditing && (
+                  <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Eye className="w-5 h-5 text-slate-600" />
+                      <h3 className="font-semibold text-slate-900">Email Preview</h3>
+                    </div>
+                    <div className="mb-3 p-3 bg-white border border-slate-200 rounded">
+                      <div className="text-xs text-slate-500 mb-1">Subject:</div>
+                      <div className="font-medium text-slate-900">{previewSubject}</div>
+                    </div>
+                    <div
+                      className="bg-white p-4 rounded border border-slate-200 overflow-auto max-h-96"
+                      dangerouslySetInnerHTML={{ __html: previewHtml }}
                     />
+                  </div>
+                )}
+
+                {/* Send Section */}
+                {!isEditing && (
+                  <div className="border border-slate-200 rounded-lg p-4 bg-blue-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Send className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-semibold text-slate-900">Send to Users</h3>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-slate-700">
+                          Select Recipients ({selectedUsers.size} selected)
+                        </label>
+                        <Button
+                          onClick={toggleAllUsers}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {selectedUsers.size === users.length ? "Deselect All" : "Select All"}
+                        </Button>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 rounded-lg max-h-48 overflow-y-auto">
+                        {users.map((user) => (
+                          <label
+                            key={user.email}
+                            className="flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.has(user.email)}
+                              onChange={() => toggleUserSelection(user.email)}
+                              className="w-4 h-4 rounded border-slate-300 text-orange-600"
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium text-slate-900 text-sm">{user.email}</p>
+                              {user.name && <p className="text-xs text-slate-500">{user.name}</p>}
+                            </div>
+                            {user.subscribed && (
+                              <span className="text-xs text-green-600 font-medium">✓ Active</span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
                     <Button
-                      onClick={() => handleSendTest(selectedTemplate)}
-                      disabled={isSending}
-                      className="h-12 px-6 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                      onClick={handleSendTemplate}
+                      disabled={isLoading || selectedUsers.size === 0}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700"
                     >
-                      {isSending ? "Sending..." : "Send Test"}
+                      {isLoading ? "Sending..." : `📧 Send to ${selectedUsers.size} User(s)`}
                     </Button>
                   </div>
-                </div>
+                )}
               </>
             ) : (
               <div className="h-full flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-200 rounded-lg p-12">
                 <div className="text-center">
                   <Mail className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                  <p>Select a template to preview and test</p>
+                  <p>Select a template to edit, preview, or send</p>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Create Template Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200 sticky top-0 bg-white">
+              <h3 className="text-xl font-bold text-slate-900">Create New Template</h3>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Template Name
+                </label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g., Welcome Email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Subject Line
+                  <span className="text-xs text-slate-500 ml-2">
+                    (Use {"{name}"} or {"{email}"} for variables)
+                  </span>
+                </label>
+                <Input
+                  value={editSubject}
+                  onChange={(e) => setEditSubject(e.target.value)}
+                  placeholder="e.g., Welcome {name}!"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  HTML Content
+                  <span className="text-xs text-slate-500 ml-2">
+                    (Full HTML with inline styles)
+                  </span>
+                </label>
+                <Textarea
+                  value={editHtmlContent}
+                  onChange={(e) => setEditHtmlContent(e.target.value)}
+                  placeholder="<html>...</html>"
+                  className="font-mono text-sm min-h-[400px]"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex gap-2">
+              <Button
+                onClick={handleCreateTemplate}
+                disabled={isLoading}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+              >
+                {isLoading ? "Creating..." : "Create Template"}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditName("");
+                  setEditSubject("");
+                  setEditHtmlContent("");
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

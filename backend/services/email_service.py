@@ -295,42 +295,56 @@ class EmailService:
 
         return {"sent": sent, "failed": failed}
 
-    def send_custom_email(self, to_email: str, subject: str, message: str, from_name: str = None) -> bool:
-        """Send a custom email to a user"""
+    def send_custom_email(self, to_email: str, subject: str, message: str, from_name: str = None, is_html: bool = False) -> bool:
+        """Send a custom email to a user
+
+        Args:
+            to_email: Recipient email address
+            subject: Email subject line
+            message: Email content (plain text or HTML based on is_html flag)
+            from_name: Sender name (defaults to self.from_name)
+            is_html: If True, message is treated as complete HTML. If False, adds wrapper.
+        """
         sender_name = from_name if from_name else self.from_name
 
-        # Convert plain text message to HTML with basic formatting
-        html_message = message.replace('\n', '<br>')
+        # If message is already HTML, use it directly
+        if is_html:
+            html_content = message
+        else:
+            # Convert plain text message to HTML with basic formatting
+            html_message = message.replace('\n', '<br>')
 
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #f9f9f9; padding: 30px; }}
-                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>{subject}</h1>
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; }}
+                    .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>{subject}</h1>
+                    </div>
+                    <div class="content">
+                        {html_message}
+                    </div>
+                    <div class="footer">
+                        <p>Don't want these emails? <a href="{{{{unsubscribe_url}}}}">Unsubscribe</a></p>
+                    </div>
                 </div>
-                <div class="content">
-                    {html_message}
-                </div>
-                <div class="footer">
-                    <p>Don't want these emails? <a href="{{{{unsubscribe_url}}}}">Unsubscribe</a></p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+            </body>
+            </html>
+            """
 
         try:
+            print(f"📧 Sending custom email to {to_email}")
+            print(f"   Subject: {subject}")
             response = requests.post(
                 self.mailgun_url,
                 auth=("api", self.mailgun_api_key),
@@ -341,7 +355,12 @@ class EmailService:
                     "html": html_content
                 }
             )
-            return response.status_code == 200
+            success = response.status_code == 200
+            if success:
+                print(f"   ✅ Custom email sent to {to_email}")
+            else:
+                print(f"   ❌ Custom email failed: {response.status_code}")
+            return success
         except Exception as e:
             print(f"Error sending custom email to {to_email}: {e}")
             return False

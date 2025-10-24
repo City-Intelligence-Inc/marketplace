@@ -53,6 +53,7 @@ email_table = dynamodb.Table(os.getenv('EMAIL_TABLE_NAME', 'email-signups'))
 paper_table = dynamodb.Table(os.getenv('PAPER_TABLE_NAME', 'paper-links'))
 podcast_table = dynamodb.Table(os.getenv('PODCASTS_TABLE_NAME', 'podcasts'))
 paper_requests_table = dynamodb.Table(os.getenv('PAPER_REQUESTS_TABLE_NAME', 'paper-requests'))
+email_templates_table = dynamodb.Table(os.getenv('EMAIL_TEMPLATES_TABLE_NAME', 'email-templates'))
 
 # ===== Models =====
 
@@ -2761,6 +2762,212 @@ async def delete_paper_request(request_id: str):
         return {"success": True, "message": "Paper request deleted successfully"}
     except Exception as e:
         print(f"Error deleting paper request: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== Email Templates CRUD =====
+
+class CreateEmailTemplateRequest(BaseModel):
+    name: str
+    subject: str
+    html_content: str
+
+class UpdateEmailTemplateRequest(BaseModel):
+    template_id: str
+    updates: dict
+
+@app.get("/api/admin/email-templates")
+async def get_all_email_templates(limit: int = 100):
+    """Get all email templates"""
+    try:
+        response = email_templates_table.scan(Limit=limit)
+        items = response.get('Items', [])
+
+        # Sort by created_at descending
+        items.sort(key=lambda x: x.get('created_at', 0), reverse=True)
+
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        print(f"Error fetching email templates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/email-templates/{template_id}")
+async def get_email_template(template_id: str):
+    """Get a single email template by ID"""
+    try:
+        response = email_templates_table.get_item(Key={'template_id': template_id})
+        item = response.get('Item')
+        if not item:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return {"item": item}
+    except Exception as e:
+        print(f"Error fetching email template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/email-templates")
+async def create_email_template(request: CreateEmailTemplateRequest):
+    """Create a new email template"""
+    try:
+        template_id = str(uuid.uuid4())
+        timestamp = int(datetime.utcnow().timestamp())
+
+        template = {
+            'template_id': template_id,
+            'name': request.name,
+            'subject': request.subject,
+            'html_content': request.html_content,
+            'created_at': timestamp,
+            'updated_at': timestamp
+        }
+
+        email_templates_table.put_item(Item=template)
+
+        return {
+            "success": True,
+            "message": "Email template created successfully",
+            "template_id": template_id,
+            "template": template
+        }
+    except Exception as e:
+        print(f"Error creating email template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/admin/email-templates")
+async def update_email_template(request: UpdateEmailTemplateRequest):
+    """Update an email template"""
+    try:
+        update_expr_parts = []
+        expr_attr_values = {}
+
+        for key, value in request.updates.items():
+            if key != 'template_id':
+                update_expr_parts.append(f"{key} = :{key}")
+                expr_attr_values[f":{key}"] = value
+
+        # Always update the updated_at timestamp
+        update_expr_parts.append("updated_at = :updated_at")
+        expr_attr_values[":updated_at"] = int(datetime.utcnow().timestamp())
+
+        if len(update_expr_parts) == 1:  # Only updated_at
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        update_expression = "SET " + ", ".join(update_expr_parts)
+
+        email_templates_table.update_item(
+            Key={'template_id': request.template_id},
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expr_attr_values
+        )
+
+        return {"success": True, "message": "Email template updated successfully"}
+    except Exception as e:
+        print(f"Error updating email template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/email-templates/{template_id}")
+async def delete_email_template(template_id: str):
+    """Delete an email template"""
+    try:
+        email_templates_table.delete_item(Key={'template_id': template_id})
+        return {"success": True, "message": "Email template deleted successfully"}
+    except Exception as e:
+        print(f"Error deleting email template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class PreviewEmailTemplateRequest(BaseModel):
+    template_id: Optional[str] = None
+    subject: Optional[str] = None
+    html_content: Optional[str] = None
+    test_variables: dict = {}
+
+class SendEmailTemplateRequest(BaseModel):
+    template_id: str
+    recipient_emails: List[str]
+    variables: dict = {}
+
+@app.post("/api/admin/email-templates/preview")
+async def preview_email_template(request: PreviewEmailTemplateRequest):
+    """Preview an email template with test variables"""
+    try:
+        # If template_id is provided, fetch from database
+        if request.template_id:
+            response = email_templates_table.get_item(Key={'template_id': request.template_id})
+            template = response.get('Item')
+            if not template:
+                raise HTTPException(status_code=404, detail="Template not found")
+            subject = template['subject']
+            html_content = template['html_content']
+        else:
+            # Use provided subject and html_content
+            subject = request.subject or "Preview Subject"
+            html_content = request.html_content or "<p>Preview content</p>"
+
+        # Replace variables in subject and content
+        for key, value in request.test_variables.items():
+            subject = subject.replace(f"{{{{{key}}}}}", str(value))
+            html_content = html_content.replace(f"{{{{{key}}}}}", str(value))
+
+        return {
+            "success": True,
+            "subject": subject,
+            "html_content": html_content
+        }
+    except Exception as e:
+        print(f"Error previewing email template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/email-templates/send")
+async def send_email_template(request: SendEmailTemplateRequest):
+    """Send an email template to selected recipients"""
+    try:
+        # Fetch template
+        response = email_templates_table.get_item(Key={'template_id': request.template_id})
+        template = response.get('Item')
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+
+        sent = 0
+        failed = 0
+        errors = []
+
+        for email in request.recipient_emails:
+            try:
+                # Replace variables in subject and content
+                subject = template['subject']
+                html_content = template['html_content']
+
+                # Use per-user variables or global variables
+                variables = {**request.variables, 'email': email}
+
+                for key, value in variables.items():
+                    subject = subject.replace(f"{{{{{key}}}}}", str(value))
+                    html_content = html_content.replace(f"{{{{{key}}}}}", str(value))
+
+                # Send email using Mailgun
+                success = email_service.send_custom_email(
+                    to_email=email,
+                    subject=subject,
+                    message=html_content,
+                    from_name=email_service.from_name,
+                    is_html=True
+                )
+
+                if success:
+                    sent += 1
+                else:
+                    failed += 1
+                    errors.append(f"Failed to send to {email}")
+            except Exception as e:
+                failed += 1
+                errors.append(f"Error sending to {email}: {str(e)}")
+
+        return {
+            "success": True,
+            "sent": sent,
+            "failed": failed,
+            "errors": errors if errors else None
+        }
+    except Exception as e:
+        print(f"Error sending email template: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ===== Static HTML Pages =====
