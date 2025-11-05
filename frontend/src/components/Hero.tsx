@@ -160,7 +160,7 @@ export function Hero() {
       </div>
 
       {/* Episodes Section */}
-      <div className="bg-gray-50 py-12 sm:py-20">
+      <div className="bg-white py-12 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <iframe
             src="https://terminus.complete.city/p/d50c4109-cf72-4f01-9db7-80422fcf038b"
