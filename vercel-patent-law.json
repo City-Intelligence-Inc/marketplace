@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd patent-law && pnpm run build",
+  "outputDirectory": "patent-law/.next",
+  "installCommand": "cd patent-law && pnpm install"
+}
