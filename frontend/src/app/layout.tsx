@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { Navbar } from "@/components/Navbar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -9,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Research Club",
-  description: "Curated 5-10 min podcasts, delivered daily",
+  title: "Research Cafe - The latest academic research, explained in plain English",
+  description: "A premium daily newsletter and podcast. Each episode is lovingly crafted by hand, and delivered to your inbox every morning.",
 };
 
 export const viewport: Viewport = {
@@ -35,6 +36,7 @@ export default function RootLayout({
         className={`${inter.variable} antialiased`}
         style={{ fontFamily: 'var(--font-inter)' }}
       >
+        <Navbar />
         {children}
         <Toaster />
       </body>
