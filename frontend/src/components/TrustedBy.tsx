@@ -20,8 +20,8 @@ export function TrustedBy() {
           Join listeners from
         </p>
 
-        {/* Responsive grid: 1 col mobile, 2 cols tablet, 7 cols desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8 sm:gap-6 max-w-7xl mx-auto">
+        {/* Responsive grid: 1 col mobile, 2 cols tablet, 5 cols desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 sm:gap-6 max-w-6xl mx-auto">
           {companies.map((company) => (
             <div
               key={company.name}

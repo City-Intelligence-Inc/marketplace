@@ -159,50 +159,16 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Episodes Section */}
       <div className="bg-gray-50 py-20">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
-            Research, Made Simple
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                📊
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Curated Content</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Our team reads hundreds of papers weekly and handpicks the most impactful discoveries for you.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                🎧
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Audio & Newsletter</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Listen on the go or read at your desk. Every episode available in both formats.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                ⚡
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Quick & Actionable</h3>
-              <p className="text-gray-600 leading-relaxed">
-                10-minute episodes that respect your time while delivering real insights you can use.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                🔬
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900">Expert Analysis</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Written by researchers and practitioners who know the field inside and out.
-              </p>
-            </div>
-          </div>
+        <div className="max-w-6xl mx-auto px-6">
+          <iframe
+            src="https://terminus.complete.city/p/d50c4109-cf72-4f01-9db7-80422fcf038b"
+            width="100%"
+            height="800"
+            style={{ border: '1px solid #e5e7eb', borderRadius: '12px' }}
+            allowFullScreen
+          />
         </div>
       </div>
     </div>
