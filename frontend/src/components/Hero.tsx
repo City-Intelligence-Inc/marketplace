@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { subscribeEmail } from "@/lib/api";
 import { TrustedBy } from "@/components/TrustedBy";
 
 const categories = [
@@ -73,20 +72,12 @@ export function Hero() {
 
     setIsSubmitting(true);
 
-    try {
-      const result = await subscribeEmail(email);
-
-      if (result.success) {
-        toast.success(result.message);
-        setEmail("");
-      } else {
-        toast.error(result.message);
-      }
-    } catch {
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
+    // Simulate API call
+    setTimeout(() => {
+      toast.success("Thanks for your interest! We'll be in touch soon.");
+      setEmail("");
       setIsSubmitting(false);
-    }
+    }, 1000);
   };
 
   return (
