@@ -1,11 +1,15 @@
-import { Hero } from "@/components/Hero";
-import { Footer } from "@/components/Footer";
+import { CLEHero } from "@/components/CLEHero";
+import { Testimonials } from "@/components/Testimonials";
+import { FAQ } from "@/components/FAQ";
+import { CLEFooter } from "@/components/CLEFooter";
 
 export default function Home() {
   return (
     <main>
-      <Hero />
-      <Footer />
+      <CLEHero />
+      <Testimonials />
+      <FAQ />
+      <CLEFooter />
     </main>
   );
 }

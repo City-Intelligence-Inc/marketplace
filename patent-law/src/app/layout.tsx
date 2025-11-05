@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Research Club - The latest academic research, explained in plain English",
-  description: "A premium daily newsletter and podcast. Each episode is lovingly crafted by hand, and delivered to your inbox every morning.",
+  title: "Research Club Patent Law CLE - Federal Circuit Updates + CLE Credits",
+  description: "Weekly Federal Circuit patent law case summaries delivered as podcasts. CLE accreditation coming Q2 2026. Subscribe now to lock in $10/month forever.",
 };
 
 export const viewport: Viewport = {
