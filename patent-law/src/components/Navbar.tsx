@@ -12,25 +12,28 @@ export function Navbar() {
 
           {/* Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#episodes" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+            <Link href="/episodes" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
               Episodes
-            </a>
-            <a href="#roadmap" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-              CLE Roadmap
-            </a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+            </Link>
+            <Link href="/states" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              States
+            </Link>
+            <Link href="/cle" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+              CLE Info
+            </Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
               Pricing
-            </a>
-            <a href="#subscribe" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
-              Subscribe Now
-            </a>
+            </Link>
+            <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+              Subscribe
+            </Link>
           </div>
 
           {/* Mobile Subscribe Button */}
           <div className="md:hidden">
-            <a href="#subscribe" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
+            <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
               Subscribe
-            </a>
+            </Link>
           </div>
         </div>
       </div>

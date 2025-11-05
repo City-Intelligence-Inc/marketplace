@@ -1,14 +1,12 @@
-import { CLEHero } from "@/components/CLEHero";
+import { SimpleHero } from "@/components/SimpleHero";
 import { Testimonials } from "@/components/Testimonials";
-import { FAQ } from "@/components/FAQ";
 import { CLEFooter } from "@/components/CLEFooter";
 
 export default function Home() {
   return (
     <main>
-      <CLEHero />
+      <SimpleHero />
       <Testimonials />
-      <FAQ />
       <CLEFooter />
     </main>
   );

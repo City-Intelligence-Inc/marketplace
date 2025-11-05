@@ -16,18 +16,23 @@ export function CLEFooter() {
             <h4 className="text-white font-bold mb-4">Product</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#episodes" className="text-gray-400 hover:text-white transition-colors">
+                <a href="/episodes" className="text-gray-400 hover:text-white transition-colors">
                   Episodes
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">
-                  Pricing
+                <a href="/states" className="text-gray-400 hover:text-white transition-colors">
+                  State Requirements
                 </a>
               </li>
               <li>
-                <a href="#roadmap" className="text-gray-400 hover:text-white transition-colors">
+                <a href="/cle" className="text-gray-400 hover:text-white transition-colors">
                   CLE Roadmap
+                </a>
+              </li>
+              <li>
+                <a href="/pricing" className="text-gray-400 hover:text-white transition-colors">
+                  Pricing
                 </a>
               </li>
             </ul>
