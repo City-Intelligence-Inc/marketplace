@@ -10,6 +10,7 @@ export function TrustedBy() {
     { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 28, mobileHeight: 42 },
     { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 56, mobileHeight: 70 },
     { name: "Purdue University", logo: "/logos/purdue.png", height: 40, mobileHeight: 50 },
+    { name: "IIT Kharagpur", logo: "/logos/iit-kgp.svg", height: 42, mobileHeight: 60 },
   ];
 
   return (
@@ -19,8 +20,8 @@ export function TrustedBy() {
           Join listeners from
         </p>
 
-        {/* Responsive grid: 1 col mobile, 2 cols tablet, 5 cols desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 sm:gap-6 max-w-6xl mx-auto">
+        {/* Responsive grid: 1 col mobile, 2 cols tablet, 7 cols desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8 sm:gap-6 max-w-7xl mx-auto">
           {companies.map((company) => (
             <div
               key={company.name}
