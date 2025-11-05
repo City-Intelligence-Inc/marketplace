@@ -1,14 +1,14 @@
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-purple-50 via-pink-50 to-violet-50 border-t border-border">
+    <footer className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* About Section */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
               ABOUT RESEARCH CLUB
             </h3>
-            <div className="text-muted-foreground text-sm leading-relaxed space-y-2">
+            <div className="text-gray-300 text-sm leading-relaxed space-y-2">
               <p>City Intelligence Inc.</p>
               <p>Howein South Street 18 A</p>
               <p>Nanjakan Building</p>
@@ -19,7 +19,7 @@ export function Footer() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-gray-300 hover:text-orange-500 transition-colors"
                 aria-label="Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -30,7 +30,7 @@ export function Footer() {
                 href="https://medium.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-gray-300 hover:text-orange-500 transition-colors"
                 aria-label="Medium"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ export function Footer() {
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-gray-300 hover:text-orange-500 transition-colors"
                 aria-label="YouTube"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -53,52 +53,52 @@ export function Footer() {
 
           {/* AI Subfields */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
               AI SUBFIELDS
             </h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Machine Learning</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Deep Learning</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Natural Language Processing</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Computer Vision</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Reinforcement Learning</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Generative AI</a></li>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Machine Learning</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Deep Learning</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Natural Language Processing</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Computer Vision</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Reinforcement Learning</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Generative AI</a></li>
             </ul>
           </div>
 
           {/* More AI Topics */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
               RESEARCH AREAS
             </h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Large Language Models</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">AI Safety & Alignment</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Robotics</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Multimodal AI</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Edge AI</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">AI in Healthcare</a></li>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Large Language Models</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">AI Safety & Alignment</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Robotics</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Multimodal AI</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Edge AI</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">AI in Healthcare</a></li>
             </ul>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
               QUICK LINKS
             </h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Register</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Sign In</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">My Account</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Terms</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Register</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Sign In</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">My Account</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">About Us</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Terms</a></li>
+              <li><a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
+        <div className="border-t border-gray-700 mt-12 pt-8 text-center text-sm text-gray-400">
           <p>&copy; {new Date().getFullYear()} City Intelligence Inc. All rights reserved.</p>
           <p className="mt-2">Research Club - Expert-curated AI research podcasts</p>
         </div>
