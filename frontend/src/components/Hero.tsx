@@ -23,11 +23,29 @@ export function Hero() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      toast.success("Thanks for subscribing! Check your inbox.");
-      setEmail("");
+    try {
+      const apiUrl = `https://dhzmiptmem.us-east-1.awsapprunner.com/podcast/agents/d50c4109-cf72-4f01-9db7-80422fcf038b/subscribe-email?email=${encodeURIComponent(email)}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Thanks for subscribing! Check your inbox.");
+        setEmail("");
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.message || "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      console.error("Subscription error:", error);
+      toast.error("Unable to connect. Please try again later.");
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
