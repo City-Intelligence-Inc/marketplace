@@ -7,7 +7,7 @@ export function Navbar() {
         <div className="flex items-center justify-center md:justify-start">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-gray-900">
-            Research Cafe
+            Research Club
           </Link>
         </div>
       </div>

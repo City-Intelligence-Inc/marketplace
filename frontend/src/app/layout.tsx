@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Research Cafe - The latest academic research, explained in plain English",
+  title: "Research Club - The latest academic research, explained in plain English",
   description: "A premium daily newsletter and podcast. Each episode is lovingly crafted by hand, and delivered to your inbox every morning.",
 };
 

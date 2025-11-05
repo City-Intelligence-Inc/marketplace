@@ -72,7 +72,7 @@ export function Footer() {
       <div className="max-w-4xl mx-auto px-6 py-16">
         <div className="text-center space-y-6">
           {/* Brand */}
-          <h3 className="text-2xl font-bold text-white">Research Cafe</h3>
+          <h3 className="text-2xl font-bold text-white">Research Club</h3>
           <p className="text-gray-400 leading-relaxed max-w-2xl mx-auto">
             Transform the way you consume research. We break down cutting-edge AI papers into clear, actionable insights delivered daily.
           </p>
@@ -142,7 +142,7 @@ export function Footer() {
           {/* Copyright */}
           <div className="border-t border-gray-800 pt-8 mt-8">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Research Cafe. All rights reserved.
+              © {new Date().getFullYear()} Research Club. All rights reserved.
             </p>
           </div>
         </div>
