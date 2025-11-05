@@ -43,7 +43,7 @@ export function Hero() {
       }
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
