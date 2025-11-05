@@ -69,12 +69,12 @@ export function SimpleHero() {
             </div>
 
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 mb-8 tracking-tight">
-              Stay Current with <br />
-              <span className="text-gray-600">Patent Law</span>
+              Federal Circuit Updates. <br />
+              <span className="text-gray-600">CLE Credits Coming.</span>
             </h1>
 
             <p className="text-2xl md:text-3xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
-              Federal Circuit case summaries for patent attorneys with zero spare time. 15-25 minutes per week. CLE credits coming Q2 2026.
+              Weekly Federal Circuit patent law podcasts. Working toward CLE accreditation for Q2 2026. Lock in $10/month now.
             </p>
 
             {/* CTA Buttons */}

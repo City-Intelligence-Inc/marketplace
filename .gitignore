@@ -40,3 +40,4 @@ Thumbs.db
 frontend-broken/
 backend/.env.local
 *.pdf
+.vercel
