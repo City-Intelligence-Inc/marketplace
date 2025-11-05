@@ -33,59 +33,103 @@ export function Hero() {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <div className="max-w-4xl mx-auto px-6 py-20 md:py-32 text-center">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-8 tracking-tight">
-          Research Cafe:
-        </h1>
-        <p className="text-2xl md:text-3xl text-gray-700 mb-4 leading-relaxed">
-          The latest academic research, explained in plain English.
-        </p>
-        <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Research Cafe is a premium daily newsletter and podcast. Each episode is lovingly crafted by hand, and delivered to your inbox every morning.
-        </p>
+      <div className="max-w-4xl mx-auto px-6 py-20 md:py-32">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
+            Your Daily Dose of <br />
+            <span className="text-gray-600">Breakthrough Research</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            We turn complex AI research papers into digestible 10-minute episodes.
+            Subscribe and stay ahead of the curve.
+          </p>
 
-        {/* Email Subscription Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch max-w-lg mx-auto mb-8">
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isSubmitting}
-            className="flex-1 h-12 px-4 text-base rounded-md bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-12 px-8 text-base bg-gray-900 hover:bg-gray-800 text-white rounded-md whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {isSubmitting ? "Subscribing..." : "Subscribe"}
-          </Button>
-        </form>
+          {/* Email Subscription Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch max-w-lg mx-auto mb-6">
+            <input
+              type="email"
+              placeholder="Your email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
+              className="flex-1 h-12 px-4 text-base rounded-lg bg-white border-2 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-12 px-8 text-base bg-gray-900 hover:bg-gray-700 text-white rounded-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+            >
+              {isSubmitting ? "Joining..." : "Get Started"}
+            </Button>
+          </form>
 
-        <p className="text-sm text-gray-500">
-          Already a member?{" "}
-          <a href="#" className="text-gray-900 hover:underline font-medium">
-            Click here to login
-          </a>
-        </p>
+          <p className="text-sm text-gray-500">
+            Free for 7 days. Cancel anytime.{" "}
+            <a href="#" className="text-gray-900 hover:text-gray-700 underline">
+              Login
+            </a>
+          </p>
+        </div>
+
+        {/* Stats or Social Proof */}
+        <div className="grid grid-cols-3 gap-8 text-center border-t border-gray-200 pt-12">
+          <div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">500+</div>
+            <div className="text-sm text-gray-600">Episodes Published</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">10K+</div>
+            <div className="text-sm text-gray-600">Active Subscribers</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">4.9★</div>
+            <div className="text-sm text-gray-600">Average Rating</div>
+          </div>
+        </div>
       </div>
 
       {/* Features Section */}
-      <div className="border-t border-gray-200 bg-gray-50 py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Daily Episodes</h3>
-              <p className="text-gray-600">New research explained every morning, delivered straight to your inbox.</p>
+      <div className="bg-gray-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12">
+            Research, Made Simple
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                📊
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Curated Content</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Our team reads hundreds of papers weekly and handpicks the most impactful discoveries for you.
+              </p>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Plain English</h3>
-              <p className="text-gray-600">Complex academic papers translated into clear, accessible language.</p>
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                🎧
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Audio & Newsletter</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Listen on the go or read at your desk. Every episode available in both formats.
+              </p>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Expert-Curated</h3>
-              <p className="text-gray-600">Each episode is carefully crafted by subject-matter experts.</p>
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                ⚡
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Quick & Actionable</h3>
+              <p className="text-gray-600 leading-relaxed">
+                10-minute episodes that respect your time while delivering real insights you can use.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                🔬
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Expert Analysis</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Written by researchers and practitioners who know the field inside and out.
+              </p>
             </div>
           </div>
         </div>
