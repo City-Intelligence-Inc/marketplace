@@ -6,37 +6,26 @@ import { toast } from "sonner";
 import { TrustedBy } from "@/components/TrustedBy";
 
 const categories = [
-  "Mathematics",
-  "AI",
-  "Crypto",
-  "Quantum Computing",
-  "Education",
-  "Patent Law",
-  "IP Law",
-  "Constitutional Law",
-  "Corporate Law",
-  "Healthcare",
-  "Climate Science",
-  "Biotechnology",
-  "Economics",
-  "Psychology",
-  "Space Exploration",
-  "Neuroscience",
-  "Physics",
-  "Finance",
-  "Cybersecurity",
-  "Data Science",
-  "Politics",
-  "Philosophy",
-  "Engineering",
-  "Chemistry",
-  "Antitrust Law",
-  "Securities Law",
-  "UI/UX Design",
-  "Product Design",
-  "Architecture",
-  "Graphic Design",
-  "Industrial Design",
+  "Machine Learning",
+  "Deep Learning",
+  "Natural Language Processing",
+  "Computer Vision",
+  "Reinforcement Learning",
+  "Generative AI",
+  "Neural Networks",
+  "Large Language Models",
+  "AI Safety & Alignment",
+  "Robotics",
+  "AI Ethics",
+  "Multimodal AI",
+  "Transformers",
+  "Diffusion Models",
+  "AI Hardware",
+  "Edge AI",
+  "Autonomous Systems",
+  "Speech Recognition",
+  "Recommendation Systems",
+  "AI in Healthcare",
 ];
 
 export function Hero() {
@@ -81,7 +70,7 @@ export function Hero() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-start justify-center overflow-hidden bg-white pt-16 sm:pt-20 md:pt-32 pb-16 sm:pb-20 md:pb-0">
+    <div className="relative flex items-start justify-center overflow-hidden bg-white pt-16 sm:pt-20 md:pt-32 pb-24 sm:pb-32 md:pb-40">
       {/* Animated Background Effects */}
       <div className="absolute inset-0 overflow-hidden bg-white">
         {/* Large Gradient Orbs - Subtle */}
@@ -107,7 +96,7 @@ export function Hero() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-6 lg:px-8 text-center">
         <div className="space-y-6 sm:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
             <span className="block text-black">
               Daily podcasts on #1 trending
             </span>
