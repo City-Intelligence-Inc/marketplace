@@ -39,3 +39,9 @@ variable "paper_requests_table_name" {
   type        = string
   default     = "paper-requests"
 }
+
+variable "agents_table_name" {
+  description = "Name of the DynamoDB table for agents"
+  type        = string
+  default     = "agents"
+}

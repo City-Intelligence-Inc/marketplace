@@ -54,6 +54,7 @@ paper_table = dynamodb.Table(os.getenv('PAPER_TABLE_NAME', 'paper-links'))
 podcast_table = dynamodb.Table(os.getenv('PODCASTS_TABLE_NAME', 'podcasts'))
 paper_requests_table = dynamodb.Table(os.getenv('PAPER_REQUESTS_TABLE_NAME', 'paper-requests'))
 email_templates_table = dynamodb.Table(os.getenv('EMAIL_TEMPLATES_TABLE_NAME', 'email-templates'))
+agents_table = dynamodb.Table(os.getenv('AGENTS_TABLE_NAME', 'agents'))
 
 # ===== Models =====
 
@@ -84,11 +85,65 @@ class PaperRequestModel(BaseModel):
     paper_title: str = None
     reason: str = None
 
+class AgentSubscribeRequest(BaseModel):
+    agent_id: str
+    email: EmailStr
+
 # ===== Public Endpoints =====
 
 @app.get("/")
 async def root():
     return {"message": "40k ARR SaaS API is running", "version": "2.0-personas"}
+
+@app.post("/api/agents/subscribe")
+async def subscribe_to_agent(request: AgentSubscribeRequest):
+    """Add an email to an agent's subscriber list"""
+    try:
+        agent_id = request.agent_id
+        email = request.email
+
+        # Get the agent from DynamoDB
+        response = agents_table.get_item(Key={'agent_id': agent_id})
+
+        if 'Item' not in response:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
+
+        agent = response['Item']
+        subscribers = agent.get('subscribers', [])
+
+        # Check if already subscribed
+        if email in subscribers:
+            return {
+                "message": f"Already subscribed to {agent.get('name', agent_id)}",
+                "agent_name": agent.get('name', agent_id),
+                "agent_id": agent_id
+            }
+
+        # Add email to subscribers list
+        subscribers.append(email)
+
+        # Update the agent in DynamoDB
+        agents_table.update_item(
+            Key={'agent_id': agent_id},
+            UpdateExpression='SET subscribers = :subscribers, updated_at = :updated_at',
+            ExpressionAttributeValues={
+                ':subscribers': subscribers,
+                ':updated_at': datetime.utcnow().isoformat()
+            }
+        )
+
+        return {
+            "message": f"Successfully subscribed to {agent.get('name', agent_id)}",
+            "agent_name": agent.get('name', agent_id),
+            "agent_id": agent_id,
+            "subscriber_count": len(subscribers)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error subscribing to agent: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/create-podcast-from-text")
 async def create_podcast_from_text(
