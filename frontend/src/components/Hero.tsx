@@ -160,15 +160,17 @@ export function Hero() {
       </div>
 
       {/* Episodes Section */}
-      <div className="bg-white py-12 sm:py-20">
+      <div className="bg-white py-12 sm:py-20 relative z-10 -mt-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <iframe
-            src="https://terminus.complete.city/p/d50c4109-cf72-4f01-9db7-80422fcf038b"
-            className="w-full h-[600px] sm:h-[700px] md:h-[800px]"
-            style={{ border: '1px solid #e5e7eb', borderRadius: '12px' }}
-            scrolling="no"
-            allowFullScreen
-          />
+          <div className="transform transition-all duration-700 ease-out opacity-0 translate-y-8 animate-fade-in-up">
+            <iframe
+              src="https://terminus.complete.city/p/d50c4109-cf72-4f01-9db7-80422fcf038b"
+              className="w-full h-[600px] sm:h-[700px] md:h-[800px] shadow-2xl"
+              style={{ border: '1px solid #e5e7eb', borderRadius: '12px' }}
+              scrolling="no"
+              allowFullScreen
+            />
+          </div>
         </div>
       </div>
     </div>
