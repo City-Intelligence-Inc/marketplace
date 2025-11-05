@@ -70,26 +70,26 @@ export function Hero() {
   };
 
   return (
-    <div className="relative flex items-start justify-center overflow-hidden bg-white pt-16 sm:pt-20 md:pt-32 pb-24 sm:pb-32 md:pb-40">
+    <div className="relative flex items-start justify-center overflow-hidden bg-background pt-16 sm:pt-20 md:pt-32 pb-24 sm:pb-32 md:pb-40">
       {/* Animated Background Effects */}
-      <div className="absolute inset-0 overflow-hidden bg-white">
-        {/* Large Gradient Orbs - Subtle */}
-        <div className="absolute top-1/4 -left-1/4 w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full blur-[80px] sm:blur-[100px] animate-float" />
-        <div className="absolute bottom-1/4 -right-1/4 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-br from-red-600/15 to-orange-600/15 rounded-full blur-[100px] sm:blur-[120px] animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-gradient-to-br from-amber-500/15 to-red-500/15 rounded-full blur-[80px] sm:blur-[100px] animate-pulse-slow" />
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Large Gradient Orbs - Pastel colors */}
+        <div className="absolute top-1/4 -left-1/4 w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] bg-gradient-to-br from-purple-300/30 to-pink-300/30 rounded-full blur-[80px] sm:blur-[100px] animate-float" />
+        <div className="absolute bottom-1/4 -right-1/4 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-gradient-to-br from-blue-300/25 to-purple-300/25 rounded-full blur-[100px] sm:blur-[120px] animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-gradient-to-br from-pink-300/25 to-violet-300/25 rounded-full blur-[80px] sm:blur-[100px] animate-pulse-slow" />
 
         {/* Additional subtle accent orbs */}
-        <div className="absolute top-10 right-1/4 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-gradient-to-br from-orange-400/12 to-red-400/12 rounded-full blur-[60px] sm:blur-[80px] animate-float-slow" />
-        <div className="absolute bottom-20 left-1/3 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-amber-600/10 to-orange-600/10 rounded-full blur-[70px] sm:blur-[90px] animate-float" />
-        <div className="absolute top-1/3 right-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-gradient-to-br from-red-500/12 to-amber-500/12 rounded-full blur-[60px] sm:blur-[70px] animate-float-delayed" />
+        <div className="absolute top-10 right-1/4 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-gradient-to-br from-indigo-300/20 to-purple-300/20 rounded-full blur-[60px] sm:blur-[80px] animate-float-slow" />
+        <div className="absolute bottom-20 left-1/3 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-gradient-to-br from-violet-300/18 to-pink-300/18 rounded-full blur-[70px] sm:blur-[90px] animate-float" />
+        <div className="absolute top-1/3 right-1/2 w-[250px] sm:w-[350px] h-[250px] sm:h-[350px] bg-gradient-to-br from-blue-300/20 to-indigo-300/20 rounded-full blur-[60px] sm:blur-[70px] animate-float-delayed" />
 
         {/* Animated Grid with depth */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.08] animate-grid-flow" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.05] animate-grid-flow" />
 
-        {/* Animated light beams - orange/red tones */}
-        <div className="absolute top-0 left-1/4 w-[2px] h-full bg-gradient-to-b from-transparent via-orange-500/30 to-transparent animate-beam blur-sm" />
-        <div className="absolute top-0 right-1/3 w-[2px] h-full bg-gradient-to-b from-transparent via-red-500/30 to-transparent animate-beam-delayed blur-sm" />
-        <div className="absolute top-0 left-2/3 w-[1px] h-full bg-gradient-to-b from-transparent via-amber-500/20 to-transparent animate-beam blur-sm" style={{ animationDelay: '4s' }} />
+        {/* Animated light beams - pastel tones */}
+        <div className="absolute top-0 left-1/4 w-[2px] h-full bg-gradient-to-b from-transparent via-purple-400/25 to-transparent animate-beam blur-sm" />
+        <div className="absolute top-0 right-1/3 w-[2px] h-full bg-gradient-to-b from-transparent via-pink-400/25 to-transparent animate-beam-delayed blur-sm" />
+        <div className="absolute top-0 left-2/3 w-[1px] h-full bg-gradient-to-b from-transparent via-blue-400/20 to-transparent animate-beam blur-sm" style={{ animationDelay: '4s' }} />
       </div>
 
       {/* Content */}
@@ -97,15 +97,15 @@ export function Hero() {
         <div className="space-y-6 sm:space-y-8">
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
-            <span className="block text-black">
+            <span className="block text-foreground">
               Daily podcasts on #1 trending
             </span>
-            <span className="block text-black">
+            <span className="block text-foreground">
               research and news in
             </span>
             <span className="block mt-6 sm:mt-8 mb-6 sm:mb-8 min-h-[7rem] sm:min-h-[10rem] py-6 sm:py-8 flex items-center justify-center overflow-visible">
               <span
-                className={`inline-block bg-gradient-to-r from-orange-500 via-red-500 to-amber-600 bg-clip-text text-transparent transition-all duration-500 leading-tight ${
+                className={`inline-block bg-gradient-to-r from-purple-500 via-pink-500 to-violet-500 bg-clip-text text-transparent transition-all duration-500 leading-tight ${
                   isAnimating
                     ? "opacity-0 translate-y-4 scale-95"
                     : "opacity-100 translate-y-0 scale-100"
@@ -117,7 +117,7 @@ export function Hero() {
           </h1>
 
           {/* Subheading */}
-          <p className="text-lg sm:text-xl md:text-2xl text-black max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-lg sm:text-xl md:text-2xl text-foreground max-w-2xl mx-auto leading-relaxed px-4">
             <span className="whitespace-nowrap">Expert-curated research podcasts</span> delivered daily.
             <br className="hidden sm:block" />
             <span className="block sm:inline mt-1 sm:mt-0">Never miss. <span className="whitespace-nowrap">10 minutes a day.</span></span>
@@ -131,12 +131,12 @@ export function Hero() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
-              className="w-full h-14 sm:h-12 px-6 text-base sm:text-sm rounded-lg bg-white border-2 border-gray-300 text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 sm:h-12 px-6 text-base sm:text-sm rounded-lg bg-card border-2 border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto h-14 sm:h-12 px-8 text-base sm:text-sm bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full sm:w-auto h-14 sm:h-12 px-8 text-base sm:text-sm bg-gradient-to-r from-purple-500 via-pink-500 to-violet-500 hover:from-purple-600 hover:via-pink-600 hover:to-violet-600 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg shadow-purple-500/30"
             >
               {isSubmitting ? "Entering..." : "Enter the Club"}
             </Button>
