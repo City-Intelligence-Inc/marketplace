@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { TrustedBy } from "@/components/TrustedBy";
 
 export function Hero() {
   const [mode, setMode] = useState<"subscribe" | "invite">("subscribe");
@@ -139,6 +140,11 @@ export function Hero() {
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* Trusted By Section */}
+        <div className="mt-20">
+          <TrustedBy />
         </div>
       </div>
 
