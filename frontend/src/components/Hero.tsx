@@ -66,7 +66,7 @@ export function Hero() {
           </p>
 
           {/* Email Subscription Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch max-w-lg mx-auto mb-6">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center items-stretch max-w-lg mx-auto">
             <input
               type="email"
               placeholder="Your email address"
@@ -83,29 +83,6 @@ export function Hero() {
               {isSubmitting ? "Joining..." : "Get Started"}
             </Button>
           </form>
-
-          <p className="text-sm text-gray-500">
-            Free for 7 days. Cancel anytime.{" "}
-            <a href="#" className="text-gray-900 hover:text-gray-700 underline">
-              Login
-            </a>
-          </p>
-        </div>
-
-        {/* Stats or Social Proof */}
-        <div className="grid grid-cols-3 gap-8 text-center border-t border-gray-200 pt-12">
-          <div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">500+</div>
-            <div className="text-sm text-gray-600">Episodes Published</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">10K+</div>
-            <div className="text-sm text-gray-600">Active Subscribers</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900 mb-1">4.9★</div>
-            <div className="text-sm text-gray-600">Average Rating</div>
-          </div>
         </div>
       </div>
 
