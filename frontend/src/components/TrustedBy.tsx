@@ -9,7 +9,7 @@ export function TrustedBy() {
     { name: "Stanford University", logo: "/logos/stanford.avif", height: 56, mobileHeight: 70 },
     { name: "UC Berkeley", logo: "/logos/berkeley.png", height: 28, mobileHeight: 42 },
     { name: "University of Pennsylvania", logo: "/logos/penn.png", height: 56, mobileHeight: 70 },
-    { name: "Purdue University", logo: "/logos/purdue.png", height: 25, mobileHeight: 40 },
+    { name: "Purdue University", logo: "/logos/purdue.png", height: 40, mobileHeight: 50 },
   ];
 
   return (
