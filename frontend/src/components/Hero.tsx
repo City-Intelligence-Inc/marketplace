@@ -96,7 +96,7 @@ export function Hero() {
       <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-6 lg:px-8 text-center">
         <div className="space-y-6 sm:space-y-8">
           {/* Main Heading */}
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-tight">
             <span className="block text-black">
               Daily podcasts on #1 trending
             </span>

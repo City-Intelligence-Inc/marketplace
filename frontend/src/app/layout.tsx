@@ -1,13 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${inter.variable} antialiased font-sans`}
+        className={`${inter.variable} antialiased`}
         style={{ fontFamily: 'var(--font-inter)' }}
       >
         {children}

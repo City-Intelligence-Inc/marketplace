@@ -5,7 +5,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* About Section */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold">
               ABOUT RESEARCH CLUB
             </h3>
             <div className="text-gray-300 text-sm leading-relaxed space-y-2">
@@ -53,7 +53,7 @@ export function Footer() {
 
           {/* AI Subfields */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold">
               AI SUBFIELDS
             </h3>
             <ul className="space-y-2 text-sm text-gray-300">
@@ -68,7 +68,7 @@ export function Footer() {
 
           {/* More AI Topics */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold">
               RESEARCH AREAS
             </h3>
             <ul className="space-y-2 text-sm text-gray-300">
@@ -83,7 +83,7 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold" style={{ fontFamily: 'var(--font-playfair)' }}>
+            <h3 className="text-xl font-bold">
               QUICK LINKS
             </h3>
             <ul className="space-y-2 text-sm text-gray-300">
