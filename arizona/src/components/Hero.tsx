@@ -89,7 +89,7 @@ export function Hero() {
             <span className="text-gray-600 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-500 cursor-default">Breakthrough Research</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Research Club is an expert-verified premium podcast and newsletter that turns complex AI research papers into digestible episodes, delivered to your inbox.
+            City Intelligence, Inc is an expert-verified premium podcast and newsletter that turns complex AI research papers into digestible episodes, delivered to your inbox.
           </p>
 
           {/* Mode Toggle */}

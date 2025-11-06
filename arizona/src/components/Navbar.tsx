@@ -7,7 +7,7 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-xl md:text-2xl font-bold text-gray-900">
-            Research Club <span className="text-blue-600">Patent Law CLE</span>
+            City Intelligence, Inc <span className="text-blue-600">Patent Law CLE</span>
           </Link>
 
           {/* Navigation */}

@@ -10,7 +10,7 @@ export default function StatesPage() {
             State CLE Requirements
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            See how Research Club podcasts satisfy CLE requirements in your state. Select your state below for specific details.
+            See how City Intelligence, Inc podcasts satisfy CLE requirements in your state. Select your state below for specific details.
           </p>
         </div>
 

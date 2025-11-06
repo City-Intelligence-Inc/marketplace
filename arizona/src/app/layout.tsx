@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Research Club - Federal Circuit CLE for Arizona Attorneys | Self-Certify Now",
-  description: "Arizona attorneys: Start earning CLE credits immediately with our Federal Circuit podcasts. Self-certification available under AZ Supreme Court Rule 45. $10/month.",
+  title: "City Intelligence, Inc - Federal Circuit CLE for Arizona Attorneys | Self-Certify Now",
+  description: "Arizona attorneys: Start earning CLE credits immediately with our Federal Circuit podcasts. Self-certification available under AZ Supreme Court Rule 45.",
 };
 
 export const viewport: Viewport = {

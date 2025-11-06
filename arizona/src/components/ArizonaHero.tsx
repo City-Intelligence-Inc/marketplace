@@ -206,7 +206,7 @@ export function ArizonaHero() {
                   <tr className="border-b-2 border-gray-300">
                     <th className="text-left py-3 px-4 font-bold text-gray-900">Requirement</th>
                     <th className="text-left py-3 px-4 font-bold text-gray-900">Details</th>
-                    <th className="text-center py-3 px-4 font-bold text-green-600">Research Club Satisfies?</th>
+                    <th className="text-center py-3 px-4 font-bold text-green-600">City Intelligence, Inc Satisfies?</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -255,7 +255,7 @@ export function ArizonaHero() {
               </div>
               <div>
                 <p className="text-lg text-gray-800 italic mb-4">
-                  &ldquo;As an Arizona patent prosecutor, I self-certify 12 hours annually from Research Club podcasts. I listen during my morning workout and while driving to client meetings. The Federal Circuit updates are immediately applicable to my prosecution practice. Arizona&apos;s self-certification makes this incredibly easy.&rdquo;
+                  &ldquo;As an Arizona patent prosecutor, I self-certify 12 hours annually from City Intelligence, Inc podcasts. I listen during my morning workout and while driving to client meetings. The Federal Circuit updates are immediately applicable to my prosecution practice. Arizona&apos;s self-certification makes this incredibly easy.&rdquo;
                 </p>
                 <p className="font-bold text-gray-900">David M.</p>
                 <p className="text-sm text-gray-600">Patent Prosecutor, Phoenix, AZ</p>

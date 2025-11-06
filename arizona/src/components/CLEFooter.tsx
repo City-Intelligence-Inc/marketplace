@@ -5,7 +5,7 @@ export function CLEFooter() {
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="text-2xl font-bold text-white mb-4">Research Club</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">City Intelligence, Inc</h3>
             <p className="text-gray-400 leading-relaxed mb-6">
               Making continuing legal education work with your schedule, not against it.
             </p>
@@ -64,7 +64,7 @@ export function CLEFooter() {
         {/* Bottom Section */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Research Club. All rights reserved.
+            © {new Date().getFullYear()} City Intelligence, Inc. All rights reserved.
           </p>
 
           {/* Social Links */}

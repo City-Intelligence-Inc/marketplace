@@ -24,7 +24,7 @@ export function FAQ() {
     },
     {
       question: "Who creates the content?",
-      answer: "Episodes are created by Arihant (Research Club founder), who has 7 years of CS education experience including teaching at Berkeley and publishing at SIGCSE. Content gets advisory review from Guy Rutenberg, a patent litigation attorney. When CLE launches, Guy will serve as co-faculty to meet state bar requirements for instructor qualifications."
+      answer: "Episodes are created by Arihant (City Intelligence, Inc founder), who has 7 years of CS education experience including teaching at Berkeley and publishing at SIGCSE. Content gets advisory review from Guy Rutenberg, a patent litigation attorney. When CLE launches, Guy will serve as co-faculty to meet state bar requirements for instructor qualifications."
     },
     {
       question: "What topics do you cover?",

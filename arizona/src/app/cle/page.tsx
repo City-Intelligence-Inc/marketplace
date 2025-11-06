@@ -159,7 +159,7 @@ export default function CLEPage() {
             <div className="bg-gray-50 p-6 rounded-xl">
               <h3 className="text-lg font-bold text-gray-900 mb-3">Who creates the content?</h3>
               <p className="text-gray-700">
-                Episodes are created by Arihant (Research Club founder), who has 7 years of CS education experience at Berkeley. Advisory review from Guy Rutenberg, a patent litigation attorney. When CLE launches, Guy serves as co-faculty to meet state bar instructor requirements.
+                Episodes are created by Arihant (City Intelligence, Inc founder), who has 7 years of CS education experience at Berkeley. Advisory review from Guy Rutenberg, a patent litigation attorney. When CLE launches, Guy serves as co-faculty to meet state bar instructor requirements.
               </p>
             </div>
           </div>

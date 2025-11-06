@@ -179,7 +179,7 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b-2 border-gray-300">
                   <th className="text-left py-4 px-4 font-bold text-gray-900">Feature</th>
-                  <th className="text-center py-4 px-4 font-bold text-blue-600">Research Club</th>
+                  <th className="text-center py-4 px-4 font-bold text-blue-600">City Intelligence, Inc</th>
                   <th className="text-center py-4 px-4 font-bold text-gray-500">Live Conference</th>
                   <th className="text-center py-4 px-4 font-bold text-gray-500">Generic Webinar</th>
                 </tr>
