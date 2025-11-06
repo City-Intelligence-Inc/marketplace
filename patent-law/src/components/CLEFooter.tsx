@@ -1,7 +1,157 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
 export function CLEFooter() {
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviterName, setInviterName] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!subscribeEmail) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    if (!subscribeEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubscribing(true);
+
+    try {
+      const apiUrl = `https://dhzmiptmem.us-east-1.awsapprunner.com/podcast/agents/b21ae987-5b7d-4b0a-844b-b3562358e3e8/subscribe-email?email=${encodeURIComponent(subscribeEmail)}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Thanks for subscribing! Check your inbox.");
+        setSubscribeEmail("");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Unable to connect. Please try again later.");
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!inviteEmail || !inviterName) {
+      toast.error("Please enter both name and email");
+      return;
+    }
+
+    if (!inviteEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsInviting(true);
+
+    try {
+      const apiUrl = `https://dhzmiptmem.us-east-1.awsapprunner.com/podcast/agents/b21ae987-5b7d-4b0a-844b-b3562358e3e8/invite-email?email=${encodeURIComponent(inviteEmail)}&inviter_name=${encodeURIComponent(inviterName)}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Invitation sent successfully!");
+        setInviteEmail("");
+        setInviterName("");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Unable to connect. Please try again later.");
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-6 py-16">
+        {/* Subscribe & Invite Section */}
+        <div className="mb-16 grid md:grid-cols-2 gap-8">
+          {/* Subscribe Form */}
+          <div className="bg-white/5 backdrop-blur-sm p-8 rounded-xl border border-white/10">
+            <h3 className="text-2xl font-bold text-white mb-4">Subscribe to Updates</h3>
+            <p className="text-gray-400 mb-6">
+              Join the first batch and get access for free
+            </p>
+            <form onSubmit={handleSubscribe} className="flex flex-col gap-4">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={subscribeEmail}
+                onChange={(e) => setSubscribeEmail(e.target.value)}
+                disabled={isSubscribing}
+                className="h-12 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <Button
+                type="submit"
+                disabled={isSubscribing}
+                className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold disabled:opacity-50"
+              >
+                {isSubscribing ? "Subscribing..." : "Subscribe"}
+              </Button>
+            </form>
+          </div>
+
+          {/* Invite Form */}
+          <div className="bg-white/5 backdrop-blur-sm p-8 rounded-xl border border-white/10">
+            <h3 className="text-2xl font-bold text-white mb-4">Invite a Colleague</h3>
+            <p className="text-gray-400 mb-6">
+              Share this with other patent attorneys
+            </p>
+            <form onSubmit={handleInvite} className="flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Your name"
+                value={inviterName}
+                onChange={(e) => setInviterName(e.target.value)}
+                disabled={isInviting}
+                className="h-12 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <input
+                type="email"
+                placeholder="Colleague's email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={isInviting}
+                className="h-12 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <Button
+                type="submit"
+                disabled={isInviting}
+                className="h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold disabled:opacity-50"
+              >
+                {isInviting ? "Sending..." : "Send Invitation"}
+              </Button>
+            </form>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2">

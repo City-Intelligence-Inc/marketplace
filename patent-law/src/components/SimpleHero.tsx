@@ -93,7 +93,7 @@ export function SimpleHero() {
                   disabled={isSubmitting}
                   className="h-16 px-10 text-lg bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold whitespace-nowrap disabled:opacity-50"
                 >
-                  {isSubmitting ? "Subscribing..." : "Subscribe ($10/mo)"}
+                  {isSubmitting ? "Subscribing..." : "Subscribe - First Batch Free"}
                 </Button>
               </form>
             </div>
@@ -158,15 +158,15 @@ export function SimpleHero() {
       <div className="bg-gray-900 text-white py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Lock In $10/Month Forever</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Join the First Batch - Free Access</h2>
             <p className="text-xl text-gray-300">
-              When CLE launches at $35/month, early subscribers keep their rate. That&apos;s $300/year in savings.
+              Early subscribers get free access to help shape the future of patent law CLE
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="bg-white/10 backdrop-blur-sm p-8 rounded-xl">
-              <h3 className="text-2xl font-bold mb-4">📅 Subscribe Today</h3>
+              <h3 className="text-2xl font-bold mb-4">📅 Available Now</h3>
               <ul className="space-y-3 text-gray-200">
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 font-bold">✓</span>
@@ -184,11 +184,11 @@ export function SimpleHero() {
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm p-8 rounded-xl">
-              <h3 className="text-2xl font-bold mb-4">🎯 When CLE Launches</h3>
+              <h3 className="text-2xl font-bold mb-4">🎯 Coming Soon</h3>
               <ul className="space-y-3 text-gray-200">
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 font-bold">✓</span>
-                  <span>Automatic upgrade to CLE credits (no price change)</span>
+                  <span>CLE credits (Q2 2026 target)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 font-bold">✓</span>
@@ -196,15 +196,15 @@ export function SimpleHero() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-green-400 font-bold">✓</span>
-                  <span>Save $300/year vs. new subscriber rate</span>
+                  <span>Early access to new features</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="text-center mt-12">
-            <Link href="/pricing" className="inline-block bg-white hover:bg-gray-100 text-gray-900 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
-              View Full Pricing Details
+            <Link href="/cle" className="inline-block bg-white hover:bg-gray-100 text-gray-900 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
+              View CLE Roadmap
             </Link>
           </div>
         </div>
